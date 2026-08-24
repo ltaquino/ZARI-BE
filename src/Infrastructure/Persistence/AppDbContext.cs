@@ -11,6 +11,14 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
 {
     public DbSet<TodoItem> Todos => Set<TodoItem>();
     public DbSet<Uom> Uoms => Set<Uom>();
+    public DbSet<ItemCategory> ItemCategories => Set<ItemCategory>();
+    public DbSet<Warehouse> Warehouses => Set<Warehouse>();
+    public DbSet<StorageLocation> StorageLocations => Set<StorageLocation>();
+    public DbSet<Item> Items => Set<Item>();
+    public DbSet<AdjustmentReason> AdjustmentReasons => Set<AdjustmentReason>();
+    public DbSet<ItemBranchSetting> ItemBranchSettings => Set<ItemBranchSetting>();
+    public DbSet<StockReservation> StockReservations => Set<StockReservation>();
+    public DbSet<DocumentSequence> DocumentSequences => Set<DocumentSequence>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

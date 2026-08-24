@@ -109,6 +109,14 @@ try
     app.MapIdentityEndpoints();
     app.MapTodoEndpoints();
     app.MapUomEndpoints();
+    app.MapItemCategoryEndpoints();
+    app.MapWarehouseEndpoints();
+    app.MapStorageLocationEndpoints();
+    app.MapItemEndpoints();
+    app.MapAdjustmentReasonEndpoints();
+    app.MapItemBranchSettingEndpoints();
+    app.MapStockReservationEndpoints();
+    app.MapDocumentSequenceEndpoints();
     //app.MapGet("/debug-user", (HttpContext ctx) =>
     //{
     //    return new

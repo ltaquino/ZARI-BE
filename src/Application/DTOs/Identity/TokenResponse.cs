@@ -1,5 +1,3 @@
-using System.Text.Json.Serialization;
-
 namespace ZARI.Application.DTOs.Identity;
 
     public sealed record TokenResponse
@@ -15,7 +13,10 @@ namespace ZARI.Application.DTOs.Identity;
         public DateTime ExpiresOn { get; set; }
         public bool IsVerified { get; set; }
 
-        [JsonIgnore]
+        // Must round-trip to the client — RefreshTokenCommand expects the client to send this back
+        // on /api/identity/refresh. It was previously [JsonIgnore]'d, which silently broke the
+        // refresh flow: the token was generated and persisted server-side but never reached the
+        // client that's supposed to present it later.
         public string RefreshToken { get; set; } = string.Empty;
     }
 

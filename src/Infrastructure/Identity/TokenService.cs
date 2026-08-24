@@ -110,8 +110,25 @@ public sealed class TokenService(
             IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Secret"]!))
         };
 
-        var tokenHandler = new JwtSecurityTokenHandler();
-        var principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out var securityToken);
+        // MapInboundClaims defaults to true on a bare JwtSecurityTokenHandler, which would silently
+        // rewrite "sub" to ClaimTypes.NameIdentifier before we ever get to read it below — matches
+        // the MapInboundClaims = false already set on the JwtBearer options used for live requests.
+        var tokenHandler = new JwtSecurityTokenHandler { MapInboundClaims = false };
+
+        ClaimsPrincipal principal;
+        SecurityToken securityToken;
+        try
+        {
+            principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
+        }
+        catch (Exception ex) when (ex is SecurityTokenException or ArgumentException or FormatException)
+        {
+            // A malformed, re-signed, or otherwise unparseable access token — not a caller bug, so
+            // surface it the same way as every other refresh-rejection path (InvalidOperationException,
+            // which RefreshTokenCommandHandler maps to a clean 400) instead of letting it bubble up
+            // as an unhandled 500.
+            throw new InvalidOperationException("Invalid access token.", ex);
+        }
 
         if (securityToken is not JwtSecurityToken jwtSecurityToken ||
             !jwtSecurityToken.Header.Alg.Equals(SecurityAlgorithms.HmacSha256, StringComparison.InvariantCultureIgnoreCase))

@@ -15,7 +15,8 @@ public static class UomEndpoints
     {
         var group = app.MapGroup("/api/uoms")
             .WithTags("Uoms")
-            .WithGroupName("Inventory");
+            .WithGroupName("Inventory")
+            .RequireAuthorization();
 
         group.MapGet("/", GetAll)
             .WithName("GetAllUoms")
