@@ -1,4 +1,4 @@
-namespace ZARI.Application.Features.Uoms.Update;
+namespace ZARI.Application.Features.Inventory.Uoms.Update;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;

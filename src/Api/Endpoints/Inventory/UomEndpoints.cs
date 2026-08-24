@@ -1,10 +1,10 @@
 using ZARI.Api.Extensions;
 using ZARI.Application.Abstractions.Messaging;
-using ZARI.Application.Features.Uoms.Create;
-using ZARI.Application.Features.Uoms.Delete;
-using ZARI.Application.Features.Uoms.Get;
-using ZARI.Application.Features.Uoms.GetAll;
-using ZARI.Application.Features.Uoms.Update;
+using ZARI.Application.Features.Inventory.Uoms.Create;
+using ZARI.Application.Features.Inventory.Uoms.Delete;
+using ZARI.Application.Features.Inventory.Uoms.Get;
+using ZARI.Application.Features.Inventory.Uoms.GetAll;
+using ZARI.Application.Features.Inventory.Uoms.Update;
 using ZARI.Domain.Common;
 
 namespace ZARI.Api.Endpoints;

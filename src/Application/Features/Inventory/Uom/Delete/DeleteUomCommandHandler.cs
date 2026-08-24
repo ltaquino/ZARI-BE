@@ -1,4 +1,4 @@
-namespace ZARI.Application.Features.Uoms.Delete;
+namespace ZARI.Application.Features.Inventory.Uoms.Delete;
 
 using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Messaging;

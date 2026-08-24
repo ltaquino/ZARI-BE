@@ -1,9 +1,9 @@
-namespace ZARI.Application.Features.Uoms.Create;
+namespace ZARI.Application.Features.Inventory.Uoms.Create;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Messaging;
-using ZARI.Application.Features.Uoms.Get;
+using ZARI.Application.Features.Inventory.Uoms.Get;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 

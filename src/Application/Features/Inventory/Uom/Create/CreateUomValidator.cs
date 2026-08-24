@@ -1,14 +1,11 @@
-namespace ZARI.Application.Features.Uoms.Update;
+namespace ZARI.Application.Features.Inventory.Uoms.Create;
 
 using FluentValidation;
 
-public sealed class UpdateUomValidator : AbstractValidator<UpdateUomCommand>
+public sealed class CreateUomValidator : AbstractValidator<CreateUomCommand>
 {
-    public UpdateUomValidator()
+    public CreateUomValidator()
     {
-        RuleFor(x => x.Id)
-            .NotEmpty();
-
         RuleFor(x => x.Code)
             .NotEmpty()
             .MaximumLength(15);

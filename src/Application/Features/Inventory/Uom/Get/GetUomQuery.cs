@@ -1,4 +1,4 @@
-namespace ZARI.Application.Features.Uoms.Get;
+namespace ZARI.Application.Features.Inventory.Uoms.Get;
 
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;

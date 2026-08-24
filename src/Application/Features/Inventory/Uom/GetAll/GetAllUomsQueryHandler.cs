@@ -1,9 +1,9 @@
-namespace ZARI.Application.Features.Uoms.GetAll;
+namespace ZARI.Application.Features.Inventory.Uoms.GetAll;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Messaging;
-using ZARI.Application.Features.Uoms.Get;
+using ZARI.Application.Features.Inventory.Uoms.Get;
 using ZARI.Domain.Common;
 
 public sealed class GetAllUomsQueryHandler(IAppDbContext dbContext) : IQueryHandler<GetAllUomsQuery, Result<List<UomResponse>>>
