@@ -22,6 +22,8 @@ public interface IAppDbContext
     DbSet<StockLedger> StockLedgers { get; }
     DbSet<SerialNumber> SerialNumbers { get; }
     DbSet<StockLocationBalance> StockLocationBalances { get; }
+    DbSet<GoodsReceipt> GoodsReceipts { get; }
+    DbSet<GoodsReceiptLine> GoodsReceiptLines { get; }
     DbSet<GlAccount> GlAccounts { get; }
     DbSet<CostCenter> CostCenters { get; }
     DbSet<GlJournal> GlJournals { get; }

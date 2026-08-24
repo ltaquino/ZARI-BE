@@ -28,9 +28,11 @@ public sealed class StockLedgerConfiguration : BaseModelConfig, IEntityTypeConfi
             .IsRequired()
             .HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
 
+        // Long enough for a real GUID-string line id (36 chars), not just the FE mock's old
+        // short-form ids (e.g. "line-1735000000000").
         builder.Property(l => l.ReferenceId)
             .IsRequired()
-            .HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
+            .HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_150);
 
         builder.Property(l => l.QtyIn).HasColumnType(DefaultDecimal);
         builder.Property(l => l.QtyOut).HasColumnType(DefaultDecimal);
