@@ -26,6 +26,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<StockLocationBalance> StockLocationBalances => Set<StockLocationBalance>();
     public DbSet<GoodsReceipt> GoodsReceipts => Set<GoodsReceipt>();
     public DbSet<GoodsReceiptLine> GoodsReceiptLines => Set<GoodsReceiptLine>();
+    public DbSet<GoodsIssue> GoodsIssues => Set<GoodsIssue>();
+    public DbSet<GoodsIssueLine> GoodsIssueLines => Set<GoodsIssueLine>();
     public DbSet<GlAccount> GlAccounts => Set<GlAccount>();
     public DbSet<CostCenter> CostCenters => Set<CostCenter>();
     public DbSet<GlJournal> GlJournals => Set<GlJournal>();

@@ -126,6 +126,7 @@ try
     app.MapApprovalRequestEndpoints();
     app.MapNotificationEndpoints();
     app.MapGoodsReceiptEndpoints();
+    app.MapGoodsIssueEndpoints();
     //app.MapGet("/debug-user", (HttpContext ctx) =>
     //{
     //    return new
