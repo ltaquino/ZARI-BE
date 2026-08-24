@@ -30,6 +30,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<GoodsIssueLine> GoodsIssueLines => Set<GoodsIssueLine>();
     public DbSet<StockAdjustment> StockAdjustments => Set<StockAdjustment>();
     public DbSet<StockAdjustmentLine> StockAdjustmentLines => Set<StockAdjustmentLine>();
+    public DbSet<StockOpname> StockOpnames => Set<StockOpname>();
+    public DbSet<StockOpnameLine> StockOpnameLines => Set<StockOpnameLine>();
+    public DbSet<StockTransferRequest> StockTransferRequests => Set<StockTransferRequest>();
+    public DbSet<StockTransferRequestLine> StockTransferRequestLines => Set<StockTransferRequestLine>();
     public DbSet<GlAccount> GlAccounts => Set<GlAccount>();
     public DbSet<CostCenter> CostCenters => Set<CostCenter>();
     public DbSet<GlJournal> GlJournals => Set<GlJournal>();

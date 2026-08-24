@@ -1,0 +1,25 @@
+using ZARI.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace ZARI.Infrastructure.Persistence.Configurations;
+
+public sealed class StockOpnameLineConfiguration : BaseModelConfig, IEntityTypeConfiguration<StockOpnameLine>
+{
+    public void Configure(EntityTypeBuilder<StockOpnameLine> builder)
+    {
+        builder.HasKey(l => l.Id);
+
+        builder.Property(l => l.BatchNo).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
+        builder.Property(l => l.SerialNo).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
+        builder.Property(l => l.SystemQty).HasColumnType(DefaultDecimal);
+        builder.Property(l => l.CountedQty).HasColumnType(DefaultDecimal);
+        builder.Property(l => l.VarianceQty).HasColumnType(DefaultDecimal);
+        builder.Property(l => l.UnitCost).HasColumnType(DefaultDecimal);
+
+        builder.HasOne(l => l.Item)
+            .WithMany()
+            .HasForeignKey(l => l.ItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}

@@ -28,6 +28,10 @@ public interface IAppDbContext
     DbSet<GoodsIssueLine> GoodsIssueLines { get; }
     DbSet<StockAdjustment> StockAdjustments { get; }
     DbSet<StockAdjustmentLine> StockAdjustmentLines { get; }
+    DbSet<StockOpname> StockOpnames { get; }
+    DbSet<StockOpnameLine> StockOpnameLines { get; }
+    DbSet<StockTransferRequest> StockTransferRequests { get; }
+    DbSet<StockTransferRequestLine> StockTransferRequestLines { get; }
     DbSet<GlAccount> GlAccounts { get; }
     DbSet<CostCenter> CostCenters { get; }
     DbSet<GlJournal> GlJournals { get; }

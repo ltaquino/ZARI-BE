@@ -1,0 +1,21 @@
+namespace ZARI.Application.Features.Inventory.StockTransferRequests.GetAll;
+
+using Microsoft.EntityFrameworkCore;
+using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Messaging;
+using ZARI.Application.Features.Inventory.StockTransferRequests.Shared;
+using ZARI.Domain.Common;
+
+public sealed class GetAllStockTransferRequestsQueryHandler(IAppDbContext dbContext) : IQueryHandler<GetAllStockTransferRequestsQuery, Result<List<StockTransferRequestResponse>>>
+{
+    public async Task<Result<List<StockTransferRequestResponse>>> HandleAsync(GetAllStockTransferRequestsQuery query, CancellationToken cancellationToken = default)
+    {
+        var requests = await dbContext.StockTransferRequests
+            .Include(r => r.Lines).ThenInclude(l => l.Item)
+            .Include(r => r.Lines).ThenInclude(l => l.Uom)
+            .OrderByDescending(r => r.RequestDate)
+            .ToListAsync(cancellationToken);
+
+        return Result.Success(requests.Select(StockTransferRequestMapper.ToResponse).ToList());
+    }
+}
