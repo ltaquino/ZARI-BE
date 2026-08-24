@@ -1,0 +1,22 @@
+namespace ZARI.Application.Features.Customers.Get;
+
+using Microsoft.EntityFrameworkCore;
+using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Messaging;
+using ZARI.Domain.Common;
+
+public sealed class GetCustomerQueryHandler(IAppDbContext dbContext) : IQueryHandler<GetCustomerQuery, Result<CustomerResponse>>
+{
+    public async Task<Result<CustomerResponse>> HandleAsync(GetCustomerQuery query, CancellationToken cancellationToken = default)
+    {
+        var customer = await dbContext.Customers
+            .Where(c => c.Id == query.Id)
+            .Select(c => new CustomerResponse(c.Id, c.Name, c.Type, c.Email, c.Phone, c.BranchId, c.Status, c.Owner, c.Address, c.Notes, c.CreatedAt))
+            .FirstOrDefaultAsync(cancellationToken);
+
+        if (customer is null)
+            return Result.Failure<CustomerResponse>(Error.NotFound("Customer.NotFound", $"Customer with ID '{query.Id}' was not found."));
+
+        return Result.Success(customer);
+    }
+}

@@ -6,6 +6,7 @@ public sealed class StockAdjustment : AuditableEntity
 {
     public string AdjustmentNo { get; set; } = default!;
     public string BranchId { get; set; } = default!;
+    public Branch Branch { get; set; } = default!;
     public Guid WarehouseId { get; set; }
     public Warehouse Warehouse { get; set; } = default!;
     public DateTimeOffset AdjustmentDate { get; set; }

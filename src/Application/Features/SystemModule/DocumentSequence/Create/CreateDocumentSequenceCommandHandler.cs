@@ -17,6 +17,10 @@ public sealed class CreateDocumentSequenceCommandHandler(IAppDbContext dbContext
         if (clashExists)
             return Result.Failure<DocumentSequenceResponse>(Error.Conflict("DocumentSequence.Duplicate", "A sequence for this branch and document type already exists — edit it instead."));
 
+        var branchExists = await dbContext.Branches.AnyAsync(b => b.Id == command.BranchId, cancellationToken);
+        if (!branchExists)
+            return Result.Failure<DocumentSequenceResponse>(Error.NotFound("Branch.NotFound", $"Branch with ID '{command.BranchId}' was not found."));
+
         var sequence = new DocumentSequence
         {
             BranchId = command.BranchId,

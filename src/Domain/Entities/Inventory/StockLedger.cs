@@ -17,8 +17,8 @@ public sealed class StockLedger : AuditableEntity
     public string? ItemName { get; set; }
     public string? UomCode { get; set; }
 
-    // References the not-yet-migrated Branch module — plain string, matches Warehouse.BranchId.
     public string BranchId { get; set; } = default!;
+    public Branch Branch { get; set; } = default!;
 
     public Guid WarehouseId { get; set; }
     public Warehouse Warehouse { get; set; } = default!;

@@ -6,6 +6,7 @@ public sealed class GoodsReceipt : AuditableEntity
 {
     public string GrNo { get; set; } = default!;
     public string BranchId { get; set; } = default!;
+    public Branch Branch { get; set; } = default!;
     public Guid WarehouseId { get; set; }
     public Warehouse Warehouse { get; set; } = default!;
     public string ReceiptType { get; set; } = default!;

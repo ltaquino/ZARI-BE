@@ -36,6 +36,16 @@ public sealed class StockTransferRequestConfiguration : BaseModelConfig, IEntity
             .HasForeignKey(r => r.DestWarehouseId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(r => r.SourceBranch)
+            .WithMany()
+            .HasForeignKey(r => r.SourceBranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(r => r.DestBranch)
+            .WithMany()
+            .HasForeignKey(r => r.DestBranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(r => r.Lines)
             .WithOne(l => l.StockTransferRequest)
             .HasForeignKey(l => l.StockTransferRequestId)

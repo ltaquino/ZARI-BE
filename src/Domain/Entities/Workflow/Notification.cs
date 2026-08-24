@@ -13,6 +13,7 @@ public sealed class Notification : AuditableEntity
     public string EntityType { get; set; } = default!;
     public string EntityId { get; set; } = default!;
     public string BranchId { get; set; } = default!;
+    public Branch Branch { get; set; } = default!;
     public string Type { get; set; } = default!;
     public string Category { get; set; } = default!;
     public string Message { get; set; } = default!;

@@ -6,12 +6,14 @@ public sealed class GoodsIssue : AuditableEntity
 {
     public string GiNo { get; set; } = default!;
     public string BranchId { get; set; } = default!; // source branch
+    public Branch Branch { get; set; } = default!;
     public Guid WarehouseId { get; set; } // source warehouse
     public Warehouse Warehouse { get; set; } = default!;
     public string ReferenceType { get; set; } = default!;
 
     // Only set (and only meaningful) when ReferenceType == STOCK_TRANSFER.
     public string? DestBranchId { get; set; }
+    public Branch? DestBranch { get; set; }
     public Guid? DestWarehouseId { get; set; }
     public Warehouse? DestWarehouse { get; set; }
 

@@ -45,6 +45,11 @@ public sealed class GlJournalConfiguration : BaseModelConfig, IEntityTypeConfigu
             .HasForeignKey(j => j.ReversalOfJournalId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(j => j.Branch)
+            .WithMany()
+            .HasForeignKey(j => j.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(j => j.Lines)
             .WithOne(l => l.GlJournal)
             .HasForeignKey(l => l.GlJournalId)

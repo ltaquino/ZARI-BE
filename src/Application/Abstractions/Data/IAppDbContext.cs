@@ -32,6 +32,11 @@ public interface IAppDbContext
     DbSet<StockOpnameLine> StockOpnameLines { get; }
     DbSet<StockTransferRequest> StockTransferRequests { get; }
     DbSet<StockTransferRequestLine> StockTransferRequestLines { get; }
+    DbSet<StockLocationTransfer> StockLocationTransfers { get; }
+    DbSet<StockLocationTransferLine> StockLocationTransferLines { get; }
+    DbSet<Customer> Customers { get; }
+    DbSet<Company> Companies { get; }
+    DbSet<Branch> Branches { get; }
     DbSet<GlAccount> GlAccounts { get; }
     DbSet<CostCenter> CostCenters { get; }
     DbSet<GlJournal> GlJournals { get; }

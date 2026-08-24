@@ -55,5 +55,10 @@ public sealed class StockLedgerConfiguration : BaseModelConfig, IEntityTypeConfi
             .WithMany()
             .HasForeignKey(l => l.WarehouseId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(l => l.Branch)
+            .WithMany()
+            .HasForeignKey(l => l.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

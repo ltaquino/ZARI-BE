@@ -13,9 +13,8 @@ public sealed class ApprovalRequest : AuditableEntity
     public string EntityType { get; set; } = default!;
     public string EntityId { get; set; } = default!;
 
-    // References the Branch mock/system-module data, which isn't a backend entity yet —
-    // kept as a plain string, matching StockReservation.BranchId.
     public string BranchId { get; set; } = default!;
+    public Branch Branch { get; set; } = default!;
 
     // References the Users mock/system-module data — same rationale, plain string not FK.
     public string RequestedBy { get; set; } = default!;

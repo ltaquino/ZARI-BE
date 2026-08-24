@@ -129,6 +129,11 @@ try
     app.MapGoodsIssueEndpoints();
     app.MapStockAdjustmentEndpoints();
     app.MapStockOpnameEndpoints();
+    app.MapStockTransferRequestEndpoints();
+    app.MapStockLocationTransferEndpoints();
+    app.MapCustomerEndpoints();
+    app.MapCompanyEndpoints();
+    app.MapBranchEndpoints();
     //app.MapGet("/debug-user", (HttpContext ctx) =>
     //{
     //    return new

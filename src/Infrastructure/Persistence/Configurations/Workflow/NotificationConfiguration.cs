@@ -24,5 +24,10 @@ public sealed class NotificationConfiguration : BaseModelConfig, IEntityTypeConf
             .WithOne(r => r.Notification)
             .HasForeignKey(r => r.NotificationId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(n => n.Branch)
+            .WithMany()
+            .HasForeignKey(n => n.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -33,5 +33,10 @@ public sealed class ItemBranchSettingConfiguration : BaseModelConfig, IEntityTyp
             .WithMany()
             .HasForeignKey(s => s.DefaultWarehouseId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(s => s.Branch)
+            .WithMany()
+            .HasForeignKey(s => s.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

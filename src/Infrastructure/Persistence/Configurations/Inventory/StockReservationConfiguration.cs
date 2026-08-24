@@ -33,5 +33,10 @@ public sealed class StockReservationConfiguration : BaseModelConfig, IEntityType
             .WithMany()
             .HasForeignKey(r => r.WarehouseId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(r => r.Branch)
+            .WithMany()
+            .HasForeignKey(r => r.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -17,6 +17,10 @@ public sealed class CreateWarehouseCommandHandler(IAppDbContext dbContext) : ICo
         if (codeExists)
             return Result.Failure<WarehouseResponse>(Error.Conflict("Warehouse.DuplicateCode", $"A warehouse with code '{command.Code}' already exists."));
 
+        var branchExists = await dbContext.Branches.AnyAsync(b => b.Id == command.BranchId, cancellationToken);
+        if (!branchExists)
+            return Result.Failure<WarehouseResponse>(Error.NotFound("Branch.NotFound", $"Branch with ID '{command.BranchId}' was not found."));
+
         var warehouse = new Warehouse
         {
             BranchId = command.BranchId,

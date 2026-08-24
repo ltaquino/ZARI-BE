@@ -11,9 +11,8 @@ public sealed class GlJournal : AuditableEntity
 {
     public string JournalNo { get; set; } = default!;
 
-    // References the Branch mock/system-module data, which isn't a backend entity yet —
-    // kept as a plain string (not Guid/FK), matching StockReservation.BranchId.
     public string BranchId { get; set; } = default!;
+    public Branch Branch { get; set; } = default!;
 
     public DateTimeOffset JournalDate { get; set; }
     public string SourceModule { get; set; } = default!;

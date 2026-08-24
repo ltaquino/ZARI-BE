@@ -18,6 +18,13 @@ public sealed class UpdateCostCenterCommandHandler(IAppDbContext dbContext) : IC
         if (duplicateCode)
             return Result.Failure(Error.Conflict("CostCenter.DuplicateCode", $"A cost center with code '{command.Code}' already exists."));
 
+        if (command.BranchId is not null)
+        {
+            var branchExists = await dbContext.Branches.AnyAsync(b => b.Id == command.BranchId, cancellationToken);
+            if (!branchExists)
+                return Result.Failure(Error.NotFound("Branch.NotFound", $"Branch with ID '{command.BranchId}' was not found."));
+        }
+
         costCenter.BranchId = command.BranchId;
         costCenter.Code = command.Code;
         costCenter.Name = command.Name;

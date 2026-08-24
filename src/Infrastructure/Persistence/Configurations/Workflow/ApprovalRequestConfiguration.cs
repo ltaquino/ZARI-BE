@@ -25,5 +25,10 @@ public sealed class ApprovalRequestConfiguration : BaseModelConfig, IEntityTypeC
             .WithOne(a => a.ApprovalRequest)
             .HasForeignKey(a => a.ApprovalRequestId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasOne(r => r.Branch)
+            .WithMany()
+            .HasForeignKey(r => r.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

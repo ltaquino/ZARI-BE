@@ -30,6 +30,17 @@ public sealed class CreateGoodsIssueCommandHandler(
                 return Result.Failure<GoodsIssueResponse>(Error.NotFound("Warehouse.NotFound", $"Destination warehouse with ID '{command.DestWarehouseId}' was not found."));
         }
 
+        var branchExists = await dbContext.Branches.AnyAsync(b => b.Id == command.BranchId, cancellationToken);
+        if (!branchExists)
+            return Result.Failure<GoodsIssueResponse>(Error.NotFound("Branch.NotFound", $"Branch with ID '{command.BranchId}' was not found."));
+
+        if (command.ReferenceType == "STOCK_TRANSFER" && command.DestBranchId is not null)
+        {
+            var destBranchExists = await dbContext.Branches.AnyAsync(b => b.Id == command.DestBranchId, cancellationToken);
+            if (!destBranchExists)
+                return Result.Failure<GoodsIssueResponse>(Error.NotFound("Branch.NotFound", $"Destination branch with ID '{command.DestBranchId}' was not found."));
+        }
+
         var itemIds = command.Lines.Select(l => l.ItemId).Distinct().ToList();
         var items = await dbContext.Items.Where(i => itemIds.Contains(i.Id)).ToDictionaryAsync(i => i.Id, cancellationToken);
         if (items.Count != itemIds.Count)

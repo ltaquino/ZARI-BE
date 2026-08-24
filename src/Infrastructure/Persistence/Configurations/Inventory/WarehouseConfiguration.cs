@@ -31,5 +31,10 @@ public sealed class WarehouseConfiguration : BaseModelConfig, IEntityTypeConfigu
             .HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
 
         builder.HasIndex(w => w.Code).IsUnique();
+
+        builder.HasOne(w => w.Branch)
+            .WithMany()
+            .HasForeignKey(w => w.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

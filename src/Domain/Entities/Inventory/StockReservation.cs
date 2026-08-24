@@ -13,9 +13,8 @@ public sealed class StockReservation : AuditableEntity
     public Guid ItemId { get; set; }
     public Item Item { get; set; } = default!;
 
-    // References the Branch mock/system-module data, which isn't a backend
-    // entity yet — kept as a plain string (not Guid/FK) until that module exists.
     public string BranchId { get; set; } = default!;
+    public Branch Branch { get; set; } = default!;
 
     public Guid WarehouseId { get; set; }
     public Warehouse Warehouse { get; set; } = default!;

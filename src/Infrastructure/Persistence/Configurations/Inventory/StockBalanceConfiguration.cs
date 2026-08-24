@@ -37,5 +37,10 @@ public sealed class StockBalanceConfiguration : BaseModelConfig, IEntityTypeConf
             .WithMany()
             .HasForeignKey(b => b.WarehouseId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(b => b.Branch)
+            .WithMany()
+            .HasForeignKey(b => b.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

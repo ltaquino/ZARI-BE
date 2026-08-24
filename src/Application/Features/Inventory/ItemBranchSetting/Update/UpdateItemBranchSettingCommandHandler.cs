@@ -23,6 +23,10 @@ public sealed class UpdateItemBranchSettingCommandHandler(IAppDbContext dbContex
         if (clashExists)
             return Result.Failure(Error.Conflict("ItemBranchSetting.Duplicate", "A reorder setting for this item and branch already exists — edit it instead."));
 
+        var branchExists = await dbContext.Branches.AnyAsync(b => b.Id == command.BranchId, cancellationToken);
+        if (!branchExists)
+            return Result.Failure(Error.NotFound("Branch.NotFound", $"Branch with ID '{command.BranchId}' was not found."));
+
         if (command.DefaultWarehouseId is not null)
         {
             var warehouseExists = await dbContext.Warehouses.AnyAsync(w => w.Id == command.DefaultWarehouseId, cancellationToken);

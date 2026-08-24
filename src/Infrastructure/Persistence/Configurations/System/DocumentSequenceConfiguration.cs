@@ -23,5 +23,10 @@ public sealed class DocumentSequenceConfiguration : BaseModelConfig, IEntityType
             .HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
 
         builder.HasIndex(s => new { s.BranchId, s.DocType }).IsUnique();
+
+        builder.HasOne(s => s.Branch)
+            .WithMany()
+            .HasForeignKey(s => s.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

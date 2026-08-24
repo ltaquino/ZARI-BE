@@ -22,6 +22,7 @@ public static class AppDbSeeder
 
         await SeedRolesAsync(roleManager, logger);
         await SeedDemoUsersAsync(userManager, passwordHasher, logger);
+        await SeedBranchesAsync(context, logger);
         await SeedUomsAsync(context, logger);
         await SeedItemCategoriesAsync(context, logger);
         await SeedWarehousesAsync(context, logger);
@@ -29,6 +30,7 @@ public static class AppDbSeeder
         await SeedDocumentSequencesAsync(context, logger);
         await SeedGlAccountsAsync(context, logger);
         await SeedCostCentersAsync(context, logger);
+        await SeedCompanyAsync(context, logger);
     }
 
     private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager, ILogger logger)
@@ -95,6 +97,27 @@ public static class AppDbSeeder
                 logger.LogInformation("Seeded demo user: {Email}", email);
             }
         }
+    }
+
+    /// <summary>
+    /// Mirrors the FE's mock seed (ZARI-FE/src/data/system-module/branches.ts) exactly — same ids,
+    /// so every already-seeded/created row elsewhere that stores one of these as a plain BranchId
+    /// string (Warehouse, DocumentSequence, ...) resolves against a real row here. Runs before
+    /// SeedWarehousesAsync/SeedDocumentSequencesAsync since those now carry a real FK to this table.
+    /// </summary>
+    private static async Task SeedBranchesAsync(AppDbContext context, ILogger logger)
+    {
+        if (await context.Branches.AnyAsync())
+            return;
+
+        context.Branches.AddRange(
+            new Branch { Id = "br-hq", Name = "Head Office", Code = "HQ", City = "Cebu City", Address = "Osmena Blvd, Cebu City", Phone = "+63 32 111 2222", Status = "active", IsHeadOffice = true },
+            new Branch { Id = "br-north", Name = "North Branch", Code = "NB", City = "Mandaue City", Address = "A.S. Fortuna St, Mandaue City", Phone = "+63 32 222 3333", Status = "active", IsHeadOffice = false },
+            new Branch { Id = "br-south", Name = "South Branch", Code = "SB", City = "Talisay City", Address = "Tabunok, Talisay City", Phone = "+63 32 333 4444", Status = "active", IsHeadOffice = false },
+            new Branch { Id = "br-east", Name = "East Branch", Code = "EB", City = "Lapu-Lapu City", Address = "Pusok, Lapu-Lapu City", Phone = "+63 32 444 5555", Status = "active", IsHeadOffice = false });
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded default branches");
     }
 
     private static async Task SeedUomsAsync(AppDbContext context, ILogger logger)
@@ -235,6 +258,27 @@ public static class AppDbSeeder
 
         await context.SaveChangesAsync();
         logger.LogInformation("Seeded default cost centers");
+    }
+
+    /// <summary>
+    /// Mirrors the FE's mock seed (ZARI-FE/src/data/system-module/company.ts) — a single row,
+    /// never created or deleted through the API, only ever updated.
+    /// </summary>
+    private static async Task SeedCompanyAsync(AppDbContext context, ILogger logger)
+    {
+        if (await context.Companies.AnyAsync())
+            return;
+
+        context.Companies.Add(new Company
+        {
+            Code = "ZARI",
+            Name = "Zari Distribution Corp.",
+            TaxId = "000-000-000-000",
+            BaseCurrencyId = "cur-php"
+        });
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded default company record");
     }
 
     //private static async Task SeedSampleTodosAsync(AppDbContext context, ILogger logger)

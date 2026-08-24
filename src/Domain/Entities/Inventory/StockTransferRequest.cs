@@ -8,11 +8,13 @@ public sealed class StockTransferRequest : AuditableEntity
 
     // The branch being asked to fulfill/ship — the eventual Goods Issue's source branch.
     public string SourceBranchId { get; set; } = default!;
+    public Branch SourceBranch { get; set; } = default!;
     public Guid SourceWarehouseId { get; set; }
     public Warehouse SourceWarehouse { get; set; } = default!;
 
     // The requesting branch that will receive — the eventual Goods Issue's destination branch.
     public string DestBranchId { get; set; } = default!;
+    public Branch DestBranch { get; set; } = default!;
     public Guid DestWarehouseId { get; set; }
     public Warehouse DestWarehouse { get; set; } = default!;
 

@@ -19,6 +19,10 @@ public sealed class UpdateDocumentSequenceCommandHandler(IAppDbContext dbContext
         if (clashExists)
             return Result.Failure(Error.Conflict("DocumentSequence.Duplicate", "A sequence for this branch and document type already exists — edit it instead."));
 
+        var branchExists = await dbContext.Branches.AnyAsync(b => b.Id == command.BranchId, cancellationToken);
+        if (!branchExists)
+            return Result.Failure(Error.NotFound("Branch.NotFound", $"Branch with ID '{command.BranchId}' was not found."));
+
         sequence.BranchId = command.BranchId;
         sequence.DocType = command.DocType;
         sequence.Prefix = command.Prefix;

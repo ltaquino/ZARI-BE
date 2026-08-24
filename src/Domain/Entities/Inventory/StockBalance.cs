@@ -12,8 +12,8 @@ public sealed class StockBalance : AuditableEntity
     public Guid ItemId { get; set; }
     public Item Item { get; set; } = default!;
 
-    // References the not-yet-migrated Branch module — plain string, matches Warehouse.BranchId.
     public string BranchId { get; set; } = default!;
+    public Branch Branch { get; set; } = default!;
 
     public Guid WarehouseId { get; set; }
     public Warehouse Warehouse { get; set; } = default!;

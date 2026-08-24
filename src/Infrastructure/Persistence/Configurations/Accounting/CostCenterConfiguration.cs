@@ -25,5 +25,10 @@ public sealed class CostCenterConfiguration : BaseModelConfig, IEntityTypeConfig
             .HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
 
         builder.HasIndex(c => c.Code).IsUnique();
+
+        builder.HasOne(c => c.Branch)
+            .WithMany()
+            .HasForeignKey(c => c.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

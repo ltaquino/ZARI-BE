@@ -381,9 +381,100 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BranchId");
+
                     b.HasIndex("EntityType", "EntityId");
 
                     b.ToTable("ApprovalRequests");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.Branch", b =>
+                {
+                    b.Property<string>("Id")
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("City")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<bool>("IsHeadOffice")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.ToTable("Branches");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.Company", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("BaseCurrencyId")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("TaxId")
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Companies");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.CostCenter", b =>
@@ -424,6 +515,8 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasColumnType("varchar(25)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
 
                     b.HasIndex("Code")
                         .IsUnique();
@@ -488,6 +581,75 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.HasIndex("ItemId", "WarehouseId", "BatchNo", "ReceiptDate");
 
                     b.ToTable("CostLayers");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.Customer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Address")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Email")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("Owner")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Phone")
+                        .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("Type")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.ToTable("Customers");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.DocumentSequence", b =>
@@ -653,6 +815,8 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BranchId");
+
                     b.HasIndex("ReversalOfJournalId");
 
                     b.HasIndex("SourceReferenceTable", "SourceReferenceId");
@@ -780,6 +944,10 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("DestBranchId");
+
                     b.HasIndex("DestWarehouseId");
 
                     b.HasIndex("GiNo")
@@ -906,6 +1074,8 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasColumnType("char(36)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
 
                     b.HasIndex("GrNo")
                         .IsUnique();
@@ -1101,6 +1271,8 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BranchId");
+
                     b.HasIndex("DefaultWarehouseId");
 
                     b.HasIndex("ItemId", "BranchId")
@@ -1203,6 +1375,8 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasColumnType("varchar(25)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
 
                     b.HasIndex("EntityType", "EntityId");
 
@@ -1341,6 +1515,8 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.HasIndex("AdjustmentNo")
                         .IsUnique();
 
+                    b.HasIndex("BranchId");
+
                     b.HasIndex("WarehouseId");
 
                     b.ToTable("StockAdjustments");
@@ -1433,6 +1609,8 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasColumnType("char(36)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
 
                     b.HasIndex("WarehouseId");
 
@@ -1534,6 +1712,8 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BranchId");
+
                     b.HasIndex("WarehouseId");
 
                     b.HasIndex("ReferenceTable", "ReferenceId");
@@ -1590,6 +1770,118 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("StockLocationBalances");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.StockLocationTransfer", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CancelledBy")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PostedBy")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<DateTimeOffset>("TransferDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("TransferNo")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("TransferNo")
+                        .IsUnique();
+
+                    b.HasIndex("WarehouseId");
+
+                    b.ToTable("StockLocationTransfers");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.StockLocationTransferLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("BatchNo")
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<Guid>("FromLocationId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("Qty")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("SerialNo")
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<Guid>("StockLocationTransferId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("ToLocationId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("FromLocationId");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("StockLocationTransferId");
+
+                    b.HasIndex("ToLocationId");
+
+                    b.ToTable("StockLocationTransferLines");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.StockOpname", b =>
@@ -1651,6 +1943,8 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasColumnType("char(36)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
 
                     b.HasIndex("OpnameNo")
                         .IsUnique();
@@ -1757,11 +2051,131 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BranchId");
+
                     b.HasIndex("ItemId");
 
                     b.HasIndex("WarehouseId");
 
                     b.ToTable("StockReservations");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.StockTransferRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CancelledBy")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("DeclineReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTimeOffset?>("DeclinedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DeclinedBy")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("DestBranchId")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<Guid>("DestWarehouseId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTimeOffset>("RequestDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("RequestNo")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("SourceBranchId")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<Guid>("SourceWarehouseId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DestBranchId");
+
+                    b.HasIndex("DestWarehouseId");
+
+                    b.HasIndex("RequestNo")
+                        .IsUnique();
+
+                    b.HasIndex("SourceBranchId");
+
+                    b.HasIndex("SourceWarehouseId");
+
+                    b.ToTable("StockTransferRequests");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.StockTransferRequestLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("QtyRequested")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<Guid>("StockTransferRequestId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("UomId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("StockTransferRequestId");
+
+                    b.HasIndex("UomId");
+
+                    b.ToTable("StockTransferRequestLines");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.StorageLocation", b =>
@@ -1929,6 +2343,8 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
+                    b.HasIndex("BranchId");
+
                     b.HasIndex("Code")
                         .IsUnique();
 
@@ -1997,6 +2413,27 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Navigation("ApprovalRequest");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.ApprovalRequest", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.CostCenter", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Branch");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.CostLayer", b =>
                 {
                     b.HasOne("ZARI.Domain.Entities.Item", "Item")
@@ -2016,6 +2453,28 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Navigation("Warehouse");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.Customer", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.DocumentSequence", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.GlAccount", b =>
                 {
                     b.HasOne("ZARI.Domain.Entities.GlAccount", "ParentAccount")
@@ -2028,10 +2487,18 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("ZARI.Domain.Entities.GlJournal", b =>
                 {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("ZARI.Domain.Entities.GlJournal", "ReversalOfJournal")
                         .WithMany()
                         .HasForeignKey("ReversalOfJournalId")
                         .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Branch");
 
                     b.Navigation("ReversalOfJournal");
                 });
@@ -2064,6 +2531,17 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("ZARI.Domain.Entities.GoodsIssue", b =>
                 {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Branch", "DestBranch")
+                        .WithMany()
+                        .HasForeignKey("DestBranchId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("ZARI.Domain.Entities.Warehouse", "DestWarehouse")
                         .WithMany()
                         .HasForeignKey("DestWarehouseId")
@@ -2074,6 +2552,10 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasForeignKey("WarehouseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("DestBranch");
 
                     b.Navigation("DestWarehouse");
 
@@ -2109,11 +2591,19 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("ZARI.Domain.Entities.GoodsReceipt", b =>
                 {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("ZARI.Domain.Entities.Warehouse", "Warehouse")
                         .WithMany()
                         .HasForeignKey("WarehouseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Branch");
 
                     b.Navigation("Warehouse");
                 });
@@ -2172,6 +2662,12 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("ZARI.Domain.Entities.ItemBranchSetting", b =>
                 {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("ZARI.Domain.Entities.Warehouse", "DefaultWarehouse")
                         .WithMany()
                         .HasForeignKey("DefaultWarehouseId")
@@ -2182,6 +2678,8 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasForeignKey("ItemId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Branch");
 
                     b.Navigation("DefaultWarehouse");
 
@@ -2196,6 +2694,17 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict);
 
                     b.Navigation("ParentCategory");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.Notification", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.NotificationRead", b =>
@@ -2229,11 +2738,19 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("ZARI.Domain.Entities.StockAdjustment", b =>
                 {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("ZARI.Domain.Entities.Warehouse", "Warehouse")
                         .WithMany()
                         .HasForeignKey("WarehouseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Branch");
 
                     b.Navigation("Warehouse");
                 });
@@ -2259,6 +2776,12 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("ZARI.Domain.Entities.StockBalance", b =>
                 {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("ZARI.Domain.Entities.Item", "Item")
                         .WithMany()
                         .HasForeignKey("ItemId")
@@ -2270,6 +2793,8 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasForeignKey("WarehouseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Branch");
 
                     b.Navigation("Item");
 
@@ -2278,6 +2803,12 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("ZARI.Domain.Entities.StockLedger", b =>
                 {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("ZARI.Domain.Entities.Item", "Item")
                         .WithMany()
                         .HasForeignKey("ItemId")
@@ -2289,6 +2820,8 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasForeignKey("WarehouseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Branch");
 
                     b.Navigation("Item");
 
@@ -2322,13 +2855,75 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Navigation("Warehouse");
                 });
 
-            modelBuilder.Entity("ZARI.Domain.Entities.StockOpname", b =>
+            modelBuilder.Entity("ZARI.Domain.Entities.StockLocationTransfer", b =>
                 {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("ZARI.Domain.Entities.Warehouse", "Warehouse")
                         .WithMany()
                         .HasForeignKey("WarehouseId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.StockLocationTransferLine", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.StorageLocation", "FromLocation")
+                        .WithMany()
+                        .HasForeignKey("FromLocationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Item", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.StockLocationTransfer", "StockLocationTransfer")
+                        .WithMany("Lines")
+                        .HasForeignKey("StockLocationTransferId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.StorageLocation", "ToLocation")
+                        .WithMany()
+                        .HasForeignKey("ToLocationId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("FromLocation");
+
+                    b.Navigation("Item");
+
+                    b.Navigation("StockLocationTransfer");
+
+                    b.Navigation("ToLocation");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.StockOpname", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Warehouse", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
 
                     b.Navigation("Warehouse");
                 });
@@ -2354,6 +2949,12 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("ZARI.Domain.Entities.StockReservation", b =>
                 {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
                     b.HasOne("ZARI.Domain.Entities.Item", "Item")
                         .WithMany()
                         .HasForeignKey("ItemId")
@@ -2366,9 +2967,73 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.Navigation("Branch");
+
                     b.Navigation("Item");
 
                     b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.StockTransferRequest", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "DestBranch")
+                        .WithMany()
+                        .HasForeignKey("DestBranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Warehouse", "DestWarehouse")
+                        .WithMany()
+                        .HasForeignKey("DestWarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Branch", "SourceBranch")
+                        .WithMany()
+                        .HasForeignKey("SourceBranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Warehouse", "SourceWarehouse")
+                        .WithMany()
+                        .HasForeignKey("SourceWarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("DestBranch");
+
+                    b.Navigation("DestWarehouse");
+
+                    b.Navigation("SourceBranch");
+
+                    b.Navigation("SourceWarehouse");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.StockTransferRequestLine", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Item", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.StockTransferRequest", "StockTransferRequest")
+                        .WithMany("Lines")
+                        .HasForeignKey("StockTransferRequestId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Uom", "Uom")
+                        .WithMany()
+                        .HasForeignKey("UomId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+
+                    b.Navigation("StockTransferRequest");
+
+                    b.Navigation("Uom");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.StorageLocation", b =>
@@ -2380,6 +3045,17 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.Warehouse", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.ApprovalRequest", b =>
@@ -2412,7 +3088,17 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Navigation("Lines");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.StockLocationTransfer", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.StockOpname", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.StockTransferRequest", b =>
                 {
                     b.Navigation("Lines");
                 });

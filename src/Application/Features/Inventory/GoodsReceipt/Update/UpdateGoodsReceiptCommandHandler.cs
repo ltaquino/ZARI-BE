@@ -31,6 +31,10 @@ public sealed class UpdateGoodsReceiptCommandHandler(
         if (!warehouseExists)
             return Result.Failure<GoodsReceiptResponse>(Error.NotFound("Warehouse.NotFound", $"Warehouse with ID '{command.WarehouseId}' was not found."));
 
+        var branchExists = await dbContext.Branches.AnyAsync(b => b.Id == command.BranchId, cancellationToken);
+        if (!branchExists)
+            return Result.Failure<GoodsReceiptResponse>(Error.NotFound("Branch.NotFound", $"Branch with ID '{command.BranchId}' was not found."));
+
         var itemIds = command.Lines.Select(l => l.ItemId).Distinct().ToList();
         var items = await dbContext.Items.Where(i => itemIds.Contains(i.Id)).ToDictionaryAsync(i => i.Id, cancellationToken);
         if (items.Count != itemIds.Count)

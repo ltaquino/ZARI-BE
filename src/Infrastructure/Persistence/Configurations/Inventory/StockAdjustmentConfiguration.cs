@@ -29,6 +29,11 @@ public sealed class StockAdjustmentConfiguration : BaseModelConfig, IEntityTypeC
             .HasForeignKey(a => a.WarehouseId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(a => a.Branch)
+            .WithMany()
+            .HasForeignKey(a => a.BranchId)
+            .OnDelete(DeleteBehavior.Restrict);
+
         builder.HasMany(a => a.Lines)
             .WithOne(l => l.StockAdjustment)
             .HasForeignKey(l => l.StockAdjustmentId)

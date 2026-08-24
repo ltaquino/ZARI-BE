@@ -19,6 +19,10 @@ public sealed class CreateStockReservationCommandHandler(IAppDbContext dbContext
         if (!warehouseExists)
             return Result.Failure<StockReservationResponse>(Error.NotFound("Warehouse.NotFound", $"Warehouse with ID '{command.WarehouseId}' was not found."));
 
+        var branchExists = await dbContext.Branches.AnyAsync(b => b.Id == command.BranchId, cancellationToken);
+        if (!branchExists)
+            return Result.Failure<StockReservationResponse>(Error.NotFound("Branch.NotFound", $"Branch with ID '{command.BranchId}' was not found."));
+
         var reservation = new StockReservation
         {
             ItemId = command.ItemId,
