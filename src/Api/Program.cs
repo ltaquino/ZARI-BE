@@ -127,6 +127,7 @@ try
     app.MapNotificationEndpoints();
     app.MapGoodsReceiptEndpoints();
     app.MapGoodsIssueEndpoints();
+    app.MapStockAdjustmentEndpoints();
     //app.MapGet("/debug-user", (HttpContext ctx) =>
     //{
     //    return new
