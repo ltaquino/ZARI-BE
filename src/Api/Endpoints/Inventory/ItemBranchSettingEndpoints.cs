@@ -1,3 +1,4 @@
+using FluentValidation;
 using ZARI.Api.Extensions;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.ItemBranchSettings.Create;
@@ -32,7 +33,6 @@ public static class ItemBranchSettingEndpoints
             .WithSummary("Create a new reorder setting");
 
         group.MapPut("/{id:guid}", Update)
-            .AddEndpointFilter<ValidationFilter<UpdateItemBranchSettingCommand>>()
             .WithName("UpdateItemBranchSetting")
             .WithSummary("Update an existing reorder setting");
 
@@ -72,11 +72,13 @@ public static class ItemBranchSettingEndpoints
     private static async Task<IResult> Update(
         Guid id,
         UpdateItemBranchSettingRequest request,
+        IValidator<UpdateItemBranchSettingCommand> validator,
         ICommandHandler<UpdateItemBranchSettingCommand, Result> handler,
         CancellationToken cancellationToken)
     {
         var command = new UpdateItemBranchSettingCommand(
             id, request.ItemId, request.BranchId, request.DefaultWarehouseId, request.ReorderPoint, request.MinStock, request.MaxStock, request.Status);
+        if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
         var result = await handler.HandleAsync(command, cancellationToken);
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblemDetails();

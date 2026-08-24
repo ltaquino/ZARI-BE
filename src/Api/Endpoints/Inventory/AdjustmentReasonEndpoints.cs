@@ -1,3 +1,4 @@
+using FluentValidation;
 using ZARI.Api.Extensions;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.AdjustmentReasons.Create;
@@ -32,7 +33,6 @@ public static class AdjustmentReasonEndpoints
             .WithSummary("Create a new adjustment reason");
 
         group.MapPut("/{id:guid}", Update)
-            .AddEndpointFilter<ValidationFilter<UpdateAdjustmentReasonCommand>>()
             .WithName("UpdateAdjustmentReason")
             .WithSummary("Update an existing adjustment reason");
 
@@ -72,10 +72,13 @@ public static class AdjustmentReasonEndpoints
     private static async Task<IResult> Update(
         Guid id,
         UpdateAdjustmentReasonRequest request,
+        IValidator<UpdateAdjustmentReasonCommand> validator,
         ICommandHandler<UpdateAdjustmentReasonCommand, Result> handler,
         CancellationToken cancellationToken)
     {
         var command = new UpdateAdjustmentReasonCommand(id, request.Code, request.Description, request.GlAccountId, request.Status);
+        if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
+
         var result = await handler.HandleAsync(command, cancellationToken);
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblemDetails();
     }

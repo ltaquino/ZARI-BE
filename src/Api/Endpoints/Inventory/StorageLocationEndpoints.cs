@@ -1,3 +1,4 @@
+using FluentValidation;
 using ZARI.Api.Extensions;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.StorageLocations.Create;
@@ -32,7 +33,6 @@ public static class StorageLocationEndpoints
             .WithSummary("Create a new storage location");
 
         group.MapPut("/{id:guid}", Update)
-            .AddEndpointFilter<ValidationFilter<UpdateStorageLocationCommand>>()
             .WithName("UpdateStorageLocation")
             .WithSummary("Update an existing storage location");
 
@@ -72,10 +72,13 @@ public static class StorageLocationEndpoints
     private static async Task<IResult> Update(
         Guid id,
         UpdateStorageLocationRequest request,
+        IValidator<UpdateStorageLocationCommand> validator,
         ICommandHandler<UpdateStorageLocationCommand, Result> handler,
         CancellationToken cancellationToken)
     {
         var command = new UpdateStorageLocationCommand(id, request.WarehouseId, request.Zone, request.Aisle, request.Rack, request.BinCode);
+        if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
+
         var result = await handler.HandleAsync(command, cancellationToken);
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblemDetails();
     }

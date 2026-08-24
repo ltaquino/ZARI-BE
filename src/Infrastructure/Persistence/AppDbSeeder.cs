@@ -27,6 +27,8 @@ public static class AppDbSeeder
         await SeedWarehousesAsync(context, logger);
         await SeedAdjustmentReasonsAsync(context, logger);
         await SeedDocumentSequencesAsync(context, logger);
+        await SeedGlAccountsAsync(context, logger);
+        await SeedCostCentersAsync(context, logger);
     }
 
     private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager, ILogger logger)
@@ -195,6 +197,44 @@ public static class AppDbSeeder
 
         await context.SaveChangesAsync();
         logger.LogInformation("Seeded default document sequences");
+    }
+
+    /// <summary>
+    /// Mirrors the FE's mock seed (ZARI-FE/src/data/accounting/glAccounts.ts) so the default chart
+    /// of accounts other still-FE-mock modules fall back to (Item.inventoryAccountId,
+    /// AdjustmentReason.GlAccountId, etc.) stays meaningful once GlAccount has a real backend —
+    /// those fields are loose strings, not FKs, so they don't need updating for this to work.
+    /// </summary>
+    private static async Task SeedGlAccountsAsync(AppDbContext context, ILogger logger)
+    {
+        if (await context.GlAccounts.AnyAsync())
+            return;
+
+        context.GlAccounts.AddRange(
+            new GlAccount { Code = "1000", Name = "Cash on Hand", AccountType = "Asset", NormalBalance = "Debit", Status = "active" },
+            new GlAccount { Code = "1200", Name = "Accounts Receivable", AccountType = "Asset", NormalBalance = "Debit", Status = "active" },
+            new GlAccount { Code = "1400", Name = "Inventory Asset", AccountType = "Asset", NormalBalance = "Debit", Status = "active" },
+            new GlAccount { Code = "1450", Name = "Inventory In-Transit", AccountType = "Asset", NormalBalance = "Debit", Status = "active" },
+            new GlAccount { Code = "2000", Name = "Accounts Payable", AccountType = "Liability", NormalBalance = "Credit", Status = "active" },
+            new GlAccount { Code = "4000", Name = "Sales Revenue", AccountType = "Revenue", NormalBalance = "Credit", Status = "active" },
+            new GlAccount { Code = "5000", Name = "Cost of Goods Sold", AccountType = "Cogs", NormalBalance = "Debit", Status = "active" },
+            new GlAccount { Code = "5100", Name = "Inventory Variance / Shrinkage", AccountType = "Cogs", NormalBalance = "Debit", Status = "active" });
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded default GL accounts");
+    }
+
+    private static async Task SeedCostCentersAsync(AppDbContext context, ILogger logger)
+    {
+        if (await context.CostCenters.AnyAsync())
+            return;
+
+        context.CostCenters.AddRange(
+            new CostCenter { Code = "ADMIN", Name = "Administration", Status = "active" },
+            new CostCenter { Code = "DELIVERY", Name = "Delivery Fleet", Status = "active" });
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded default cost centers");
     }
 
     //private static async Task SeedSampleTodosAsync(AppDbContext context, ILogger logger)

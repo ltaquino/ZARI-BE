@@ -22,6 +22,15 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<StockBalance> StockBalances => Set<StockBalance>();
     public DbSet<CostLayer> CostLayers => Set<CostLayer>();
     public DbSet<StockLedger> StockLedgers => Set<StockLedger>();
+    public DbSet<SerialNumber> SerialNumbers => Set<SerialNumber>();
+    public DbSet<StockLocationBalance> StockLocationBalances => Set<StockLocationBalance>();
+    public DbSet<GlAccount> GlAccounts => Set<GlAccount>();
+    public DbSet<CostCenter> CostCenters => Set<CostCenter>();
+    public DbSet<GlJournal> GlJournals => Set<GlJournal>();
+    public DbSet<ApprovalRequest> ApprovalRequests => Set<ApprovalRequest>();
+    public DbSet<ApprovalAction> ApprovalActions => Set<ApprovalAction>();
+    public DbSet<Notification> Notifications => Set<Notification>();
+    public DbSet<NotificationRead> NotificationReads => Set<NotificationRead>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

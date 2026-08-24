@@ -1,3 +1,4 @@
+using FluentValidation;
 using ZARI.Api.Extensions;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Todos.Complete;
@@ -33,7 +34,6 @@ public static class TodoEndpoints
             .WithSummary("Create a new todo");
 
         group.MapPut("/{id:guid}", Update)
-            .AddEndpointFilter<ValidationFilter<UpdateTodoCommand>>()
             .WithName("UpdateTodo")
             .WithSummary("Update an existing todo");
 
@@ -80,10 +80,13 @@ public static class TodoEndpoints
     private static async Task<IResult> Update(
         Guid id,
         UpdateTodoRequest request,
+        IValidator<UpdateTodoCommand> validator,
         ICommandHandler<UpdateTodoCommand, Result> handler,
         CancellationToken cancellationToken)
     {
         var command = new UpdateTodoCommand(id, request.Title, request.Description);
+        if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
+
         var result = await handler.HandleAsync(command, cancellationToken);
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblemDetails();
     }

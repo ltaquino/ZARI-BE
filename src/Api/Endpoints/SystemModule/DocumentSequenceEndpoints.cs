@@ -1,3 +1,4 @@
+using FluentValidation;
 using ZARI.Api.Extensions;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.SystemModule.DocumentSequences.Create;
@@ -33,7 +34,6 @@ public static class DocumentSequenceEndpoints
             .WithSummary("Create a new document numbering sequence");
 
         group.MapPut("/{id:guid}", Update)
-            .AddEndpointFilter<ValidationFilter<UpdateDocumentSequenceCommand>>()
             .WithName("UpdateDocumentSequence")
             .WithSummary("Update an existing document numbering sequence");
 
@@ -77,10 +77,13 @@ public static class DocumentSequenceEndpoints
     private static async Task<IResult> Update(
         Guid id,
         UpdateDocumentSequenceRequest request,
+        IValidator<UpdateDocumentSequenceCommand> validator,
         ICommandHandler<UpdateDocumentSequenceCommand, Result> handler,
         CancellationToken cancellationToken)
     {
         var command = new UpdateDocumentSequenceCommand(id, request.BranchId, request.DocType, request.Prefix, request.NextNumber, request.PaddingLength);
+        if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
+
         var result = await handler.HandleAsync(command, cancellationToken);
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblemDetails();
     }

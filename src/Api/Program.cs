@@ -118,6 +118,13 @@ try
     app.MapStockReservationEndpoints();
     app.MapDocumentSequenceEndpoints();
     app.MapStockLedgerEndpoints();
+    app.MapSerialNumberEndpoints();
+    app.MapStockLocationBalanceEndpoints();
+    app.MapGlAccountEndpoints();
+    app.MapCostCenterEndpoints();
+    app.MapGlJournalEndpoints();
+    app.MapApprovalRequestEndpoints();
+    app.MapNotificationEndpoints();
     //app.MapGet("/debug-user", (HttpContext ctx) =>
     //{
     //    return new

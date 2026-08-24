@@ -1,3 +1,4 @@
+using FluentValidation;
 using ZARI.Api.Extensions;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.Warehouses.Create;
@@ -32,7 +33,6 @@ public static class WarehouseEndpoints
             .WithSummary("Create a new warehouse");
 
         group.MapPut("/{id:guid}", Update)
-            .AddEndpointFilter<ValidationFilter<UpdateWarehouseCommand>>()
             .WithName("UpdateWarehouse")
             .WithSummary("Update an existing warehouse");
 
@@ -72,10 +72,13 @@ public static class WarehouseEndpoints
     private static async Task<IResult> Update(
         Guid id,
         UpdateWarehouseRequest request,
+        IValidator<UpdateWarehouseCommand> validator,
         ICommandHandler<UpdateWarehouseCommand, Result> handler,
         CancellationToken cancellationToken)
     {
         var command = new UpdateWarehouseCommand(id, request.BranchId, request.Code, request.Name, request.WarehouseType, request.Status);
+        if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
+
         var result = await handler.HandleAsync(command, cancellationToken);
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblemDetails();
     }

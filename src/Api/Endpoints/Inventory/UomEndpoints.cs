@@ -1,3 +1,4 @@
+using FluentValidation;
 using ZARI.Api.Extensions;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.Uoms.Create;
@@ -32,7 +33,6 @@ public static class UomEndpoints
             .WithSummary("Create a new unit of measure");
 
         group.MapPut("/{id:guid}", Update)
-            .AddEndpointFilter<ValidationFilter<UpdateUomCommand>>()
             .WithName("UpdateUom")
             .WithSummary("Update an existing unit of measure");
 
@@ -72,10 +72,13 @@ public static class UomEndpoints
     private static async Task<IResult> Update(
         Guid id,
         UpdateUomRequest request,
+        IValidator<UpdateUomCommand> validator,
         ICommandHandler<UpdateUomCommand, Result> handler,
         CancellationToken cancellationToken)
     {
         var command = new UpdateUomCommand(id, request.Code, request.Name);
+        if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
+
         var result = await handler.HandleAsync(command, cancellationToken);
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblemDetails();
     }

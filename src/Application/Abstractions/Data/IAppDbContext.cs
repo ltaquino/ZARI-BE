@@ -20,6 +20,15 @@ public interface IAppDbContext
     DbSet<StockBalance> StockBalances { get; }
     DbSet<CostLayer> CostLayers { get; }
     DbSet<StockLedger> StockLedgers { get; }
+    DbSet<SerialNumber> SerialNumbers { get; }
+    DbSet<StockLocationBalance> StockLocationBalances { get; }
+    DbSet<GlAccount> GlAccounts { get; }
+    DbSet<CostCenter> CostCenters { get; }
+    DbSet<GlJournal> GlJournals { get; }
+    DbSet<ApprovalRequest> ApprovalRequests { get; }
+    DbSet<ApprovalAction> ApprovalActions { get; }
+    DbSet<Notification> Notifications { get; }
+    DbSet<NotificationRead> NotificationReads { get; }
 
     // Exposed only for the stock-ledger posting handlers, which need an explicit transaction plus
     // raw-SQL "FOR UPDATE" locking (see Application/Features/Inventory/StockLedger/Shared/

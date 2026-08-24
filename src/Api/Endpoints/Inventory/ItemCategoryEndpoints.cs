@@ -1,3 +1,4 @@
+using FluentValidation;
 using ZARI.Api.Extensions;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.ItemCategories.Create;
@@ -32,7 +33,6 @@ public static class ItemCategoryEndpoints
             .WithSummary("Create a new item category");
 
         group.MapPut("/{id:guid}", Update)
-            .AddEndpointFilter<ValidationFilter<UpdateItemCategoryCommand>>()
             .WithName("UpdateItemCategory")
             .WithSummary("Update an existing item category");
 
@@ -72,10 +72,13 @@ public static class ItemCategoryEndpoints
     private static async Task<IResult> Update(
         Guid id,
         UpdateItemCategoryRequest request,
+        IValidator<UpdateItemCategoryCommand> validator,
         ICommandHandler<UpdateItemCategoryCommand, Result> handler,
         CancellationToken cancellationToken)
     {
         var command = new UpdateItemCategoryCommand(id, request.Code, request.Name, request.ParentCategoryId);
+        if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
+
         var result = await handler.HandleAsync(command, cancellationToken);
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblemDetails();
     }
