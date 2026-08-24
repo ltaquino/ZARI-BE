@@ -117,6 +117,7 @@ try
     app.MapItemBranchSettingEndpoints();
     app.MapStockReservationEndpoints();
     app.MapDocumentSequenceEndpoints();
+    app.MapStockLedgerEndpoints();
     //app.MapGet("/debug-user", (HttpContext ctx) =>
     //{
     //    return new

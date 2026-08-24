@@ -19,6 +19,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<ItemBranchSetting> ItemBranchSettings => Set<ItemBranchSetting>();
     public DbSet<StockReservation> StockReservations => Set<StockReservation>();
     public DbSet<DocumentSequence> DocumentSequences => Set<DocumentSequence>();
+    public DbSet<StockBalance> StockBalances => Set<StockBalance>();
+    public DbSet<CostLayer> CostLayers => Set<CostLayer>();
+    public DbSet<StockLedger> StockLedgers => Set<StockLedger>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
