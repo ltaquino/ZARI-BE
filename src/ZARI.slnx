@@ -1,0 +1,16 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="Domain/ZARI.Domain.csproj" />
+    <Project Path="Application/ZARI.Application.csproj" />
+    <Project Path="Infrastructure/ZARI.Infrastructure.csproj" />
+    <Project Path="Api/ZARI.Api.csproj" />
+  </Folder>
+  <Folder Name="/aspire/">
+    <Project Path="AppHost/ZARI.AppHost.csproj" />
+    <Project Path="ServiceDefaults/ZARI.ServiceDefaults.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="../tests/Architecture.Tests/ZARI.Architecture.Tests.csproj" />
+    <Project Path="../tests/Application.UnitTests/ZARI.Application.UnitTests.csproj" />
+  </Folder>
+</Solution>

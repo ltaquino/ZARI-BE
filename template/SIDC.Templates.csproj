@@ -1,0 +1,35 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <PackageId>SIDC.Templates</PackageId>
+    <Version>1.0.0</Version>
+    <Authors>SIDC</Authors>
+    <Description>Custom project templates for SIDC development.</Description>
+
+    <PackageType>Template</PackageType>
+    <TargetFramework>netstandard2.0</TargetFramework> 
+    <IncludeContentInPack>true</IncludeContentInPack>
+    <IncludeBuildOutput>false</IncludeBuildOutput>
+    <ContentTargetFolders>content</ContentTargetFolders>
+
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
+    <ImplicitUsings>disable</ImplicitUsings>
+
+    <NoBuild>true</NoBuild>
+    <IncludeSymbols>false</IncludeSymbols>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="**\*" />
+
+    <Content Include="..\**\*" Exclude="
+              ..\**\SIDC.Templates.csproj;
+              ..\**\bin\**;
+              ..\**\obj\**;
+              ..\**\.git\**;
+              ..\**\.vs\**;
+              ..\**\.vscode\**">
+      <PackagePath>content/</PackagePath>
+    </Content>
+  </ItemGroup>
+</Project>
