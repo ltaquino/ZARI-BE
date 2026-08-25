@@ -14,6 +14,7 @@ using ZARI.Application.Features.Workflow.ApprovalRequests.Decide;
 using ZARI.Application.Features.Workflow.ApprovalRequests.GetAll;
 using ZARI.Application.Features.Workflow.Notifications.Create;
 using ZARI.Application.Features.Workflow.Notifications.GetAll;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Domain.Common;
 
 /// <summary>
@@ -29,7 +30,8 @@ public sealed class ApproveStockAdjustmentCancellationCommandHandler(
     ICommandHandler<ReverseIssueSerialCommand, Result> reverseIssueSerialHandler,
     ICommandHandler<ReverseGlJournalsCommand, Result<List<GlJournalResponse>>> reverseGlJournalsHandler,
     ICommandHandler<DecideApprovalRequestCommand, Result<ApprovalRequestResponse>> decideHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<ApproveStockAdjustmentCancellationCommand, Result<StockAdjustmentResponse>>
 {
     public async Task<Result<StockAdjustmentResponse>> HandleAsync(ApproveStockAdjustmentCancellationCommand command, CancellationToken cancellationToken = default)
@@ -40,6 +42,9 @@ public sealed class ApproveStockAdjustmentCancellationCommandHandler(
 
         if (adjustment is null)
             return Result.Failure<StockAdjustmentResponse>(Error.NotFound("StockAdjustment.NotFound", $"Stock adjustment with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasCancellationAuthorityAsync("STOCK_ADJUSTMENTS", cancellationToken))
+            return Result.Failure<StockAdjustmentResponse>(Error.Forbidden("StockAdjustment.Forbidden", "Only someone with cancel permission assigned to the head office branch can decide a cancellation request."));
 
         if (adjustment.Status != "PENDING_CANCELLATION")
             return Result.Failure<StockAdjustmentResponse>(Error.Validation("StockAdjustment.NotPendingCancellation", "Only a stock adjustment pending cancellation can be cancelled this way."));

@@ -2,16 +2,20 @@ namespace ZARI.Application.Features.SystemModule.Branches.Delete;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
-public sealed class DeleteBranchCommandHandler(IAppDbContext dbContext) : ICommandHandler<DeleteBranchCommand>
+public sealed class DeleteBranchCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<DeleteBranchCommand>
 {
     public async Task<Result> HandleAsync(DeleteBranchCommand command, CancellationToken cancellationToken = default)
     {
         var branch = await dbContext.Branches.FindAsync([command.Id], cancellationToken);
         if (branch is null)
             return Result.Failure(Error.NotFound("Branch.NotFound", $"Branch with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionAsync("BRANCHES", FormAction.Delete, cancellationToken))
+            return Result.Failure(Error.Forbidden("Branch.Forbidden", "You do not have permission to delete branches."));
 
         var warehouseCount = await dbContext.Warehouses.CountAsync(w => w.BranchId == command.Id, cancellationToken);
         if (warehouseCount > 0)

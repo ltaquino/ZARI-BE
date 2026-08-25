@@ -44,6 +44,10 @@ public interface IAppDbContext
     DbSet<ApprovalAction> ApprovalActions { get; }
     DbSet<Notification> Notifications { get; }
     DbSet<NotificationRead> NotificationReads { get; }
+    DbSet<Form> Forms { get; }
+    DbSet<UserBranch> UserBranches { get; }
+    DbSet<RolePermission> RolePermissions { get; }
+    DbSet<UserFormPermissionOverride> UserFormPermissionOverrides { get; }
 
     // Exposed only for the stock-ledger posting handlers, which need an explicit transaction plus
     // raw-SQL "FOR UPDATE" locking (see Application/Features/Inventory/StockLedger/Shared/

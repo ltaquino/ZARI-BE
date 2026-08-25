@@ -2,15 +2,19 @@ namespace ZARI.Application.Features.Inventory.StorageLocations.Create;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.StorageLocations.Get;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
-public sealed class CreateStorageLocationCommandHandler(IAppDbContext dbContext) : ICommandHandler<CreateStorageLocationCommand, Result<StorageLocationResponse>>
+public sealed class CreateStorageLocationCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<CreateStorageLocationCommand, Result<StorageLocationResponse>>
 {
     public async Task<Result<StorageLocationResponse>> HandleAsync(CreateStorageLocationCommand command, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionAsync("STORAGE_LOCATIONS", FormAction.Create, cancellationToken))
+            return Result.Failure<StorageLocationResponse>(Error.Forbidden("StorageLocation.Forbidden", "You do not have permission to create storage locations."));
+
         var warehouseExists = await dbContext.Warehouses.AnyAsync(w => w.Id == command.WarehouseId, cancellationToken);
         if (!warehouseExists)
             return Result.Failure<StorageLocationResponse>(Error.NotFound("Warehouse.NotFound", $"Warehouse with ID '{command.WarehouseId}' was not found."));

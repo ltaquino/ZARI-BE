@@ -9,13 +9,15 @@ using ZARI.Application.Features.Workflow.ApprovalRequests.GetAll;
 using ZARI.Application.Features.Workflow.ApprovalRequests.Submit;
 using ZARI.Application.Features.Workflow.Notifications.Create;
 using ZARI.Application.Features.Workflow.Notifications.GetAll;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Domain.Common;
 
 /// <summary>POSTED -> PENDING_CANCELLATION. A same-branch manager flags it; only an HQ admin can finish the cancellation.</summary>
 public sealed class RequestStockAdjustmentCancellationCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<SubmitForApprovalCommand, Result<ApprovalRequestResponse>> submitForApprovalHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<RequestStockAdjustmentCancellationCommand, Result<StockAdjustmentResponse>>
 {
     public async Task<Result<StockAdjustmentResponse>> HandleAsync(RequestStockAdjustmentCancellationCommand command, CancellationToken cancellationToken = default)
@@ -26,6 +28,9 @@ public sealed class RequestStockAdjustmentCancellationCommandHandler(
 
         if (adjustment is null)
             return Result.Failure<StockAdjustmentResponse>(Error.NotFound("StockAdjustment.NotFound", $"Stock adjustment with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("STOCK_ADJUSTMENTS", FormAction.Cancel, adjustment.BranchId, cancellationToken))
+            return Result.Failure<StockAdjustmentResponse>(Error.Forbidden("StockAdjustment.Forbidden", "You do not have permission to cancel stock adjustments for this branch."));
 
         if (adjustment.Status != "POSTED")
             return Result.Failure<StockAdjustmentResponse>(Error.Validation("StockAdjustment.NotPosted", "Only a posted stock adjustment can have its cancellation requested."));

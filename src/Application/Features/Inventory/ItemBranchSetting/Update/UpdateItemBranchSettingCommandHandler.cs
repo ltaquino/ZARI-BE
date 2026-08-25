@@ -2,16 +2,20 @@ namespace ZARI.Application.Features.Inventory.ItemBranchSettings.Update;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
-public sealed class UpdateItemBranchSettingCommandHandler(IAppDbContext dbContext) : ICommandHandler<UpdateItemBranchSettingCommand>
+public sealed class UpdateItemBranchSettingCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<UpdateItemBranchSettingCommand>
 {
     public async Task<Result> HandleAsync(UpdateItemBranchSettingCommand command, CancellationToken cancellationToken = default)
     {
         var setting = await dbContext.ItemBranchSettings.FindAsync([command.Id], cancellationToken);
         if (setting is null)
             return Result.Failure(Error.NotFound("ItemBranchSetting.NotFound", $"Reorder setting with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("ITEM_BRANCH_SETTINGS", FormAction.Edit, setting.BranchId, cancellationToken))
+            return Result.Failure(Error.Forbidden("ItemBranchSetting.Forbidden", "You do not have permission to update item branch settings for this branch."));
 
         var itemExists = await dbContext.Items.AnyAsync(i => i.Id == command.ItemId, cancellationToken);
         if (!itemExists)

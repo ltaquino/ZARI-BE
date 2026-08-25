@@ -2,16 +2,20 @@ namespace ZARI.Application.Features.Inventory.Warehouses.Update;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
-public sealed class UpdateWarehouseCommandHandler(IAppDbContext dbContext) : ICommandHandler<UpdateWarehouseCommand>
+public sealed class UpdateWarehouseCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<UpdateWarehouseCommand>
 {
     public async Task<Result> HandleAsync(UpdateWarehouseCommand command, CancellationToken cancellationToken = default)
     {
         var warehouse = await dbContext.Warehouses.FindAsync([command.Id], cancellationToken);
         if (warehouse is null)
             return Result.Failure(Error.NotFound("Warehouse.NotFound", $"Warehouse with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("WAREHOUSES", FormAction.Edit, warehouse.BranchId, cancellationToken))
+            return Result.Failure(Error.Forbidden("Warehouse.Forbidden", "You do not have permission to update warehouses for this branch."));
 
         var duplicateCode = await dbContext.Warehouses
             .AnyAsync(w => w.Id != command.Id && w.Code == command.Code, cancellationToken);

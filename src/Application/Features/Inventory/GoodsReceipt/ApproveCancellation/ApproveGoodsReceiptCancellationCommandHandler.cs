@@ -7,6 +7,7 @@ using ZARI.Application.Features.Accounting.GlJournals.GetAll;
 using ZARI.Application.Features.Accounting.GlJournals.Reverse;
 using ZARI.Application.Features.Inventory.GoodsReceipts.GetAll;
 using ZARI.Application.Features.Inventory.GoodsReceipts.Shared;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Features.Inventory.SerialNumbers.ReverseReceive;
 using ZARI.Application.Features.Inventory.StockLedgers.Reverse;
 using ZARI.Application.Features.Workflow.ApprovalRequests.Decide;
@@ -28,7 +29,8 @@ public sealed class ApproveGoodsReceiptCancellationCommandHandler(
     ICommandHandler<ReverseReceiveSerialCommand, Result> reverseReceiveSerialHandler,
     ICommandHandler<ReverseGlJournalsCommand, Result<List<GlJournalResponse>>> reverseGlJournalsHandler,
     ICommandHandler<DecideApprovalRequestCommand, Result<ApprovalRequestResponse>> decideHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<ApproveGoodsReceiptCancellationCommand, Result<GoodsReceiptResponse>>
 {
     public async Task<Result<GoodsReceiptResponse>> HandleAsync(ApproveGoodsReceiptCancellationCommand command, CancellationToken cancellationToken = default)
@@ -40,6 +42,9 @@ public sealed class ApproveGoodsReceiptCancellationCommandHandler(
 
         if (receipt is null)
             return Result.Failure<GoodsReceiptResponse>(Error.NotFound("GoodsReceipt.NotFound", $"Goods receipt with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasCancellationAuthorityAsync("GOODS_RECEIPTS", cancellationToken))
+            return Result.Failure<GoodsReceiptResponse>(Error.Forbidden("GoodsReceipt.Forbidden", "Only someone with cancel permission assigned to the head office branch can decide a cancellation request."));
 
         if (receipt.Status != "PENDING_CANCELLATION")
             return Result.Failure<GoodsReceiptResponse>(Error.Validation("GoodsReceipt.NotPendingCancellation", "Only a goods receipt pending cancellation can be cancelled this way."));

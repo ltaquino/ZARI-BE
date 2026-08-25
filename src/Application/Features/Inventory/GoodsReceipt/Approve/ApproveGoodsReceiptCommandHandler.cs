@@ -11,6 +11,7 @@ using ZARI.Application.Features.Inventory.SerialNumbers.GetAll;
 using ZARI.Application.Features.Inventory.SerialNumbers.Receive;
 using ZARI.Application.Features.Inventory.StockLedgers.Receive;
 using ZARI.Application.Features.Inventory.StockLocationBalances.Receive;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Features.Workflow.ApprovalRequests.Decide;
 using ZARI.Application.Features.Workflow.ApprovalRequests.GetAll;
 using ZARI.Application.Features.Workflow.Notifications.Create;
@@ -33,7 +34,8 @@ public sealed class ApproveGoodsReceiptCommandHandler(
     ICommandHandler<ReceiveSerialCommand, Result<SerialNumberResponse>> receiveSerialHandler,
     ICommandHandler<ReceiveIntoLocationCommand, Result> receiveIntoLocationHandler,
     ICommandHandler<PostGlJournalCommand, Result<GlJournalResponse>> postGlJournalHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<ApproveGoodsReceiptCommand, Result<GoodsReceiptResponse>>
 {
     public async Task<Result<GoodsReceiptResponse>> HandleAsync(ApproveGoodsReceiptCommand command, CancellationToken cancellationToken = default)
@@ -45,6 +47,9 @@ public sealed class ApproveGoodsReceiptCommandHandler(
 
         if (receipt is null)
             return Result.Failure<GoodsReceiptResponse>(Error.NotFound("GoodsReceipt.NotFound", $"Goods receipt with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("GOODS_RECEIPTS", FormAction.Approve, receipt.BranchId, cancellationToken))
+            return Result.Failure<GoodsReceiptResponse>(Error.Forbidden("GoodsReceipt.Forbidden", "You do not have permission to approve goods receipts for this branch."));
 
         if (receipt.Status != "PENDING_APPROVAL")
             return Result.Failure<GoodsReceiptResponse>(Error.Validation("GoodsReceipt.NotPendingApproval", "Only goods receipts pending approval can be approved."));

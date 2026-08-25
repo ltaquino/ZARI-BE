@@ -199,6 +199,7 @@ public static class DependencyInjection
         services.AddHttpContextAccessor();
         services.AddScoped<ITokenService, TokenService>();
         services.AddScoped<ICurrentUser, CurrentUser>();
+        services.AddScoped<IPermissionService, PermissionService>();
     }
 
     private static void AddCachingServices(this IServiceCollection services)

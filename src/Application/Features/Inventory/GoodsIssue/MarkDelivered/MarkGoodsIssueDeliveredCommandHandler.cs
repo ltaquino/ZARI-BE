@@ -7,6 +7,7 @@ using ZARI.Application.Features.Inventory.GoodsIssues.GetAll;
 using ZARI.Application.Features.Inventory.GoodsIssues.Shared;
 using ZARI.Application.Features.Workflow.Notifications.Create;
 using ZARI.Application.Features.Workflow.Notifications.GetAll;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Domain.Common;
 
 /// <summary>
@@ -15,7 +16,8 @@ using ZARI.Domain.Common;
 /// </summary>
 public sealed class MarkGoodsIssueDeliveredCommandHandler(
     IAppDbContext dbContext,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<MarkGoodsIssueDeliveredCommand, Result<GoodsIssueResponse>>
 {
     public async Task<Result<GoodsIssueResponse>> HandleAsync(MarkGoodsIssueDeliveredCommand command, CancellationToken cancellationToken = default)
@@ -27,6 +29,12 @@ public sealed class MarkGoodsIssueDeliveredCommandHandler(
 
         if (issue is null)
             return Result.Failure<GoodsIssueResponse>(Error.NotFound("GoodsIssue.NotFound", $"Goods issue with ID '{command.Id}' was not found."));
+
+        // DestBranchId is validated NotEmpty for STOCK_TRANSFER at Create/Update, and ShipmentStatus
+        // is only ever set (PREPARING/IN_TRANSIT/DELIVERED) for a STOCK_TRANSFER issue at Approve
+        // time — so by the time we reach a shipment-tracking status, DestBranchId is guaranteed set.
+        if (!await permissionService.HasPermissionOnBranchAsync("GOODS_ISSUES", FormAction.Edit, issue.DestBranchId!, cancellationToken))
+            return Result.Failure<GoodsIssueResponse>(Error.Forbidden("GoodsIssue.Forbidden", "You do not have permission to mark this shipment as delivered for this branch."));
 
         if (issue.Status != "POSTED")
             return Result.Failure<GoodsIssueResponse>(Error.Validation("GoodsIssue.NotPosted", "Only a posted goods issue has a shipment to track."));

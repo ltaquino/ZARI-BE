@@ -7,12 +7,14 @@ using ZARI.Application.Features.Inventory.StockAdjustments.GetAll;
 using ZARI.Application.Features.Inventory.StockAdjustments.Shared;
 using ZARI.Application.Features.Workflow.Notifications.Create;
 using ZARI.Application.Features.Workflow.Notifications.GetAll;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
 public sealed class UpdateStockAdjustmentCommandHandler(
     IAppDbContext dbContext,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<UpdateStockAdjustmentCommand, Result<StockAdjustmentResponse>>
 {
     public async Task<Result<StockAdjustmentResponse>> HandleAsync(UpdateStockAdjustmentCommand command, CancellationToken cancellationToken = default)
@@ -23,6 +25,9 @@ public sealed class UpdateStockAdjustmentCommandHandler(
 
         if (adjustment is null)
             return Result.Failure<StockAdjustmentResponse>(Error.NotFound("StockAdjustment.NotFound", $"Stock adjustment with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("STOCK_ADJUSTMENTS", FormAction.Edit, adjustment.BranchId, cancellationToken))
+            return Result.Failure<StockAdjustmentResponse>(Error.Forbidden("StockAdjustment.Forbidden", "You do not have permission to update stock adjustments for this branch."));
 
         if (adjustment.Status != "DRAFT")
             return Result.Failure<StockAdjustmentResponse>(Error.Validation("StockAdjustment.NotDraft", "Only draft stock adjustments can be edited."));

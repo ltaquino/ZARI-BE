@@ -2,10 +2,11 @@ namespace ZARI.Application.Features.SystemModule.DocumentSequences.Get;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
-public sealed class GetDocumentSequenceQueryHandler(IAppDbContext dbContext) : IQueryHandler<GetDocumentSequenceQuery, Result<DocumentSequenceResponse>>
+public sealed class GetDocumentSequenceQueryHandler(IAppDbContext dbContext, IPermissionService permissionService) : IQueryHandler<GetDocumentSequenceQuery, Result<DocumentSequenceResponse>>
 {
     public async Task<Result<DocumentSequenceResponse>> HandleAsync(GetDocumentSequenceQuery query, CancellationToken cancellationToken = default)
     {
@@ -16,6 +17,9 @@ public sealed class GetDocumentSequenceQueryHandler(IAppDbContext dbContext) : I
 
         if (sequence is null)
             return Result.Failure<DocumentSequenceResponse>(Error.NotFound("DocumentSequence.NotFound", $"Document sequence with ID '{query.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("DOCUMENT_SEQUENCES", FormAction.View, sequence.BranchId, cancellationToken))
+            return Result.Failure<DocumentSequenceResponse>(Error.Forbidden("DocumentSequence.Forbidden", "You do not have permission to view document sequences for this branch."));
 
         return Result.Success(sequence);
     }

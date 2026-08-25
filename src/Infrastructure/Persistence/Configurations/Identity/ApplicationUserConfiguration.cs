@@ -16,6 +16,13 @@ public sealed class ApplicationUserConfiguration : BaseModelConfig, IEntityTypeC
             .IsRequired()
             .HasMaxLength(100);
 
+        builder.Property(u => u.Phone)
+            .HasMaxLength(100);
+
+        builder.Property(u => u.Status)
+            .IsRequired()
+            .HasMaxLength(25);
+
         builder.Property(u => u.RefreshToken)
             .HasMaxLength(500);
     }

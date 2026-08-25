@@ -2,15 +2,19 @@ namespace ZARI.Application.Features.Customers.Create;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Customers.Get;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
-public sealed class CreateCustomerCommandHandler(IAppDbContext dbContext) : ICommandHandler<CreateCustomerCommand, Result<CustomerResponse>>
+public sealed class CreateCustomerCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<CreateCustomerCommand, Result<CustomerResponse>>
 {
     public async Task<Result<CustomerResponse>> HandleAsync(CreateCustomerCommand command, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionOnBranchAsync("CUSTOMERS", FormAction.Create, command.BranchId, cancellationToken))
+            return Result.Failure<CustomerResponse>(Error.Forbidden("Customer.Forbidden", "You do not have permission to create customers for this branch."));
+
         var branchExists = await dbContext.Branches.AnyAsync(b => b.Id == command.BranchId, cancellationToken);
         if (!branchExists)
             return Result.Failure<CustomerResponse>(Error.NotFound("Branch.NotFound", $"Branch with ID '{command.BranchId}' was not found."));

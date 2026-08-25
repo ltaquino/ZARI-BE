@@ -244,6 +244,10 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Property<string>("PasswordHash")
                         .HasColumnType("longtext");
 
+                    b.Property<string>("Phone")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
                     b.Property<string>("PhoneNumber")
                         .HasColumnType("longtext");
 
@@ -259,6 +263,11 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("SecurityStamp")
                         .HasColumnType("longtext");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
 
                     b.Property<bool>("TwoFactorEnabled")
                         .HasColumnType("tinyint(1)");
@@ -697,6 +706,27 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("DocumentSequences");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.Form", b =>
+                {
+                    b.Property<string>("Code")
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("Module")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.HasKey("Code");
+
+                    b.ToTable("Forms");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.GlAccount", b =>
@@ -1406,6 +1436,40 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("NotificationReads");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.RolePermission", b =>
+                {
+                    b.Property<string>("RoleId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("FormCode")
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<bool>("CanApprove")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("CanCancel")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("CanCreate")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("CanDelete")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("CanEdit")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("CanView")
+                        .HasColumnType("tinyint(1)");
+
+                    b.HasKey("RoleId", "FormCode");
+
+                    b.HasIndex("FormCode");
+
+                    b.ToTable("RolePermissions");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.SerialNumber", b =>
@@ -2298,6 +2362,56 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.ToTable("Uoms");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.UserBranch", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("BranchId")
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("UserId", "BranchId");
+
+                    b.HasIndex("BranchId");
+
+                    b.ToTable("UserBranches");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.UserFormPermissionOverride", b =>
+                {
+                    b.Property<string>("UserId")
+                        .HasColumnType("varchar(255)");
+
+                    b.Property<string>("FormCode")
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<bool>("CanApprove")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("CanCancel")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("CanCreate")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("CanDelete")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("CanEdit")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("CanView")
+                        .HasColumnType("tinyint(1)");
+
+                    b.HasKey("UserId", "FormCode");
+
+                    b.HasIndex("FormCode");
+
+                    b.ToTable("UserFormPermissionOverrides");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.Warehouse", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2718,6 +2832,21 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Navigation("Notification");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.RolePermission", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Form", null)
+                        .WithMany()
+                        .HasForeignKey("FormCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("Microsoft.AspNetCore.Identity.IdentityRole", null)
+                        .WithMany()
+                        .HasForeignKey("RoleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.SerialNumber", b =>
                 {
                     b.HasOne("ZARI.Domain.Entities.Item", "Item")
@@ -3045,6 +3174,36 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Warehouse");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.UserBranch", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Branch", null)
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.UserFormPermissionOverride", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Form", null)
+                        .WithMany()
+                        .HasForeignKey("FormCode")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.ApplicationUser", null)
+                        .WithMany()
+                        .HasForeignKey("UserId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.Warehouse", b =>

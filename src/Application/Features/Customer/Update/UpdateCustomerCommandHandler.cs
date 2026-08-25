@@ -2,16 +2,20 @@ namespace ZARI.Application.Features.Customers.Update;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
-public sealed class UpdateCustomerCommandHandler(IAppDbContext dbContext) : ICommandHandler<UpdateCustomerCommand>
+public sealed class UpdateCustomerCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<UpdateCustomerCommand>
 {
     public async Task<Result> HandleAsync(UpdateCustomerCommand command, CancellationToken cancellationToken = default)
     {
         var customer = await dbContext.Customers.FindAsync([command.Id], cancellationToken);
         if (customer is null)
             return Result.Failure(Error.NotFound("Customer.NotFound", $"Customer with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("CUSTOMERS", FormAction.Edit, customer.BranchId, cancellationToken))
+            return Result.Failure(Error.Forbidden("Customer.Forbidden", "You do not have permission to update customers for this branch."));
 
         var branchExists = await dbContext.Branches.AnyAsync(b => b.Id == command.BranchId, cancellationToken);
         if (!branchExists)

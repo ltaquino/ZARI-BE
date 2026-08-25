@@ -2,6 +2,7 @@ namespace ZARI.Application.Features.Inventory.StockOpnames.Update;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.StockOpnames.GetAll;
 using ZARI.Application.Features.Inventory.StockOpnames.Shared;
@@ -12,7 +13,8 @@ using ZARI.Domain.Entities;
 
 public sealed class UpdateStockOpnameCommandHandler(
     IAppDbContext dbContext,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<UpdateStockOpnameCommand, Result<StockOpnameResponse>>
 {
     public async Task<Result<StockOpnameResponse>> HandleAsync(UpdateStockOpnameCommand command, CancellationToken cancellationToken = default)
@@ -23,6 +25,9 @@ public sealed class UpdateStockOpnameCommandHandler(
 
         if (opname is null)
             return Result.Failure<StockOpnameResponse>(Error.NotFound("StockOpname.NotFound", $"Stock opname with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("STOCK_OPNAMES", FormAction.Edit, opname.BranchId, cancellationToken))
+            return Result.Failure<StockOpnameResponse>(Error.Forbidden("StockOpname.Forbidden", "You do not have permission to update stock counts for this branch."));
 
         if (opname.Status != "DRAFT")
             return Result.Failure<StockOpnameResponse>(Error.Validation("StockOpname.NotDraft", "Only a draft stock count can be edited."));

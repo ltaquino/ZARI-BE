@@ -2,6 +2,7 @@ namespace ZARI.Application.Features.Inventory.GoodsReceipts.Create;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.GoodsReceipts.GetAll;
 using ZARI.Application.Features.Inventory.GoodsReceipts.Shared;
@@ -14,11 +15,15 @@ using ZARI.Domain.Entities;
 public sealed class CreateGoodsReceiptCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<GetNextDocumentNumberCommand, Result<NextDocumentNumberResponse>> nextDocumentNumberHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<CreateGoodsReceiptCommand, Result<GoodsReceiptResponse>>
 {
     public async Task<Result<GoodsReceiptResponse>> HandleAsync(CreateGoodsReceiptCommand command, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionOnBranchAsync("GOODS_RECEIPTS", FormAction.Create, command.BranchId, cancellationToken))
+            return Result.Failure<GoodsReceiptResponse>(Error.Forbidden("GoodsReceipt.Forbidden", "You do not have permission to create goods receipts for this branch."));
+
         var warehouseExists = await dbContext.Warehouses.AnyAsync(w => w.Id == command.WarehouseId, cancellationToken);
         if (!warehouseExists)
             return Result.Failure<GoodsReceiptResponse>(Error.NotFound("Warehouse.NotFound", $"Warehouse with ID '{command.WarehouseId}' was not found."));

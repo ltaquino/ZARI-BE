@@ -2,13 +2,17 @@ namespace ZARI.Application.Features.Inventory.ItemCategories.Get;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
-public sealed class GetItemCategoryQueryHandler(IAppDbContext dbContext) : IQueryHandler<GetItemCategoryQuery, Result<ItemCategoryResponse>>
+public sealed class GetItemCategoryQueryHandler(IAppDbContext dbContext, IPermissionService permissionService) : IQueryHandler<GetItemCategoryQuery, Result<ItemCategoryResponse>>
 {
     public async Task<Result<ItemCategoryResponse>> HandleAsync(GetItemCategoryQuery query, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionAsync("ITEM_CATEGORIES", FormAction.View, cancellationToken))
+            return Result.Failure<ItemCategoryResponse>(Error.Forbidden("ItemCategory.Forbidden", "You do not have permission to view item categories."));
+
         var category = await dbContext.ItemCategories
             .Where(c => c.Id == query.Id)
             .Select(c => new ItemCategoryResponse(c.Id, c.Code, c.Name, c.ParentCategoryId, c.CreatedAt))

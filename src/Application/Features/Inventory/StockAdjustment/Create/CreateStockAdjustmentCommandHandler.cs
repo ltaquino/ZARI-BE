@@ -8,17 +8,22 @@ using ZARI.Application.Features.Inventory.StockAdjustments.Shared;
 using ZARI.Application.Features.SystemModule.DocumentSequences.GetNext;
 using ZARI.Application.Features.Workflow.Notifications.Create;
 using ZARI.Application.Features.Workflow.Notifications.GetAll;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
 public sealed class CreateStockAdjustmentCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<GetNextDocumentNumberCommand, Result<NextDocumentNumberResponse>> nextDocumentNumberHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<CreateStockAdjustmentCommand, Result<StockAdjustmentResponse>>
 {
     public async Task<Result<StockAdjustmentResponse>> HandleAsync(CreateStockAdjustmentCommand command, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionOnBranchAsync("STOCK_ADJUSTMENTS", FormAction.Create, command.BranchId, cancellationToken))
+            return Result.Failure<StockAdjustmentResponse>(Error.Forbidden("StockAdjustment.Forbidden", "You do not have permission to create stock adjustments for this branch."));
+
         var warehouseExists = await dbContext.Warehouses.AnyAsync(w => w.Id == command.WarehouseId, cancellationToken);
         if (!warehouseExists)
             return Result.Failure<StockAdjustmentResponse>(Error.NotFound("Warehouse.NotFound", $"Warehouse with ID '{command.WarehouseId}' was not found."));

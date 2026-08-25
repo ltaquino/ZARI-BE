@@ -13,6 +13,7 @@ using ZARI.Application.Features.Workflow.ApprovalRequests.Decide;
 using ZARI.Application.Features.Workflow.ApprovalRequests.GetAll;
 using ZARI.Application.Features.Workflow.Notifications.Create;
 using ZARI.Application.Features.Workflow.Notifications.GetAll;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Domain.Common;
 
 /// <summary>
@@ -27,7 +28,8 @@ public sealed class ApproveGoodsIssueCancellationCommandHandler(
     ICommandHandler<ReverseIssueSerialCommand, Result> reverseIssueSerialHandler,
     ICommandHandler<ReverseGlJournalsCommand, Result<List<GlJournalResponse>>> reverseGlJournalsHandler,
     ICommandHandler<DecideApprovalRequestCommand, Result<ApprovalRequestResponse>> decideHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<ApproveGoodsIssueCancellationCommand, Result<GoodsIssueResponse>>
 {
     public async Task<Result<GoodsIssueResponse>> HandleAsync(ApproveGoodsIssueCancellationCommand command, CancellationToken cancellationToken = default)
@@ -39,6 +41,9 @@ public sealed class ApproveGoodsIssueCancellationCommandHandler(
 
         if (issue is null)
             return Result.Failure<GoodsIssueResponse>(Error.NotFound("GoodsIssue.NotFound", $"Goods issue with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasCancellationAuthorityAsync("GOODS_ISSUES", cancellationToken))
+            return Result.Failure<GoodsIssueResponse>(Error.Forbidden("GoodsIssue.Forbidden", "Only someone with cancel permission assigned to the head office branch can decide a cancellation request."));
 
         if (issue.Status != "PENDING_CANCELLATION")
             return Result.Failure<GoodsIssueResponse>(Error.Validation("GoodsIssue.NotPendingCancellation", "Only a goods issue pending cancellation can be cancelled this way."));

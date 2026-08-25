@@ -8,17 +8,22 @@ using ZARI.Application.Features.Inventory.GoodsIssues.Shared;
 using ZARI.Application.Features.SystemModule.DocumentSequences.GetNext;
 using ZARI.Application.Features.Workflow.Notifications.Create;
 using ZARI.Application.Features.Workflow.Notifications.GetAll;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
 public sealed class CreateGoodsIssueCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<GetNextDocumentNumberCommand, Result<NextDocumentNumberResponse>> nextDocumentNumberHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<CreateGoodsIssueCommand, Result<GoodsIssueResponse>>
 {
     public async Task<Result<GoodsIssueResponse>> HandleAsync(CreateGoodsIssueCommand command, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionOnBranchAsync("GOODS_ISSUES", FormAction.Create, command.BranchId, cancellationToken))
+            return Result.Failure<GoodsIssueResponse>(Error.Forbidden("GoodsIssue.Forbidden", "You do not have permission to create goods issues for this branch."));
+
         var warehouseExists = await dbContext.Warehouses.AnyAsync(w => w.Id == command.WarehouseId, cancellationToken);
         if (!warehouseExists)
             return Result.Failure<GoodsIssueResponse>(Error.NotFound("Warehouse.NotFound", $"Warehouse with ID '{command.WarehouseId}' was not found."));

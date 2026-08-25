@@ -2,16 +2,20 @@ namespace ZARI.Application.Features.SystemModule.Branches.Update;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
-public sealed class UpdateBranchCommandHandler(IAppDbContext dbContext) : ICommandHandler<UpdateBranchCommand>
+public sealed class UpdateBranchCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<UpdateBranchCommand>
 {
     public async Task<Result> HandleAsync(UpdateBranchCommand command, CancellationToken cancellationToken = default)
     {
         var branch = await dbContext.Branches.FindAsync([command.Id], cancellationToken);
         if (branch is null)
             return Result.Failure(Error.NotFound("Branch.NotFound", $"Branch with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionAsync("BRANCHES", FormAction.Edit, cancellationToken))
+            return Result.Failure(Error.Forbidden("Branch.Forbidden", "You do not have permission to update branches."));
 
         var duplicateCode = await dbContext.Branches.AnyAsync(b => b.Id != command.Id && b.Code == command.Code, cancellationToken);
         if (duplicateCode)

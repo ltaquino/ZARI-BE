@@ -2,6 +2,7 @@ namespace ZARI.Application.Features.Inventory.StockOpnames.RequestCancellation;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.StockOpnames.GetAll;
 using ZARI.Application.Features.Inventory.StockOpnames.Shared;
@@ -15,7 +16,8 @@ using ZARI.Domain.Common;
 public sealed class RequestStockOpnameCancellationCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<SubmitForApprovalCommand, Result<ApprovalRequestResponse>> submitForApprovalHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<RequestStockOpnameCancellationCommand, Result<StockOpnameResponse>>
 {
     public async Task<Result<StockOpnameResponse>> HandleAsync(RequestStockOpnameCancellationCommand command, CancellationToken cancellationToken = default)
@@ -26,6 +28,9 @@ public sealed class RequestStockOpnameCancellationCommandHandler(
 
         if (opname is null)
             return Result.Failure<StockOpnameResponse>(Error.NotFound("StockOpname.NotFound", $"Stock opname with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("STOCK_OPNAMES", FormAction.Cancel, opname.BranchId, cancellationToken))
+            return Result.Failure<StockOpnameResponse>(Error.Forbidden("StockOpname.Forbidden", "You do not have permission to cancel stock counts for this branch."));
 
         if (opname.Status != "POSTED")
             return Result.Failure<StockOpnameResponse>(Error.Validation("StockOpname.NotPosted", "Only a posted stock count can have its cancellation requested."));

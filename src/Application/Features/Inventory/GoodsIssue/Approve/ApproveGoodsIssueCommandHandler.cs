@@ -13,6 +13,7 @@ using ZARI.Application.Features.Workflow.ApprovalRequests.Decide;
 using ZARI.Application.Features.Workflow.ApprovalRequests.GetAll;
 using ZARI.Application.Features.Workflow.Notifications.Create;
 using ZARI.Application.Features.Workflow.Notifications.GetAll;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
@@ -29,7 +30,8 @@ public sealed class ApproveGoodsIssueCommandHandler(
     ICommandHandler<DecideApprovalRequestCommand, Result<ApprovalRequestResponse>> decideHandler,
     ICommandHandler<IssueSerialCommand, Result> issueSerialHandler,
     ICommandHandler<PostGlJournalCommand, Result<GlJournalResponse>> postGlJournalHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<ApproveGoodsIssueCommand, Result<GoodsIssueResponse>>
 {
     public async Task<Result<GoodsIssueResponse>> HandleAsync(ApproveGoodsIssueCommand command, CancellationToken cancellationToken = default)
@@ -41,6 +43,9 @@ public sealed class ApproveGoodsIssueCommandHandler(
 
         if (issue is null)
             return Result.Failure<GoodsIssueResponse>(Error.NotFound("GoodsIssue.NotFound", $"Goods issue with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("GOODS_ISSUES", FormAction.Approve, issue.BranchId, cancellationToken))
+            return Result.Failure<GoodsIssueResponse>(Error.Forbidden("GoodsIssue.Forbidden", "You do not have permission to approve goods issues for this branch."));
 
         if (issue.Status != "PENDING_APPROVAL")
             return Result.Failure<GoodsIssueResponse>(Error.Validation("GoodsIssue.NotPendingApproval", "Only goods issues pending approval can be approved."));

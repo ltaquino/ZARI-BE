@@ -46,6 +46,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<ApprovalAction> ApprovalActions => Set<ApprovalAction>();
     public DbSet<Notification> Notifications => Set<Notification>();
     public DbSet<NotificationRead> NotificationReads => Set<NotificationRead>();
+    public DbSet<Form> Forms => Set<Form>();
+    public DbSet<UserBranch> UserBranches => Set<UserBranch>();
+    public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
+    public DbSet<UserFormPermissionOverride> UserFormPermissionOverrides => Set<UserFormPermissionOverride>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

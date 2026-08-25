@@ -21,8 +21,8 @@ public static class AppDbSeeder
         await context.Database.MigrateAsync();
 
         await SeedRolesAsync(roleManager, logger);
-        await SeedDemoUsersAsync(userManager, passwordHasher, logger);
         await SeedBranchesAsync(context, logger);
+        await SeedDemoUsersAsync(userManager, passwordHasher, context, logger);
         await SeedUomsAsync(context, logger);
         await SeedItemCategoriesAsync(context, logger);
         await SeedWarehousesAsync(context, logger);
@@ -31,6 +31,8 @@ public static class AppDbSeeder
         await SeedGlAccountsAsync(context, logger);
         await SeedCostCentersAsync(context, logger);
         await SeedCompanyAsync(context, logger);
+        await SeedFormsAsync(context, logger);
+        await SeedRolePermissionsAsync(context, roleManager, logger);
     }
 
     private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager, ILogger logger)
@@ -48,25 +50,25 @@ public static class AppDbSeeder
     }
 
     /// <summary>
-    /// Mirrors the FE's mock system-module seed (ZARI-FE/src/data/system-module/users.ts) so the
-    /// interbranch demo workflow advertised on the login page works against real backend auth.
-    /// Branch/role-permission assignment still lives in that FE mock until Users/Roles/Branches
-    /// get their own backend — this only makes the credential check itself real.
+    /// Mirrors the FE's mock system-module seed (ZARI-FE/src/data/system-module/users.ts) — same
+    /// emails, names, and branch assignments — so the interbranch demo workflow advertised on the
+    /// login page works against real backend auth, roles, and branch scoping.
     /// </summary>
     private static async Task SeedDemoUsersAsync(
         UserManager<ApplicationUser> userManager,
         IPasswordHasher<ApplicationUser> passwordHasher,
+        AppDbContext context,
         ILogger logger)
     {
-        (string Email, string FirstName, string LastName, string Role)[] demoUsers =
+        (string Email, string FirstName, string LastName, string Phone, string Role, string[] BranchIds)[] demoUsers =
         [
-            ("admin@zari.coop", "Maria", "Santos", "Admin"),
-            ("manager@zari.coop", "Carlo", "Reyes", "Manager"),
-            ("ana.lopez@zari.coop", "Ana", "Lopez", "Staff"),
-            ("rico.tan@zari.coop", "Rico", "Tan", "Staff"),
-            ("staff.north@zari.coop", "Jenny", "Cruz", "Staff"),
-            ("manager.hq@zari.coop", "Bea", "Santos", "Manager"),
-            ("staff.hq@zari.coop", "Miguel", "Torres", "Staff"),
+            ("admin@zari.coop", "Maria", "Santos", "+63 917 111 2222", "Admin", ["br-hq", "br-north", "br-south", "br-east"]),
+            ("manager@zari.coop", "Carlo", "Reyes", "+63 918 222 3333", "Manager", ["br-north"]),
+            ("ana.lopez@zari.coop", "Ana", "Lopez", "+63 919 333 4444", "Staff", ["br-south"]),
+            ("rico.tan@zari.coop", "Rico", "Tan", "+63 920 444 5555", "Staff", ["br-east"]),
+            ("staff.north@zari.coop", "Jenny", "Cruz", "+63 921 555 6666", "Staff", ["br-north"]),
+            ("manager.hq@zari.coop", "Bea", "Santos", "+63 922 666 7777", "Manager", ["br-hq"]),
+            ("staff.hq@zari.coop", "Miguel", "Torres", "+63 923 777 8888", "Staff", ["br-hq"]),
         ];
 
         // "zari123" fails the real signup password policy (no uppercase) — seeded directly via the
@@ -75,7 +77,7 @@ public static class AppDbSeeder
         // policy that applies to genuine self-service registrations.
         const string demoPassword = "zari123";
 
-        foreach (var (email, firstName, lastName, role) in demoUsers)
+        foreach (var (email, firstName, lastName, phone, role, branchIds) in demoUsers)
         {
             if (await userManager.FindByEmailAsync(email) is not null)
                 continue;
@@ -86,6 +88,8 @@ public static class AppDbSeeder
                 LastName = lastName,
                 Email = email,
                 UserName = email,
+                Phone = phone,
+                Status = "active",
                 EmailConfirmed = true
             };
             user.PasswordHash = passwordHasher.HashPassword(user, demoPassword);
@@ -94,6 +98,8 @@ public static class AppDbSeeder
             if (result.Succeeded)
             {
                 await userManager.AddToRoleAsync(user, role);
+                context.UserBranches.AddRange(branchIds.Select(branchId => new UserBranch { UserId = user.Id, BranchId = branchId }));
+                await context.SaveChangesAsync();
                 logger.LogInformation("Seeded demo user: {Email}", email);
             }
         }
@@ -279,6 +285,153 @@ public static class AppDbSeeder
 
         await context.SaveChangesAsync();
         logger.LogInformation("Seeded default company record");
+    }
+
+    /// <summary>
+    /// One row per admin/transactional page the app actually has today — the catalog Role
+    /// templates and per-user overrides grant Form-level action flags against.
+    /// </summary>
+    private static async Task SeedFormsAsync(AppDbContext context, ILogger logger)
+    {
+        if (await context.Forms.AnyAsync())
+            return;
+
+        (string Code, string Name, string Module)[] forms =
+        [
+            ("DASHBOARD", "Dashboard", "Dashboard"),
+
+            ("CUSTOMERS", "Customers", "CRM"),
+
+            ("USERS", "Users", "System"),
+            ("ROLES", "Roles", "System"),
+            ("BRANCHES", "Branches", "System"),
+            ("COMPANY", "Company Settings", "System"),
+            ("DOCUMENT_SEQUENCES", "Document Sequences", "System"),
+
+            ("GL_ACCOUNTS", "GL Accounts", "Accounting"),
+            ("COST_CENTERS", "Cost Centers", "Accounting"),
+            ("GL_JOURNALS", "Journal Entries", "Accounting"),
+
+            ("UOMS", "Units of Measure", "Inventory"),
+            ("ITEM_CATEGORIES", "Item Categories", "Inventory"),
+            ("WAREHOUSES", "Warehouses", "Inventory"),
+            ("STORAGE_LOCATIONS", "Storage Locations", "Inventory"),
+            ("ITEMS", "Items", "Inventory"),
+            ("ADJUSTMENT_REASONS", "Adjustment Reasons", "Inventory"),
+            ("ITEM_BRANCH_SETTINGS", "Item Branch Settings", "Inventory"),
+            ("STOCK_RESERVATIONS", "Stock Reservations", "Inventory"),
+            ("SERIAL_NUMBERS", "Serial Numbers", "Inventory"),
+
+            ("GOODS_RECEIPTS", "Goods Receipts", "Inventory Transactions"),
+            ("GOODS_ISSUES", "Goods Issues", "Inventory Transactions"),
+            ("STOCK_ADJUSTMENTS", "Stock Adjustments", "Inventory Transactions"),
+            ("STOCK_OPNAMES", "Stock Opnames", "Inventory Transactions"),
+            ("STOCK_TRANSFER_REQUESTS", "Stock Transfer Requests", "Inventory Transactions"),
+            ("STOCK_LOCATION_TRANSFERS", "Stock Location Transfers", "Inventory Transactions"),
+
+            ("APPROVAL_REQUESTS", "Approval Requests", "Workflow"),
+            ("NOTIFICATIONS", "Notifications", "Workflow"),
+        ];
+
+        context.Forms.AddRange(forms.Select(f => new Form { Code = f.Code, Name = f.Name, Module = f.Module }));
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded {Count} forms", forms.Length);
+    }
+
+    /// <summary>
+    /// Default Form grants for the three seeded roles — a starting point editable later through the
+    /// Roles admin screen, not a fixed policy. Admin gets every flag on every form. Manager gets
+    /// full operational rights (view/create/edit/approve/cancel, no delete) on the transactional
+    /// inventory documents plus manage rights on master data, but only view (or nothing) on
+    /// system-admin forms. Staff can prepare (view/create/edit) transactional documents but not
+    /// approve/cancel/delete them, and is view-only everywhere else it has access at all.
+    /// </summary>
+    private static async Task SeedRolePermissionsAsync(AppDbContext context, RoleManager<IdentityRole> roleManager, ILogger logger)
+    {
+        if (await context.RolePermissions.AnyAsync())
+            return;
+
+        var adminRole = await roleManager.FindByNameAsync("Admin");
+        var managerRole = await roleManager.FindByNameAsync("Manager");
+        var staffRole = await roleManager.FindByNameAsync("Staff");
+        if (adminRole is null || managerRole is null || staffRole is null)
+            return;
+
+        var allFormCodes = await context.Forms.Select(f => f.Code).ToListAsync();
+
+        (bool View, bool Create, bool Edit, bool Approve, bool Cancel, bool Delete) full = (true, true, true, true, true, true);
+        (bool View, bool Create, bool Edit, bool Approve, bool Cancel, bool Delete) manage = (true, true, true, false, false, false);
+        (bool View, bool Create, bool Edit, bool Approve, bool Cancel, bool Delete) operate = (true, true, true, true, true, false);
+        (bool View, bool Create, bool Edit, bool Approve, bool Cancel, bool Delete) prepare = (true, true, true, false, false, false);
+        (bool View, bool Create, bool Edit, bool Approve, bool Cancel, bool Delete) view = (true, false, false, false, false, false);
+
+        var permissions = new List<RolePermission>();
+
+        void Grant(string roleId, string formCode, (bool View, bool Create, bool Edit, bool Approve, bool Cancel, bool Delete) flags)
+        {
+            if (!allFormCodes.Contains(formCode))
+                return;
+
+            permissions.Add(new RolePermission
+            {
+                RoleId = roleId,
+                FormCode = formCode,
+                CanView = flags.View,
+                CanCreate = flags.Create,
+                CanEdit = flags.Edit,
+                CanApprove = flags.Approve,
+                CanCancel = flags.Cancel,
+                CanDelete = flags.Delete
+            });
+        }
+
+        foreach (var formCode in allFormCodes)
+            Grant(adminRole.Id, formCode, full);
+
+        string[] managerTransactionalForms =
+        [
+            "GOODS_RECEIPTS", "GOODS_ISSUES", "STOCK_ADJUSTMENTS", "STOCK_OPNAMES",
+            "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS", "APPROVAL_REQUESTS"
+        ];
+        string[] managerMasterDataForms =
+        [
+            "UOMS", "ITEM_CATEGORIES", "WAREHOUSES", "STORAGE_LOCATIONS", "ITEMS",
+            "ADJUSTMENT_REASONS", "ITEM_BRANCH_SETTINGS", "STOCK_RESERVATIONS", "SERIAL_NUMBERS"
+        ];
+        string[] managerViewOnlyForms =
+        [
+            "DASHBOARD", "USERS", "BRANCHES", "DOCUMENT_SEQUENCES", "GL_ACCOUNTS", "COST_CENTERS", "GL_JOURNALS", "NOTIFICATIONS"
+        ];
+
+        foreach (var formCode in managerTransactionalForms)
+            Grant(managerRole.Id, formCode, operate);
+        foreach (var formCode in managerMasterDataForms)
+            Grant(managerRole.Id, formCode, manage);
+        foreach (var formCode in managerViewOnlyForms)
+            Grant(managerRole.Id, formCode, view);
+        Grant(managerRole.Id, "CUSTOMERS", manage);
+
+        string[] staffTransactionalForms =
+        [
+            "GOODS_RECEIPTS", "GOODS_ISSUES", "STOCK_ADJUSTMENTS", "STOCK_OPNAMES",
+            "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS"
+        ];
+        string[] staffViewOnlyForms =
+        [
+            "DASHBOARD", "CUSTOMERS", "UOMS", "ITEM_CATEGORIES", "WAREHOUSES", "STORAGE_LOCATIONS",
+            "ITEMS", "ADJUSTMENT_REASONS", "ITEM_BRANCH_SETTINGS", "STOCK_RESERVATIONS",
+            "SERIAL_NUMBERS", "APPROVAL_REQUESTS", "NOTIFICATIONS"
+        ];
+
+        foreach (var formCode in staffTransactionalForms)
+            Grant(staffRole.Id, formCode, prepare);
+        foreach (var formCode in staffViewOnlyForms)
+            Grant(staffRole.Id, formCode, view);
+
+        context.RolePermissions.AddRange(permissions);
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded {Count} default role permissions", permissions.Count);
     }
 
     //private static async Task SeedSampleTodosAsync(AppDbContext context, ILogger logger)

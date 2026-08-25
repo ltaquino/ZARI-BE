@@ -16,6 +16,7 @@ using ZARI.Application.Features.Workflow.ApprovalRequests.Decide;
 using ZARI.Application.Features.Workflow.ApprovalRequests.GetAll;
 using ZARI.Application.Features.Workflow.Notifications.Create;
 using ZARI.Application.Features.Workflow.Notifications.GetAll;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
@@ -35,7 +36,8 @@ public sealed class ApproveStockAdjustmentCommandHandler(
     ICommandHandler<ReceiveSerialCommand, Result<SerialNumberResponse>> receiveSerialHandler,
     ICommandHandler<IssueSerialCommand, Result> issueSerialHandler,
     ICommandHandler<PostGlJournalCommand, Result<GlJournalResponse>> postGlJournalHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<ApproveStockAdjustmentCommand, Result<StockAdjustmentResponse>>
 {
     public async Task<Result<StockAdjustmentResponse>> HandleAsync(ApproveStockAdjustmentCommand command, CancellationToken cancellationToken = default)
@@ -46,6 +48,9 @@ public sealed class ApproveStockAdjustmentCommandHandler(
 
         if (adjustment is null)
             return Result.Failure<StockAdjustmentResponse>(Error.NotFound("StockAdjustment.NotFound", $"Stock adjustment with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("STOCK_ADJUSTMENTS", FormAction.Approve, adjustment.BranchId, cancellationToken))
+            return Result.Failure<StockAdjustmentResponse>(Error.Forbidden("StockAdjustment.Forbidden", "You do not have permission to approve stock adjustments for this branch."));
 
         if (adjustment.Status != "PENDING_APPROVAL")
             return Result.Failure<StockAdjustmentResponse>(Error.Validation("StockAdjustment.NotPendingApproval", "Only stock adjustments pending approval can be approved."));

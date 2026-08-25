@@ -3,6 +3,7 @@ namespace ZARI.Application.Features.Inventory.StockLocationTransfers.Post;
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Messaging;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Features.Inventory.StockLocationBalances.Move;
 using ZARI.Application.Features.Inventory.StockLocationTransfers.GetAll;
 using ZARI.Application.Features.Inventory.StockLocationTransfers.Shared;
@@ -18,7 +19,8 @@ using ZARI.Domain.Common;
 public sealed class PostStockLocationTransferCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<MoveBetweenLocationsCommand, Result> moveBetweenLocationsHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<PostStockLocationTransferCommand, Result<StockLocationTransferResponse>>
 {
     public async Task<Result<StockLocationTransferResponse>> HandleAsync(PostStockLocationTransferCommand command, CancellationToken cancellationToken = default)
@@ -31,6 +33,9 @@ public sealed class PostStockLocationTransferCommandHandler(
 
         if (transfer is null)
             return Result.Failure<StockLocationTransferResponse>(Error.NotFound("StockLocationTransfer.NotFound", $"Bin transfer with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("STOCK_LOCATION_TRANSFERS", FormAction.Approve, transfer.BranchId, cancellationToken))
+            return Result.Failure<StockLocationTransferResponse>(Error.Forbidden("StockLocationTransfer.Forbidden", "You do not have permission to post bin transfers for this branch."));
 
         if (transfer.Status != "DRAFT")
             return Result.Failure<StockLocationTransferResponse>(Error.Validation("StockLocationTransfer.NotDraft", "Only a draft bin transfer can be posted."));

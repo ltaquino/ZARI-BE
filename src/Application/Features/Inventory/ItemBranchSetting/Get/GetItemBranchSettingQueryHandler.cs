@@ -2,10 +2,11 @@ namespace ZARI.Application.Features.Inventory.ItemBranchSettings.Get;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
-public sealed class GetItemBranchSettingQueryHandler(IAppDbContext dbContext) : IQueryHandler<GetItemBranchSettingQuery, Result<ItemBranchSettingResponse>>
+public sealed class GetItemBranchSettingQueryHandler(IAppDbContext dbContext, IPermissionService permissionService) : IQueryHandler<GetItemBranchSettingQuery, Result<ItemBranchSettingResponse>>
 {
     public async Task<Result<ItemBranchSettingResponse>> HandleAsync(GetItemBranchSettingQuery query, CancellationToken cancellationToken = default)
     {
@@ -16,6 +17,9 @@ public sealed class GetItemBranchSettingQueryHandler(IAppDbContext dbContext) : 
 
         if (setting is null)
             return Result.Failure<ItemBranchSettingResponse>(Error.NotFound("ItemBranchSetting.NotFound", $"Reorder setting with ID '{query.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("ITEM_BRANCH_SETTINGS", FormAction.View, setting.BranchId, cancellationToken))
+            return Result.Failure<ItemBranchSettingResponse>(Error.Forbidden("ItemBranchSetting.Forbidden", "You do not have permission to view item branch settings for this branch."));
 
         return Result.Success(setting);
     }

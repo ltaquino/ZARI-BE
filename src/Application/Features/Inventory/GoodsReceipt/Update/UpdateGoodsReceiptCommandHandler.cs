@@ -2,6 +2,7 @@ namespace ZARI.Application.Features.Inventory.GoodsReceipts.Update;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.GoodsReceipts.GetAll;
 using ZARI.Application.Features.Inventory.GoodsReceipts.Shared;
@@ -12,7 +13,8 @@ using ZARI.Domain.Entities;
 
 public sealed class UpdateGoodsReceiptCommandHandler(
     IAppDbContext dbContext,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<UpdateGoodsReceiptCommand, Result<GoodsReceiptResponse>>
 {
     public async Task<Result<GoodsReceiptResponse>> HandleAsync(UpdateGoodsReceiptCommand command, CancellationToken cancellationToken = default)
@@ -23,6 +25,9 @@ public sealed class UpdateGoodsReceiptCommandHandler(
 
         if (receipt is null)
             return Result.Failure<GoodsReceiptResponse>(Error.NotFound("GoodsReceipt.NotFound", $"Goods receipt with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("GOODS_RECEIPTS", FormAction.Edit, receipt.BranchId, cancellationToken))
+            return Result.Failure<GoodsReceiptResponse>(Error.Forbidden("GoodsReceipt.Forbidden", "You do not have permission to update goods receipts for this branch."));
 
         if (receipt.Status != "DRAFT")
             return Result.Failure<GoodsReceiptResponse>(Error.Validation("GoodsReceipt.NotDraft", "Only draft goods receipts can be edited."));

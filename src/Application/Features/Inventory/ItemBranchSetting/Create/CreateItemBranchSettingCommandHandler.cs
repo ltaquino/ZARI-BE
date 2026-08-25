@@ -2,15 +2,19 @@ namespace ZARI.Application.Features.Inventory.ItemBranchSettings.Create;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.ItemBranchSettings.Get;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
-public sealed class CreateItemBranchSettingCommandHandler(IAppDbContext dbContext) : ICommandHandler<CreateItemBranchSettingCommand, Result<ItemBranchSettingResponse>>
+public sealed class CreateItemBranchSettingCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<CreateItemBranchSettingCommand, Result<ItemBranchSettingResponse>>
 {
     public async Task<Result<ItemBranchSettingResponse>> HandleAsync(CreateItemBranchSettingCommand command, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionOnBranchAsync("ITEM_BRANCH_SETTINGS", FormAction.Create, command.BranchId, cancellationToken))
+            return Result.Failure<ItemBranchSettingResponse>(Error.Forbidden("ItemBranchSetting.Forbidden", "You do not have permission to create item branch settings for this branch."));
+
         var itemExists = await dbContext.Items.AnyAsync(i => i.Id == command.ItemId, cancellationToken);
         if (!itemExists)
             return Result.Failure<ItemBranchSettingResponse>(Error.NotFound("Item.NotFound", $"Item with ID '{command.ItemId}' was not found."));

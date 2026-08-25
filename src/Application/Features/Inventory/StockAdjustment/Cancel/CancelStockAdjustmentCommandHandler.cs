@@ -8,6 +8,7 @@ using ZARI.Application.Features.Inventory.StockAdjustments.Shared;
 using ZARI.Application.Features.Workflow.ApprovalRequests.CancelPending;
 using ZARI.Application.Features.Workflow.Notifications.Create;
 using ZARI.Application.Features.Workflow.Notifications.GetAll;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Domain.Common;
 
 /// <summary>
@@ -17,7 +18,8 @@ using ZARI.Domain.Common;
 public sealed class CancelStockAdjustmentCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<CancelPendingApprovalRequestCommand, Result> cancelPendingHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<CancelStockAdjustmentCommand, Result<StockAdjustmentResponse>>
 {
     public async Task<Result<StockAdjustmentResponse>> HandleAsync(CancelStockAdjustmentCommand command, CancellationToken cancellationToken = default)
@@ -28,6 +30,9 @@ public sealed class CancelStockAdjustmentCommandHandler(
 
         if (adjustment is null)
             return Result.Failure<StockAdjustmentResponse>(Error.NotFound("StockAdjustment.NotFound", $"Stock adjustment with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("STOCK_ADJUSTMENTS", FormAction.Cancel, adjustment.BranchId, cancellationToken))
+            return Result.Failure<StockAdjustmentResponse>(Error.Forbidden("StockAdjustment.Forbidden", "You do not have permission to cancel stock adjustments for this branch."));
 
         if (adjustment.Status == "CANCELLED")
             return Result.Failure<StockAdjustmentResponse>(Error.Validation("StockAdjustment.AlreadyCancelled", "This stock adjustment is already cancelled."));

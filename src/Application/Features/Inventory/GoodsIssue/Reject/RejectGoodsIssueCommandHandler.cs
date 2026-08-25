@@ -9,13 +9,15 @@ using ZARI.Application.Features.Workflow.ApprovalRequests.Decide;
 using ZARI.Application.Features.Workflow.ApprovalRequests.GetAll;
 using ZARI.Application.Features.Workflow.Notifications.Create;
 using ZARI.Application.Features.Workflow.Notifications.GetAll;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Domain.Common;
 
 /// <summary>PENDING_APPROVAL -> DRAFT, so the encoder can fix the issue the checker flagged and resubmit.</summary>
 public sealed class RejectGoodsIssueCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<DecideApprovalRequestCommand, Result<ApprovalRequestResponse>> decideHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<RejectGoodsIssueCommand, Result<GoodsIssueResponse>>
 {
     public async Task<Result<GoodsIssueResponse>> HandleAsync(RejectGoodsIssueCommand command, CancellationToken cancellationToken = default)
@@ -27,6 +29,9 @@ public sealed class RejectGoodsIssueCommandHandler(
 
         if (issue is null)
             return Result.Failure<GoodsIssueResponse>(Error.NotFound("GoodsIssue.NotFound", $"Goods issue with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("GOODS_ISSUES", FormAction.Approve, issue.BranchId, cancellationToken))
+            return Result.Failure<GoodsIssueResponse>(Error.Forbidden("GoodsIssue.Forbidden", "You do not have permission to reject goods issues for this branch."));
 
         if (issue.Status != "PENDING_APPROVAL")
             return Result.Failure<GoodsIssueResponse>(Error.Validation("GoodsIssue.NotPendingApproval", "Only goods issues pending approval can be rejected."));

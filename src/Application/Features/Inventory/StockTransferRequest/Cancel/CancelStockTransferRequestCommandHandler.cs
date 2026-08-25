@@ -3,6 +3,7 @@ namespace ZARI.Application.Features.Inventory.StockTransferRequests.Cancel;
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Messaging;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Features.Inventory.StockTransferRequests.GetAll;
 using ZARI.Application.Features.Inventory.StockTransferRequests.Shared;
 using ZARI.Application.Features.Workflow.ApprovalRequests.CancelPending;
@@ -17,7 +18,8 @@ using ZARI.Domain.Common;
 public sealed class CancelStockTransferRequestCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<CancelPendingApprovalRequestCommand, Result> cancelPendingHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<CancelStockTransferRequestCommand, Result<StockTransferRequestResponse>>
 {
     public async Task<Result<StockTransferRequestResponse>> HandleAsync(CancelStockTransferRequestCommand command, CancellationToken cancellationToken = default)
@@ -29,6 +31,9 @@ public sealed class CancelStockTransferRequestCommandHandler(
 
         if (request is null)
             return Result.Failure<StockTransferRequestResponse>(Error.NotFound("StockTransferRequest.NotFound", $"Stock transfer request with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("STOCK_TRANSFER_REQUESTS", FormAction.Cancel, request.DestBranchId, cancellationToken))
+            return Result.Failure<StockTransferRequestResponse>(Error.Forbidden("StockTransferRequest.Forbidden", "You do not have permission to cancel this stock transfer request for the requesting branch."));
 
         if (request.Status is "CANCELLED" or "DECLINED")
             return Result.Failure<StockTransferRequestResponse>(Error.Validation("StockTransferRequest.CannotCancel", "This stock transfer request can no longer be cancelled."));

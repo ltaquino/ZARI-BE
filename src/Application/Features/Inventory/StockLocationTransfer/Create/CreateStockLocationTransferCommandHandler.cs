@@ -3,6 +3,7 @@ namespace ZARI.Application.Features.Inventory.StockLocationTransfers.Create;
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Messaging;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Features.Inventory.StockLocationTransfers.GetAll;
 using ZARI.Application.Features.Inventory.StockLocationTransfers.Shared;
 using ZARI.Application.Features.SystemModule.DocumentSequences.GetNext;
@@ -14,11 +15,15 @@ using ZARI.Domain.Entities;
 public sealed class CreateStockLocationTransferCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<GetNextDocumentNumberCommand, Result<NextDocumentNumberResponse>> nextDocumentNumberHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<CreateStockLocationTransferCommand, Result<StockLocationTransferResponse>>
 {
     public async Task<Result<StockLocationTransferResponse>> HandleAsync(CreateStockLocationTransferCommand command, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionOnBranchAsync("STOCK_LOCATION_TRANSFERS", FormAction.Create, command.BranchId, cancellationToken))
+            return Result.Failure<StockLocationTransferResponse>(Error.Forbidden("StockLocationTransfer.Forbidden", "You do not have permission to create bin transfers for this branch."));
+
         var warehouseExists = await dbContext.Warehouses.AnyAsync(w => w.Id == command.WarehouseId, cancellationToken);
         if (!warehouseExists)
             return Result.Failure<StockLocationTransferResponse>(Error.NotFound("Warehouse.NotFound", $"Warehouse with ID '{command.WarehouseId}' was not found."));

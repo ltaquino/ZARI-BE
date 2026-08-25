@@ -2,6 +2,7 @@ namespace ZARI.Application.Features.Inventory.StockOpnames.Create;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.StockOpnames.GetAll;
 using ZARI.Application.Features.Inventory.StockOpnames.Shared;
@@ -14,11 +15,15 @@ using ZARI.Domain.Entities;
 public sealed class CreateStockOpnameCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<GetNextDocumentNumberCommand, Result<NextDocumentNumberResponse>> nextDocumentNumberHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<CreateStockOpnameCommand, Result<StockOpnameResponse>>
 {
     public async Task<Result<StockOpnameResponse>> HandleAsync(CreateStockOpnameCommand command, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionOnBranchAsync("STOCK_OPNAMES", FormAction.Create, command.BranchId, cancellationToken))
+            return Result.Failure<StockOpnameResponse>(Error.Forbidden("StockOpname.Forbidden", "You do not have permission to create stock counts for this branch."));
+
         var warehouseExists = await dbContext.Warehouses.AnyAsync(w => w.Id == command.WarehouseId, cancellationToken);
         if (!warehouseExists)
             return Result.Failure<StockOpnameResponse>(Error.NotFound("Warehouse.NotFound", $"Warehouse with ID '{command.WarehouseId}' was not found."));

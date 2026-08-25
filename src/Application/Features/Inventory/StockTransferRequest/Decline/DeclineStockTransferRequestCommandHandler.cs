@@ -3,6 +3,7 @@ namespace ZARI.Application.Features.Inventory.StockTransferRequests.Decline;
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Messaging;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Features.Inventory.StockTransferRequests.GetAll;
 using ZARI.Application.Features.Inventory.StockTransferRequests.Shared;
 using ZARI.Application.Features.Workflow.Notifications.Create;
@@ -17,7 +18,8 @@ using ZARI.Domain.Common;
 /// </summary>
 public sealed class DeclineStockTransferRequestCommandHandler(
     IAppDbContext dbContext,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<DeclineStockTransferRequestCommand, Result<StockTransferRequestResponse>>
 {
     public async Task<Result<StockTransferRequestResponse>> HandleAsync(DeclineStockTransferRequestCommand command, CancellationToken cancellationToken = default)
@@ -29,6 +31,9 @@ public sealed class DeclineStockTransferRequestCommandHandler(
 
         if (request is null)
             return Result.Failure<StockTransferRequestResponse>(Error.NotFound("StockTransferRequest.NotFound", $"Stock transfer request with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("STOCK_TRANSFER_REQUESTS", FormAction.Cancel, request.SourceBranchId, cancellationToken))
+            return Result.Failure<StockTransferRequestResponse>(Error.Forbidden("StockTransferRequest.Forbidden", "You do not have permission to decline this stock transfer request for the fulfilling branch."));
 
         if (request.Status != "APPROVED")
             return Result.Failure<StockTransferRequestResponse>(Error.Validation("StockTransferRequest.NotApproved", "Only an approved stock transfer request can be declined."));

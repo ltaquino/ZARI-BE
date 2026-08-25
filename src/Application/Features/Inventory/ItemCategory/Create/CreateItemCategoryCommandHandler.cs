@@ -2,15 +2,19 @@ namespace ZARI.Application.Features.Inventory.ItemCategories.Create;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.ItemCategories.Get;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
-public sealed class CreateItemCategoryCommandHandler(IAppDbContext dbContext) : ICommandHandler<CreateItemCategoryCommand, Result<ItemCategoryResponse>>
+public sealed class CreateItemCategoryCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<CreateItemCategoryCommand, Result<ItemCategoryResponse>>
 {
     public async Task<Result<ItemCategoryResponse>> HandleAsync(CreateItemCategoryCommand command, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionAsync("ITEM_CATEGORIES", FormAction.Create, cancellationToken))
+            return Result.Failure<ItemCategoryResponse>(Error.Forbidden("ItemCategory.Forbidden", "You do not have permission to create item categories."));
+
         var codeExists = await dbContext.ItemCategories
             .AnyAsync(c => c.Code == command.Code, cancellationToken);
 

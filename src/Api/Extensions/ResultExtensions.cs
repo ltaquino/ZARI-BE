@@ -14,6 +14,7 @@ public static class ResultExtensions
             ErrorType.NotFound => (StatusCodes.Status404NotFound, "Not Found"),
             ErrorType.Validation => (StatusCodes.Status400BadRequest, "Validation Error"),
             ErrorType.Conflict => (StatusCodes.Status409Conflict, "Conflict"),
+            ErrorType.Forbidden => (StatusCodes.Status403Forbidden, "Forbidden"),
             _ => (StatusCodes.Status500InternalServerError, "Server Error")
         };
 

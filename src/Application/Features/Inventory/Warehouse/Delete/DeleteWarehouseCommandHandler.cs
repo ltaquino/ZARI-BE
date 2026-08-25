@@ -2,16 +2,20 @@ namespace ZARI.Application.Features.Inventory.Warehouses.Delete;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
-public sealed class DeleteWarehouseCommandHandler(IAppDbContext dbContext) : ICommandHandler<DeleteWarehouseCommand>
+public sealed class DeleteWarehouseCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<DeleteWarehouseCommand>
 {
     public async Task<Result> HandleAsync(DeleteWarehouseCommand command, CancellationToken cancellationToken = default)
     {
         var warehouse = await dbContext.Warehouses.FindAsync([command.Id], cancellationToken);
         if (warehouse is null)
             return Result.Failure(Error.NotFound("Warehouse.NotFound", $"Warehouse with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("WAREHOUSES", FormAction.Delete, warehouse.BranchId, cancellationToken))
+            return Result.Failure(Error.Forbidden("Warehouse.Forbidden", "You do not have permission to delete warehouses for this branch."));
 
         var locationCount = await dbContext.StorageLocations.CountAsync(l => l.WarehouseId == command.Id, cancellationToken);
         if (locationCount > 0)

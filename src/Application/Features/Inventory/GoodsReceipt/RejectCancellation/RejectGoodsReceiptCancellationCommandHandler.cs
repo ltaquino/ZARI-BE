@@ -2,6 +2,7 @@ namespace ZARI.Application.Features.Inventory.GoodsReceipts.RejectCancellation;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.GoodsReceipts.GetAll;
 using ZARI.Application.Features.Inventory.GoodsReceipts.Shared;
@@ -15,7 +16,8 @@ using ZARI.Domain.Common;
 public sealed class RejectGoodsReceiptCancellationCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<DecideApprovalRequestCommand, Result<ApprovalRequestResponse>> decideHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<RejectGoodsReceiptCancellationCommand, Result<GoodsReceiptResponse>>
 {
     public async Task<Result<GoodsReceiptResponse>> HandleAsync(RejectGoodsReceiptCancellationCommand command, CancellationToken cancellationToken = default)
@@ -27,6 +29,9 @@ public sealed class RejectGoodsReceiptCancellationCommandHandler(
 
         if (receipt is null)
             return Result.Failure<GoodsReceiptResponse>(Error.NotFound("GoodsReceipt.NotFound", $"Goods receipt with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasCancellationAuthorityAsync("GOODS_RECEIPTS", cancellationToken))
+            return Result.Failure<GoodsReceiptResponse>(Error.Forbidden("GoodsReceipt.Forbidden", "Only someone with cancel permission assigned to the head office branch can decide a cancellation request."));
 
         if (receipt.Status != "PENDING_CANCELLATION")
             return Result.Failure<GoodsReceiptResponse>(Error.Validation("GoodsReceipt.NotPendingCancellation", "Only a goods receipt pending cancellation can have that request rejected."));

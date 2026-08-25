@@ -2,6 +2,7 @@ namespace ZARI.Application.Features.Inventory.GoodsReceipts.Submit;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.GoodsReceipts.GetAll;
 using ZARI.Application.Features.Inventory.GoodsReceipts.Shared;
@@ -15,7 +16,8 @@ using ZARI.Domain.Common;
 public sealed class SubmitGoodsReceiptCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<SubmitForApprovalCommand, Result<ApprovalRequestResponse>> submitForApprovalHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<SubmitGoodsReceiptCommand, Result<GoodsReceiptResponse>>
 {
     public async Task<Result<GoodsReceiptResponse>> HandleAsync(SubmitGoodsReceiptCommand command, CancellationToken cancellationToken = default)
@@ -27,6 +29,9 @@ public sealed class SubmitGoodsReceiptCommandHandler(
 
         if (receipt is null)
             return Result.Failure<GoodsReceiptResponse>(Error.NotFound("GoodsReceipt.NotFound", $"Goods receipt with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("GOODS_RECEIPTS", FormAction.Edit, receipt.BranchId, cancellationToken))
+            return Result.Failure<GoodsReceiptResponse>(Error.Forbidden("GoodsReceipt.Forbidden", "You do not have permission to submit goods receipts for this branch."));
 
         if (receipt.Status != "DRAFT")
             return Result.Failure<GoodsReceiptResponse>(Error.Validation("GoodsReceipt.NotDraft", "Only draft goods receipts can be submitted for approval."));

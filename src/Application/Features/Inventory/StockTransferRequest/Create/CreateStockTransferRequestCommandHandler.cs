@@ -3,6 +3,7 @@ namespace ZARI.Application.Features.Inventory.StockTransferRequests.Create;
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Messaging;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Features.Inventory.StockTransferRequests.GetAll;
 using ZARI.Application.Features.Inventory.StockTransferRequests.Shared;
 using ZARI.Application.Features.SystemModule.DocumentSequences.GetNext;
@@ -14,11 +15,15 @@ using ZARI.Domain.Entities;
 public sealed class CreateStockTransferRequestCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<GetNextDocumentNumberCommand, Result<NextDocumentNumberResponse>> nextDocumentNumberHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<CreateStockTransferRequestCommand, Result<StockTransferRequestResponse>>
 {
     public async Task<Result<StockTransferRequestResponse>> HandleAsync(CreateStockTransferRequestCommand command, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionOnBranchAsync("STOCK_TRANSFER_REQUESTS", FormAction.Create, command.DestBranchId, cancellationToken))
+            return Result.Failure<StockTransferRequestResponse>(Error.Forbidden("StockTransferRequest.Forbidden", "You do not have permission to create stock transfer requests for this branch."));
+
         var sourceWarehouseExists = await dbContext.Warehouses.AnyAsync(w => w.Id == command.SourceWarehouseId, cancellationToken);
         if (!sourceWarehouseExists)
             return Result.Failure<StockTransferRequestResponse>(Error.NotFound("Warehouse.NotFound", $"Warehouse with ID '{command.SourceWarehouseId}' was not found."));

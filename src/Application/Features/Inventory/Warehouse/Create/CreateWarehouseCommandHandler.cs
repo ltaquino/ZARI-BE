@@ -2,15 +2,19 @@ namespace ZARI.Application.Features.Inventory.Warehouses.Create;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.Warehouses.Get;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
-public sealed class CreateWarehouseCommandHandler(IAppDbContext dbContext) : ICommandHandler<CreateWarehouseCommand, Result<WarehouseResponse>>
+public sealed class CreateWarehouseCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<CreateWarehouseCommand, Result<WarehouseResponse>>
 {
     public async Task<Result<WarehouseResponse>> HandleAsync(CreateWarehouseCommand command, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionOnBranchAsync("WAREHOUSES", FormAction.Create, command.BranchId, cancellationToken))
+            return Result.Failure<WarehouseResponse>(Error.Forbidden("Warehouse.Forbidden", "You do not have permission to create warehouses for this branch."));
+
         var codeExists = await dbContext.Warehouses
             .AnyAsync(w => w.Code == command.Code, cancellationToken);
 

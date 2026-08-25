@@ -2,13 +2,17 @@ namespace ZARI.Application.Features.Inventory.Items.Get;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
-public sealed class GetItemQueryHandler(IAppDbContext dbContext) : IQueryHandler<GetItemQuery, Result<ItemResponse>>
+public sealed class GetItemQueryHandler(IAppDbContext dbContext, IPermissionService permissionService) : IQueryHandler<GetItemQuery, Result<ItemResponse>>
 {
     public async Task<Result<ItemResponse>> HandleAsync(GetItemQuery query, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionAsync("ITEMS", FormAction.View, cancellationToken))
+            return Result.Failure<ItemResponse>(Error.Forbidden("Item.Forbidden", "You do not have permission to view items."));
+
         var item = await dbContext.Items
             .Where(i => i.Id == query.Id)
             .Select(i => new ItemResponse(

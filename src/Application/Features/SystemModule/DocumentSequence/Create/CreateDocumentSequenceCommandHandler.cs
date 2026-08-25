@@ -2,15 +2,19 @@ namespace ZARI.Application.Features.SystemModule.DocumentSequences.Create;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.SystemModule.DocumentSequences.Get;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
-public sealed class CreateDocumentSequenceCommandHandler(IAppDbContext dbContext) : ICommandHandler<CreateDocumentSequenceCommand, Result<DocumentSequenceResponse>>
+public sealed class CreateDocumentSequenceCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<CreateDocumentSequenceCommand, Result<DocumentSequenceResponse>>
 {
     public async Task<Result<DocumentSequenceResponse>> HandleAsync(CreateDocumentSequenceCommand command, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionOnBranchAsync("DOCUMENT_SEQUENCES", FormAction.Create, command.BranchId, cancellationToken))
+            return Result.Failure<DocumentSequenceResponse>(Error.Forbidden("DocumentSequence.Forbidden", "You do not have permission to create document sequences for this branch."));
+
         var clashExists = await dbContext.DocumentSequences
             .AnyAsync(s => s.BranchId == command.BranchId && s.DocType == command.DocType, cancellationToken);
 

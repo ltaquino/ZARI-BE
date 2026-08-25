@@ -2,15 +2,19 @@ namespace ZARI.Application.Features.Inventory.Items.Create;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.Items.Get;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
-public sealed class CreateItemCommandHandler(IAppDbContext dbContext) : ICommandHandler<CreateItemCommand, Result<ItemResponse>>
+public sealed class CreateItemCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<CreateItemCommand, Result<ItemResponse>>
 {
     public async Task<Result<ItemResponse>> HandleAsync(CreateItemCommand command, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionAsync("ITEMS", FormAction.Create, cancellationToken))
+            return Result.Failure<ItemResponse>(Error.Forbidden("Item.Forbidden", "You do not have permission to create items."));
+
         var codeExists = await dbContext.Items.AnyAsync(i => i.Code == command.Code, cancellationToken);
         if (codeExists)
             return Result.Failure<ItemResponse>(Error.Conflict("Item.DuplicateCode", $"An item with code '{command.Code}' already exists."));

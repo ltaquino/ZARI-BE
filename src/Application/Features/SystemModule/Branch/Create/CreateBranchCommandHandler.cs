@@ -2,15 +2,19 @@ namespace ZARI.Application.Features.SystemModule.Branches.Create;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.SystemModule.Branches.Get;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
-public sealed class CreateBranchCommandHandler(IAppDbContext dbContext) : ICommandHandler<CreateBranchCommand, Result<BranchResponse>>
+public sealed class CreateBranchCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<CreateBranchCommand, Result<BranchResponse>>
 {
     public async Task<Result<BranchResponse>> HandleAsync(CreateBranchCommand command, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionAsync("BRANCHES", FormAction.Create, cancellationToken))
+            return Result.Failure<BranchResponse>(Error.Forbidden("Branch.Forbidden", "You do not have permission to create branches."));
+
         var codeExists = await dbContext.Branches.AnyAsync(b => b.Code == command.Code, cancellationToken);
         if (codeExists)
             return Result.Failure<BranchResponse>(Error.Conflict("Branch.DuplicateCode", $"A branch with code '{command.Code}' already exists."));

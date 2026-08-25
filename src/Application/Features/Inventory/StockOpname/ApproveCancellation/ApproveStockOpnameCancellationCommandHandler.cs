@@ -2,6 +2,7 @@ namespace ZARI.Application.Features.Inventory.StockOpnames.ApproveCancellation;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Accounting.GlJournals.GetAll;
 using ZARI.Application.Features.Accounting.GlJournals.Reverse;
@@ -29,7 +30,8 @@ public sealed class ApproveStockOpnameCancellationCommandHandler(
     ICommandHandler<ReverseIssueSerialCommand, Result> reverseIssueSerialHandler,
     ICommandHandler<ReverseGlJournalsCommand, Result<List<GlJournalResponse>>> reverseGlJournalsHandler,
     ICommandHandler<DecideApprovalRequestCommand, Result<ApprovalRequestResponse>> decideHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<ApproveStockOpnameCancellationCommand, Result<StockOpnameResponse>>
 {
     public async Task<Result<StockOpnameResponse>> HandleAsync(ApproveStockOpnameCancellationCommand command, CancellationToken cancellationToken = default)
@@ -40,6 +42,9 @@ public sealed class ApproveStockOpnameCancellationCommandHandler(
 
         if (opname is null)
             return Result.Failure<StockOpnameResponse>(Error.NotFound("StockOpname.NotFound", $"Stock opname with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasCancellationAuthorityAsync("STOCK_OPNAMES", cancellationToken))
+            return Result.Failure<StockOpnameResponse>(Error.Forbidden("StockOpname.Forbidden", "Only someone with cancel permission assigned to the head office branch can decide a cancellation request."));
 
         if (opname.Status != "PENDING_CANCELLATION")
             return Result.Failure<StockOpnameResponse>(Error.Validation("StockOpname.NotPendingCancellation", "Only a stock count pending cancellation can be cancelled this way."));

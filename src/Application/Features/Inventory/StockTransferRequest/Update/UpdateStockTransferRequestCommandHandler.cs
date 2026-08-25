@@ -3,6 +3,7 @@ namespace ZARI.Application.Features.Inventory.StockTransferRequests.Update;
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Messaging;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Features.Inventory.StockTransferRequests.GetAll;
 using ZARI.Application.Features.Inventory.StockTransferRequests.Shared;
 using ZARI.Application.Features.Workflow.Notifications.Create;
@@ -12,7 +13,8 @@ using ZARI.Domain.Entities;
 
 public sealed class UpdateStockTransferRequestCommandHandler(
     IAppDbContext dbContext,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<UpdateStockTransferRequestCommand, Result<StockTransferRequestResponse>>
 {
     public async Task<Result<StockTransferRequestResponse>> HandleAsync(UpdateStockTransferRequestCommand command, CancellationToken cancellationToken = default)
@@ -23,6 +25,9 @@ public sealed class UpdateStockTransferRequestCommandHandler(
 
         if (request is null)
             return Result.Failure<StockTransferRequestResponse>(Error.NotFound("StockTransferRequest.NotFound", $"Stock transfer request with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("STOCK_TRANSFER_REQUESTS", FormAction.Edit, request.DestBranchId, cancellationToken))
+            return Result.Failure<StockTransferRequestResponse>(Error.Forbidden("StockTransferRequest.Forbidden", "You do not have permission to edit this stock transfer request for the requesting branch."));
 
         if (request.Status != "DRAFT")
             return Result.Failure<StockTransferRequestResponse>(Error.Validation("StockTransferRequest.NotDraft", "Only draft stock transfer requests can be edited."));

@@ -2,15 +2,19 @@ namespace ZARI.Application.Features.Inventory.StockReservations.Create;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.StockReservations.GetAll;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
-public sealed class CreateStockReservationCommandHandler(IAppDbContext dbContext) : ICommandHandler<CreateStockReservationCommand, Result<StockReservationResponse>>
+public sealed class CreateStockReservationCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<CreateStockReservationCommand, Result<StockReservationResponse>>
 {
     public async Task<Result<StockReservationResponse>> HandleAsync(CreateStockReservationCommand command, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionOnBranchAsync("STOCK_RESERVATIONS", FormAction.Create, command.BranchId, cancellationToken))
+            return Result.Failure<StockReservationResponse>(Error.Forbidden("StockReservation.Forbidden", "You do not have permission to create stock reservations for this branch."));
+
         var itemExists = await dbContext.Items.AnyAsync(i => i.Id == command.ItemId, cancellationToken);
         if (!itemExists)
             return Result.Failure<StockReservationResponse>(Error.NotFound("Item.NotFound", $"Item with ID '{command.ItemId}' was not found."));

@@ -2,16 +2,20 @@ namespace ZARI.Application.Features.Inventory.AdjustmentReasons.Update;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
-public sealed class UpdateAdjustmentReasonCommandHandler(IAppDbContext dbContext) : ICommandHandler<UpdateAdjustmentReasonCommand>
+public sealed class UpdateAdjustmentReasonCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<UpdateAdjustmentReasonCommand>
 {
     public async Task<Result> HandleAsync(UpdateAdjustmentReasonCommand command, CancellationToken cancellationToken = default)
     {
         var reason = await dbContext.AdjustmentReasons.FindAsync([command.Id], cancellationToken);
         if (reason is null)
             return Result.Failure(Error.NotFound("AdjustmentReason.NotFound", $"Adjustment reason with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionAsync("ADJUSTMENT_REASONS", FormAction.Edit, cancellationToken))
+            return Result.Failure(Error.Forbidden("AdjustmentReason.Forbidden", "You do not have permission to update adjustment reasons."));
 
         var duplicateCode = await dbContext.AdjustmentReasons
             .AnyAsync(r => r.Id != command.Id && r.Code == command.Code, cancellationToken);

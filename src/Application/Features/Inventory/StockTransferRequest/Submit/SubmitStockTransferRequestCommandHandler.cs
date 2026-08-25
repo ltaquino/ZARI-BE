@@ -3,6 +3,7 @@ namespace ZARI.Application.Features.Inventory.StockTransferRequests.Submit;
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Messaging;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Features.Inventory.StockTransferRequests.GetAll;
 using ZARI.Application.Features.Inventory.StockTransferRequests.Shared;
 using ZARI.Application.Features.Workflow.ApprovalRequests.GetAll;
@@ -15,7 +16,8 @@ using ZARI.Domain.Common;
 public sealed class SubmitStockTransferRequestCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<SubmitForApprovalCommand, Result<ApprovalRequestResponse>> submitForApprovalHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<SubmitStockTransferRequestCommand, Result<StockTransferRequestResponse>>
 {
     public async Task<Result<StockTransferRequestResponse>> HandleAsync(SubmitStockTransferRequestCommand command, CancellationToken cancellationToken = default)
@@ -27,6 +29,9 @@ public sealed class SubmitStockTransferRequestCommandHandler(
 
         if (request is null)
             return Result.Failure<StockTransferRequestResponse>(Error.NotFound("StockTransferRequest.NotFound", $"Stock transfer request with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("STOCK_TRANSFER_REQUESTS", FormAction.Edit, request.DestBranchId, cancellationToken))
+            return Result.Failure<StockTransferRequestResponse>(Error.Forbidden("StockTransferRequest.Forbidden", "You do not have permission to submit this stock transfer request for the requesting branch."));
 
         if (request.Status != "DRAFT")
             return Result.Failure<StockTransferRequestResponse>(Error.Validation("StockTransferRequest.NotDraft", "Only draft stock transfer requests can be submitted for approval."));

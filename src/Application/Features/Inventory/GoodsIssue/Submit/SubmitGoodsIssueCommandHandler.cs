@@ -9,13 +9,15 @@ using ZARI.Application.Features.Workflow.ApprovalRequests.GetAll;
 using ZARI.Application.Features.Workflow.ApprovalRequests.Submit;
 using ZARI.Application.Features.Workflow.Notifications.Create;
 using ZARI.Application.Features.Workflow.Notifications.GetAll;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Domain.Common;
 
 /// <summary>DRAFT -> PENDING_APPROVAL. Creates the ApprovalRequest a checker will act on.</summary>
 public sealed class SubmitGoodsIssueCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<SubmitForApprovalCommand, Result<ApprovalRequestResponse>> submitForApprovalHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<SubmitGoodsIssueCommand, Result<GoodsIssueResponse>>
 {
     public async Task<Result<GoodsIssueResponse>> HandleAsync(SubmitGoodsIssueCommand command, CancellationToken cancellationToken = default)
@@ -27,6 +29,9 @@ public sealed class SubmitGoodsIssueCommandHandler(
 
         if (issue is null)
             return Result.Failure<GoodsIssueResponse>(Error.NotFound("GoodsIssue.NotFound", $"Goods issue with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("GOODS_ISSUES", FormAction.Edit, issue.BranchId, cancellationToken))
+            return Result.Failure<GoodsIssueResponse>(Error.Forbidden("GoodsIssue.Forbidden", "You do not have permission to submit goods issues for this branch."));
 
         if (issue.Status != "DRAFT")
             return Result.Failure<GoodsIssueResponse>(Error.Validation("GoodsIssue.NotDraft", "Only draft goods issues can be submitted for approval."));

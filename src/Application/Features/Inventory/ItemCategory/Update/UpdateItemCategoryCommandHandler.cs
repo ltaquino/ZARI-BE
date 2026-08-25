@@ -2,16 +2,20 @@ namespace ZARI.Application.Features.Inventory.ItemCategories.Update;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
-public sealed class UpdateItemCategoryCommandHandler(IAppDbContext dbContext) : ICommandHandler<UpdateItemCategoryCommand>
+public sealed class UpdateItemCategoryCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<UpdateItemCategoryCommand>
 {
     public async Task<Result> HandleAsync(UpdateItemCategoryCommand command, CancellationToken cancellationToken = default)
     {
         var category = await dbContext.ItemCategories.FindAsync([command.Id], cancellationToken);
         if (category is null)
             return Result.Failure(Error.NotFound("ItemCategory.NotFound", $"Item category with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionAsync("ITEM_CATEGORIES", FormAction.Edit, cancellationToken))
+            return Result.Failure(Error.Forbidden("ItemCategory.Forbidden", "You do not have permission to update item categories."));
 
         var duplicateCode = await dbContext.ItemCategories
             .AnyAsync(c => c.Id != command.Id && c.Code == command.Code, cancellationToken);

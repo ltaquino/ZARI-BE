@@ -2,6 +2,7 @@ namespace ZARI.Application.Features.Inventory.StockOpnames.RejectCancellation;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.StockOpnames.GetAll;
 using ZARI.Application.Features.Inventory.StockOpnames.Shared;
@@ -15,7 +16,8 @@ using ZARI.Domain.Common;
 public sealed class RejectStockOpnameCancellationCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<DecideApprovalRequestCommand, Result<ApprovalRequestResponse>> decideHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<RejectStockOpnameCancellationCommand, Result<StockOpnameResponse>>
 {
     public async Task<Result<StockOpnameResponse>> HandleAsync(RejectStockOpnameCancellationCommand command, CancellationToken cancellationToken = default)
@@ -26,6 +28,9 @@ public sealed class RejectStockOpnameCancellationCommandHandler(
 
         if (opname is null)
             return Result.Failure<StockOpnameResponse>(Error.NotFound("StockOpname.NotFound", $"Stock opname with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasCancellationAuthorityAsync("STOCK_OPNAMES", cancellationToken))
+            return Result.Failure<StockOpnameResponse>(Error.Forbidden("StockOpname.Forbidden", "Only someone with cancel permission assigned to the head office branch can decide a cancellation request."));
 
         if (opname.Status != "PENDING_CANCELLATION")
             return Result.Failure<StockOpnameResponse>(Error.Validation("StockOpname.NotPendingCancellation", "Only a stock count pending cancellation can have that request rejected."));

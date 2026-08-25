@@ -2,15 +2,19 @@ namespace ZARI.Application.Features.Inventory.AdjustmentReasons.Create;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.AdjustmentReasons.Get;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
-public sealed class CreateAdjustmentReasonCommandHandler(IAppDbContext dbContext) : ICommandHandler<CreateAdjustmentReasonCommand, Result<AdjustmentReasonResponse>>
+public sealed class CreateAdjustmentReasonCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<CreateAdjustmentReasonCommand, Result<AdjustmentReasonResponse>>
 {
     public async Task<Result<AdjustmentReasonResponse>> HandleAsync(CreateAdjustmentReasonCommand command, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionAsync("ADJUSTMENT_REASONS", FormAction.Create, cancellationToken))
+            return Result.Failure<AdjustmentReasonResponse>(Error.Forbidden("AdjustmentReason.Forbidden", "You do not have permission to create adjustment reasons."));
+
         var codeExists = await dbContext.AdjustmentReasons.AnyAsync(r => r.Code == command.Code, cancellationToken);
         if (codeExists)
             return Result.Failure<AdjustmentReasonResponse>(Error.Conflict("AdjustmentReason.DuplicateCode", $"An adjustment reason with code '{command.Code}' already exists."));

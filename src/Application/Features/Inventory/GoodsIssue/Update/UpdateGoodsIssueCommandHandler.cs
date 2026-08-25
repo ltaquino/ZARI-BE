@@ -7,12 +7,14 @@ using ZARI.Application.Features.Inventory.GoodsIssues.GetAll;
 using ZARI.Application.Features.Inventory.GoodsIssues.Shared;
 using ZARI.Application.Features.Workflow.Notifications.Create;
 using ZARI.Application.Features.Workflow.Notifications.GetAll;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
 public sealed class UpdateGoodsIssueCommandHandler(
     IAppDbContext dbContext,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<UpdateGoodsIssueCommand, Result<GoodsIssueResponse>>
 {
     public async Task<Result<GoodsIssueResponse>> HandleAsync(UpdateGoodsIssueCommand command, CancellationToken cancellationToken = default)
@@ -23,6 +25,9 @@ public sealed class UpdateGoodsIssueCommandHandler(
 
         if (issue is null)
             return Result.Failure<GoodsIssueResponse>(Error.NotFound("GoodsIssue.NotFound", $"Goods issue with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("GOODS_ISSUES", FormAction.Edit, issue.BranchId, cancellationToken))
+            return Result.Failure<GoodsIssueResponse>(Error.Forbidden("GoodsIssue.Forbidden", "You do not have permission to update goods issues for this branch."));
 
         if (issue.Status != "DRAFT")
             return Result.Failure<GoodsIssueResponse>(Error.Validation("GoodsIssue.NotDraft", "Only draft goods issues can be edited."));

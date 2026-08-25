@@ -2,6 +2,7 @@ namespace ZARI.Application.Features.Inventory.StockOpnames.Post;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Accounting.GlJournals.GetAll;
 using ZARI.Application.Features.Accounting.GlJournals.Post;
@@ -32,7 +33,8 @@ public sealed class PostStockOpnameCommandHandler(
     ICommandHandler<ReceiveSerialCommand, Result<SerialNumberResponse>> receiveSerialHandler,
     ICommandHandler<IssueSerialCommand, Result> issueSerialHandler,
     ICommandHandler<PostGlJournalCommand, Result<GlJournalResponse>> postGlJournalHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<PostStockOpnameCommand, Result<StockOpnameResponse>>
 {
     public async Task<Result<StockOpnameResponse>> HandleAsync(PostStockOpnameCommand command, CancellationToken cancellationToken = default)
@@ -43,6 +45,9 @@ public sealed class PostStockOpnameCommandHandler(
 
         if (opname is null)
             return Result.Failure<StockOpnameResponse>(Error.NotFound("StockOpname.NotFound", $"Stock opname with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionOnBranchAsync("STOCK_OPNAMES", FormAction.Approve, opname.BranchId, cancellationToken))
+            return Result.Failure<StockOpnameResponse>(Error.Forbidden("StockOpname.Forbidden", "You do not have permission to post stock counts for this branch."));
 
         if (opname.Status != "DRAFT")
             return Result.Failure<StockOpnameResponse>(Error.Validation("StockOpname.NotDraft", "Only a draft stock count can be posted."));

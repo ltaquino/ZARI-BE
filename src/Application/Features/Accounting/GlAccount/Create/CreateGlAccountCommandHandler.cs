@@ -2,15 +2,19 @@ namespace ZARI.Application.Features.Accounting.GlAccounts.Create;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Accounting.GlAccounts.Get;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
-public sealed class CreateGlAccountCommandHandler(IAppDbContext dbContext) : ICommandHandler<CreateGlAccountCommand, Result<GlAccountResponse>>
+public sealed class CreateGlAccountCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<CreateGlAccountCommand, Result<GlAccountResponse>>
 {
     public async Task<Result<GlAccountResponse>> HandleAsync(CreateGlAccountCommand command, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionAsync("GL_ACCOUNTS", FormAction.Create, cancellationToken))
+            return Result.Failure<GlAccountResponse>(Error.Forbidden("GlAccount.Forbidden", "You do not have permission to create GL accounts."));
+
         var codeExists = await dbContext.GlAccounts.AnyAsync(a => a.Code == command.Code, cancellationToken);
         if (codeExists)
             return Result.Failure<GlAccountResponse>(Error.Conflict("GlAccount.DuplicateCode", $"A GL account with code '{command.Code}' already exists."));

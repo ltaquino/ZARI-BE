@@ -2,16 +2,20 @@ namespace ZARI.Application.Features.Inventory.StorageLocations.Update;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
-public sealed class UpdateStorageLocationCommandHandler(IAppDbContext dbContext) : ICommandHandler<UpdateStorageLocationCommand>
+public sealed class UpdateStorageLocationCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<UpdateStorageLocationCommand>
 {
     public async Task<Result> HandleAsync(UpdateStorageLocationCommand command, CancellationToken cancellationToken = default)
     {
         var location = await dbContext.StorageLocations.FindAsync([command.Id], cancellationToken);
         if (location is null)
             return Result.Failure(Error.NotFound("StorageLocation.NotFound", $"Storage location with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionAsync("STORAGE_LOCATIONS", FormAction.Edit, cancellationToken))
+            return Result.Failure(Error.Forbidden("StorageLocation.Forbidden", "You do not have permission to update storage locations."));
 
         var warehouseExists = await dbContext.Warehouses.AnyAsync(w => w.Id == command.WarehouseId, cancellationToken);
         if (!warehouseExists)

@@ -134,6 +134,9 @@ try
     app.MapCustomerEndpoints();
     app.MapCompanyEndpoints();
     app.MapBranchEndpoints();
+    app.MapFormEndpoints();
+    app.MapUserEndpoints();
+    app.MapRoleEndpoints();
     //app.MapGet("/debug-user", (HttpContext ctx) =>
     //{
     //    return new

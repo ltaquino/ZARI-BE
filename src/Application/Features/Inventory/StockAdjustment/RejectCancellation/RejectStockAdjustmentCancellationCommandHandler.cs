@@ -9,13 +9,15 @@ using ZARI.Application.Features.Workflow.ApprovalRequests.Decide;
 using ZARI.Application.Features.Workflow.ApprovalRequests.GetAll;
 using ZARI.Application.Features.Workflow.Notifications.Create;
 using ZARI.Application.Features.Workflow.Notifications.GetAll;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Domain.Common;
 
 /// <summary>PENDING_CANCELLATION -> POSTED. The HQ admin declines the request; the document stands as posted.</summary>
 public sealed class RejectStockAdjustmentCancellationCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<DecideApprovalRequestCommand, Result<ApprovalRequestResponse>> decideHandler,
-    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler)
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
+    IPermissionService permissionService)
     : ICommandHandler<RejectStockAdjustmentCancellationCommand, Result<StockAdjustmentResponse>>
 {
     public async Task<Result<StockAdjustmentResponse>> HandleAsync(RejectStockAdjustmentCancellationCommand command, CancellationToken cancellationToken = default)
@@ -26,6 +28,9 @@ public sealed class RejectStockAdjustmentCancellationCommandHandler(
 
         if (adjustment is null)
             return Result.Failure<StockAdjustmentResponse>(Error.NotFound("StockAdjustment.NotFound", $"Stock adjustment with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasCancellationAuthorityAsync("STOCK_ADJUSTMENTS", cancellationToken))
+            return Result.Failure<StockAdjustmentResponse>(Error.Forbidden("StockAdjustment.Forbidden", "Only someone with cancel permission assigned to the head office branch can decide a cancellation request."));
 
         if (adjustment.Status != "PENDING_CANCELLATION")
             return Result.Failure<StockAdjustmentResponse>(Error.Validation("StockAdjustment.NotPendingCancellation", "Only a stock adjustment pending cancellation can have that request rejected."));

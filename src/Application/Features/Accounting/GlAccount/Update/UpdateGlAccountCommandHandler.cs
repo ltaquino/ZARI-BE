@@ -2,16 +2,20 @@ namespace ZARI.Application.Features.Accounting.GlAccounts.Update;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
-public sealed class UpdateGlAccountCommandHandler(IAppDbContext dbContext) : ICommandHandler<UpdateGlAccountCommand>
+public sealed class UpdateGlAccountCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<UpdateGlAccountCommand>
 {
     public async Task<Result> HandleAsync(UpdateGlAccountCommand command, CancellationToken cancellationToken = default)
     {
         var account = await dbContext.GlAccounts.FindAsync([command.Id], cancellationToken);
         if (account is null)
             return Result.Failure(Error.NotFound("GlAccount.NotFound", $"GL account with ID '{command.Id}' was not found."));
+
+        if (!await permissionService.HasPermissionAsync("GL_ACCOUNTS", FormAction.Edit, cancellationToken))
+            return Result.Failure(Error.Forbidden("GlAccount.Forbidden", "You do not have permission to update GL accounts."));
 
         var duplicateCode = await dbContext.GlAccounts
             .AnyAsync(a => a.Id != command.Id && a.Code == command.Code, cancellationToken);
