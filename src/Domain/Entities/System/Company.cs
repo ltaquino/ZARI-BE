@@ -11,6 +11,6 @@ public sealed class Company : AuditableEntity
     public string Name { get; set; } = default!;
     public string? TaxId { get; set; }
 
-    // References the not-yet-migrated Currency module — plain string, matches Warehouse.BranchId.
     public string BaseCurrencyId { get; set; } = default!;
+    public Currency BaseCurrency { get; set; } = default!;
 }

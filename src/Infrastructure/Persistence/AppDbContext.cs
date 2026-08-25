@@ -50,6 +50,14 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<UserBranch> UserBranches => Set<UserBranch>();
     public DbSet<RolePermission> RolePermissions => Set<RolePermission>();
     public DbSet<UserFormPermissionOverride> UserFormPermissionOverrides => Set<UserFormPermissionOverride>();
+    public DbSet<Currency> Currencies => Set<Currency>();
+    public DbSet<TaxCode> TaxCodes => Set<TaxCode>();
+    public DbSet<FiscalYear> FiscalYears => Set<FiscalYear>();
+    public DbSet<ExchangeRate> ExchangeRates => Set<ExchangeRate>();
+    public DbSet<BankAccount> BankAccounts => Set<BankAccount>();
+    public DbSet<Supplier> Suppliers => Set<Supplier>();
+    public DbSet<PurchaseOrder> PurchaseOrders => Set<PurchaseOrder>();
+    public DbSet<PurchaseOrderLine> PurchaseOrderLines => Set<PurchaseOrderLine>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

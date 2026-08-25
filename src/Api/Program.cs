@@ -137,6 +137,13 @@ try
     app.MapFormEndpoints();
     app.MapUserEndpoints();
     app.MapRoleEndpoints();
+    app.MapCurrencyEndpoints();
+    app.MapTaxCodeEndpoints();
+    app.MapFiscalYearEndpoints();
+    app.MapExchangeRateEndpoints();
+    app.MapBankAccountEndpoints();
+    app.MapSupplierEndpoints();
+    app.MapPurchaseOrderEndpoints();
     //app.MapGet("/debug-user", (HttpContext ctx) =>
     //{
     //    return new

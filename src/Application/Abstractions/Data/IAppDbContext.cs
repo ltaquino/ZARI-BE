@@ -48,6 +48,14 @@ public interface IAppDbContext
     DbSet<UserBranch> UserBranches { get; }
     DbSet<RolePermission> RolePermissions { get; }
     DbSet<UserFormPermissionOverride> UserFormPermissionOverrides { get; }
+    DbSet<Currency> Currencies { get; }
+    DbSet<TaxCode> TaxCodes { get; }
+    DbSet<FiscalYear> FiscalYears { get; }
+    DbSet<ExchangeRate> ExchangeRates { get; }
+    DbSet<BankAccount> BankAccounts { get; }
+    DbSet<Supplier> Suppliers { get; }
+    DbSet<PurchaseOrder> PurchaseOrders { get; }
+    DbSet<PurchaseOrderLine> PurchaseOrderLines { get; }
 
     // Exposed only for the stock-ledger posting handlers, which need an explicit transaction plus
     // raw-SQL "FOR UPDATE" locking (see Application/Features/Inventory/StockLedger/Shared/

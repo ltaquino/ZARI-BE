@@ -25,6 +25,10 @@ public sealed class DeleteBranchCommandHandler(IAppDbContext dbContext, IPermiss
         if (customerCount > 0)
             return Result.Failure(Error.Conflict("Branch.HasCustomers", $"Cannot delete this branch — it has {customerCount} customer record{(customerCount == 1 ? "" : "s")}."));
 
+        var bankAccountCount = await dbContext.BankAccounts.CountAsync(b => b.BranchId == command.Id, cancellationToken);
+        if (bankAccountCount > 0)
+            return Result.Failure(Error.Conflict("Branch.HasBankAccounts", $"Cannot delete this branch — it has {bankAccountCount} bank account{(bankAccountCount == 1 ? "" : "s")}."));
+
         dbContext.Branches.Remove(branch);
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

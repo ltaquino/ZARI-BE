@@ -14,5 +14,10 @@ public sealed class CompanyConfiguration : BaseModelConfig, IEntityTypeConfigura
         builder.Property(c => c.Name).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_150);
         builder.Property(c => c.TaxId).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
         builder.Property(c => c.BaseCurrencyId).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
+
+        builder.HasOne(c => c.BaseCurrency)
+            .WithMany()
+            .HasForeignKey(c => c.BaseCurrencyId)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

@@ -1,0 +1,46 @@
+namespace ZARI.Application.Features.Purchasing.Suppliers.Update;
+
+using FluentValidation;
+
+public sealed class UpdateSupplierValidator : AbstractValidator<UpdateSupplierCommand>
+{
+    public UpdateSupplierValidator()
+    {
+        RuleFor(x => x.Id).NotEmpty();
+
+        RuleFor(x => x.Code)
+            .NotEmpty()
+            .MaximumLength(25);
+
+        RuleFor(x => x.Name)
+            .NotEmpty()
+            .MaximumLength(150);
+
+        RuleFor(x => x.TaxId)
+            .MaximumLength(25);
+
+        RuleFor(x => x.PaymentTerms)
+            .MaximumLength(25);
+
+        RuleFor(x => x.CurrencyId)
+            .MaximumLength(25);
+
+        RuleFor(x => x.Address)
+            .MaximumLength(300);
+
+        RuleFor(x => x.ContactPerson)
+            .MaximumLength(150);
+
+        RuleFor(x => x.ContactNumber)
+            .MaximumLength(100);
+
+        RuleFor(x => x.Email)
+            .EmailAddress()
+            .MaximumLength(150);
+
+        RuleFor(x => x.Status)
+            .NotEmpty()
+            .Must(s => s is "active" or "inactive")
+            .WithMessage("Status must be 'active' or 'inactive'.");
+    }
+}

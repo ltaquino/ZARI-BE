@@ -13,6 +13,9 @@ public sealed class UpdateRoleCommandHandler(
     IAppDbContext dbContext,
     IPermissionService permissionService) : ICommandHandler<UpdateRoleCommand>
 {
+    /// <summary>Seeded via AppDbSeeder.SeedRolesAsync — never renamable, mirrors DeleteRoleCommandHandler's guard (permissions on these roles can still be edited, just not the name).</summary>
+    private static readonly HashSet<string> SystemRoleNames = new(StringComparer.OrdinalIgnoreCase) { "Admin", "Manager", "Staff" };
+
     public async Task<Result> HandleAsync(UpdateRoleCommand command, CancellationToken cancellationToken = default)
     {
         var role = await roleManager.FindByIdAsync(command.Id);
@@ -24,6 +27,9 @@ public sealed class UpdateRoleCommandHandler(
 
         if (!string.Equals(role.Name, command.Name, StringComparison.OrdinalIgnoreCase))
         {
+            if (SystemRoleNames.Contains(role.Name!))
+                return Result.Failure(Error.Conflict("Role.SystemRole", $"'{role.Name}' is a built-in system role and cannot be renamed."));
+
             var nameOwner = await roleManager.FindByNameAsync(command.Name);
             if (nameOwner is not null && nameOwner.Id != role.Id)
                 return Result.Failure(Error.Conflict("Role.DuplicateName", $"A role named '{command.Name}' already exists."));
@@ -43,6 +49,13 @@ public sealed class UpdateRoleCommandHandler(
         }
 
         await dbContext.RolePermissions.Where(rp => rp.RoleId == role.Id).ExecuteDeleteAsync(cancellationToken);
+
+        // The permission check above (HasPermissionAsync) tracks this same role's RolePermission
+        // rows when the acting user holds the role being edited (e.g. Admin editing Admin) — those
+        // rows are now stale (ExecuteDeleteAsync bypasses the tracker, so it doesn't know they're
+        // gone) and would collide with the new instances added below, which share the same
+        // (RoleId, FormCode) key. Clear them out first.
+        dbContext.ChangeTracker.Clear();
 
         var newPermissions = command.Permissions.Select(p => new RolePermission
         {

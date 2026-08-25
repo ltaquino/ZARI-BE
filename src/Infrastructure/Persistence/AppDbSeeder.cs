@@ -30,7 +30,13 @@ public static class AppDbSeeder
         await SeedDocumentSequencesAsync(context, logger);
         await SeedGlAccountsAsync(context, logger);
         await SeedCostCentersAsync(context, logger);
+        await SeedCurrenciesAsync(context, logger);
         await SeedCompanyAsync(context, logger);
+        await SeedFiscalYearsAsync(context, logger);
+        await SeedExchangeRatesAsync(context, logger);
+        await SeedBankAccountsAsync(context, logger);
+        await SeedSuppliersAsync(context, logger);
+        await SeedPurchaseOrdersAsync(context, logger);
         await SeedFormsAsync(context, logger);
         await SeedRolePermissionsAsync(context, roleManager, logger);
     }
@@ -288,14 +294,167 @@ public static class AppDbSeeder
     }
 
     /// <summary>
+    /// Mirrors the FE's mock seed (ZARI-FE/src/data/system-module/currencies.ts). Ids are the
+    /// exact "cur-php"/"cur-usd" strings the mock used, since Company.BaseCurrencyId already
+    /// stores "cur-php" as a real FK value — matching it exactly needs no data migration.
+    /// </summary>
+    private static async Task SeedCurrenciesAsync(AppDbContext context, ILogger logger)
+    {
+        if (await context.Currencies.AnyAsync())
+            return;
+
+        context.Currencies.AddRange(
+            new Currency { Id = "cur-php", Code = "PHP", Name = "Philippine Peso", Status = "active", CreatedAt = DateTimeOffset.UtcNow },
+            new Currency { Id = "cur-usd", Code = "USD", Name = "US Dollar", Status = "active", CreatedAt = DateTimeOffset.UtcNow }
+        );
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded default currencies");
+    }
+
+    /// <summary>Mirrors the FE's mock seed (ZARI-FE/src/data/accounting/fiscalYears.ts) — one open fiscal year.</summary>
+    private static async Task SeedFiscalYearsAsync(AppDbContext context, ILogger logger)
+    {
+        if (await context.FiscalYears.AnyAsync())
+            return;
+
+        context.FiscalYears.Add(new FiscalYear
+        {
+            YearName = "FY 2025",
+            StartDate = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero),
+            EndDate = new DateTimeOffset(2025, 12, 31, 0, 0, 0, TimeSpan.Zero),
+            Status = "OPEN"
+        });
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded default fiscal year");
+    }
+
+    private static async Task SeedExchangeRatesAsync(AppDbContext context, ILogger logger)
+    {
+        if (await context.ExchangeRates.AnyAsync())
+            return;
+
+        // Looked up by Code rather than a hardcoded "cur-usd" id — the seeded Currency rows are
+        // only guaranteed to exist by Code; their Id can drift if a currency is ever recreated.
+        var usd = await context.Currencies.FirstOrDefaultAsync(c => c.Code == "USD");
+        if (usd is null)
+            return;
+
+        context.ExchangeRates.Add(new ExchangeRate
+        {
+            CurrencyId = usd.Id,
+            RateDate = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero),
+            RateToBase = 56.50m
+        });
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded default exchange rate");
+    }
+
+    private static async Task SeedBankAccountsAsync(AppDbContext context, ILogger logger)
+    {
+        if (await context.BankAccounts.AnyAsync())
+            return;
+
+        var cashAccount = await context.GlAccounts.FirstOrDefaultAsync(a => a.Code == "1000");
+        var php = await context.Currencies.FirstOrDefaultAsync(c => c.Code == "PHP");
+        if (cashAccount is null || php is null)
+            return;
+
+        context.BankAccounts.Add(new BankAccount
+        {
+            BranchId = "br-hq",
+            AccountName = "Main Operating Account",
+            AccountNumber = "1234-5678-90",
+            BankName = "BDO",
+            GlAccountId = cashAccount.Id,
+            CurrencyId = php.Id
+        });
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded default bank account");
+    }
+
+    private static async Task SeedSuppliersAsync(AppDbContext context, ILogger logger)
+    {
+        if (await context.Suppliers.AnyAsync())
+            return;
+
+        var php = await context.Currencies.FirstOrDefaultAsync(c => c.Code == "PHP");
+        if (php is null)
+            return;
+
+        context.Suppliers.Add(new Supplier
+        {
+            Code = "SUP-001",
+            Name = "Sample Supplier Co.",
+            CurrencyId = php.Id,
+            Status = "active"
+        });
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded default supplier");
+    }
+
+    /// <summary>
+    /// One DRAFT + one POSTED demo purchase order, skipped entirely if no items exist yet to put on
+    /// the lines — this seeder never creates Items itself, so on a brand-new DB this is a no-op
+    /// until at least one item has been created through the app.
+    /// </summary>
+    private static async Task SeedPurchaseOrdersAsync(AppDbContext context, ILogger logger)
+    {
+        if (await context.PurchaseOrders.AnyAsync())
+            return;
+
+        var supplier = await context.Suppliers.FirstOrDefaultAsync(s => s.Code == "SUP-001");
+        var pcs = await context.Uoms.FirstOrDefaultAsync(u => u.Code == "PCS");
+        var items = await context.Items.Take(2).ToListAsync();
+        if (supplier is null || pcs is null || items.Count == 0)
+            return;
+
+        PurchaseOrderLine Line(Item item, decimal qty, decimal unitCost) => new()
+        {
+            ItemId = item.Id,
+            Qty = qty,
+            UomId = pcs.Id,
+            UnitCost = unitCost
+        };
+
+        // Deliberately NOT using the "HQ-PO-" prefix that GetNextDocumentNumberCommandHandler
+        // generates for real creates — this seeder can't safely bump the (br-hq, PO)
+        // DocumentSequence counter (SeedDocumentSequencesAsync only runs once, on a fully empty
+        // table), so a seeded "HQ-PO-000001" would collide with the first real PO ever created.
+        context.PurchaseOrders.AddRange(
+            new PurchaseOrder
+            {
+                PoNo = "DEMO-PO-0001",
+                BranchId = "br-hq",
+                SupplierId = supplier.Id,
+                OrderDate = DateTimeOffset.UtcNow,
+                Status = "DRAFT",
+                Lines = [Line(items[0], 10, 100m)]
+            },
+            new PurchaseOrder
+            {
+                PoNo = "DEMO-PO-0002",
+                BranchId = "br-hq",
+                SupplierId = supplier.Id,
+                OrderDate = DateTimeOffset.UtcNow.AddDays(-3),
+                Status = "POSTED",
+                Lines = items.Count > 1 ? [Line(items[0], 20, 100m), Line(items[1], 5, 250m)] : [Line(items[0], 20, 100m)]
+            });
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded default purchase orders");
+    }
+
+    /// <summary>
     /// One row per admin/transactional page the app actually has today — the catalog Role
     /// templates and per-user overrides grant Form-level action flags against.
     /// </summary>
     private static async Task SeedFormsAsync(AppDbContext context, ILogger logger)
     {
-        if (await context.Forms.AnyAsync())
-            return;
-
         (string Code, string Name, string Module)[] forms =
         [
             ("DASHBOARD", "Dashboard", "Dashboard"),
@@ -307,10 +466,18 @@ public static class AppDbSeeder
             ("BRANCHES", "Branches", "System"),
             ("COMPANY", "Company Settings", "System"),
             ("DOCUMENT_SEQUENCES", "Document Sequences", "System"),
+            ("CURRENCIES", "Currencies", "System"),
+            ("EXCHANGE_RATES", "Exchange Rates", "System"),
 
             ("GL_ACCOUNTS", "GL Accounts", "Accounting"),
             ("COST_CENTERS", "Cost Centers", "Accounting"),
             ("GL_JOURNALS", "Journal Entries", "Accounting"),
+            ("TAX_CODES", "Tax Codes", "Accounting"),
+            ("FISCAL_YEARS", "Fiscal Years", "Accounting"),
+            ("BANK_ACCOUNTS", "Bank Accounts", "Accounting"),
+
+            ("SUPPLIERS", "Suppliers", "Purchasing"),
+            ("PURCHASE_ORDERS", "Purchase Orders", "Purchasing"),
 
             ("UOMS", "Units of Measure", "Inventory"),
             ("ITEM_CATEGORIES", "Item Categories", "Inventory"),
@@ -333,10 +500,15 @@ public static class AppDbSeeder
             ("NOTIFICATIONS", "Notifications", "Workflow"),
         ];
 
-        context.Forms.AddRange(forms.Select(f => new Form { Code = f.Code, Name = f.Name, Module = f.Module }));
+        var existingCodes = await context.Forms.Select(f => f.Code).ToListAsync();
+        var missing = forms.Where(f => !existingCodes.Contains(f.Code)).ToList();
+        if (missing.Count == 0)
+            return;
+
+        context.Forms.AddRange(missing.Select(f => new Form { Code = f.Code, Name = f.Name, Module = f.Module }));
 
         await context.SaveChangesAsync();
-        logger.LogInformation("Seeded {Count} forms", forms.Length);
+        logger.LogInformation("Seeded {Count} forms", missing.Count);
     }
 
     /// <summary>
@@ -349,9 +521,6 @@ public static class AppDbSeeder
     /// </summary>
     private static async Task SeedRolePermissionsAsync(AppDbContext context, RoleManager<IdentityRole> roleManager, ILogger logger)
     {
-        if (await context.RolePermissions.AnyAsync())
-            return;
-
         var adminRole = await roleManager.FindByNameAsync("Admin");
         var managerRole = await roleManager.FindByNameAsync("Manager");
         var staffRole = await roleManager.FindByNameAsync("Staff");
@@ -359,6 +528,9 @@ public static class AppDbSeeder
             return;
 
         var allFormCodes = await context.Forms.Select(f => f.Code).ToListAsync();
+        var existingGrants = (await context.RolePermissions.Select(rp => new { rp.RoleId, rp.FormCode }).ToListAsync())
+            .Select(rp => (rp.RoleId, rp.FormCode))
+            .ToHashSet();
 
         (bool View, bool Create, bool Edit, bool Approve, bool Cancel, bool Delete) full = (true, true, true, true, true, true);
         (bool View, bool Create, bool Edit, bool Approve, bool Cancel, bool Delete) manage = (true, true, true, false, false, false);
@@ -370,7 +542,7 @@ public static class AppDbSeeder
 
         void Grant(string roleId, string formCode, (bool View, bool Create, bool Edit, bool Approve, bool Cancel, bool Delete) flags)
         {
-            if (!allFormCodes.Contains(formCode))
+            if (!allFormCodes.Contains(formCode) || existingGrants.Contains((roleId, formCode)))
                 return;
 
             permissions.Add(new RolePermission
@@ -392,7 +564,7 @@ public static class AppDbSeeder
         string[] managerTransactionalForms =
         [
             "GOODS_RECEIPTS", "GOODS_ISSUES", "STOCK_ADJUSTMENTS", "STOCK_OPNAMES",
-            "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS", "APPROVAL_REQUESTS"
+            "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS", "APPROVAL_REQUESTS", "PURCHASE_ORDERS"
         ];
         string[] managerMasterDataForms =
         [
@@ -401,7 +573,8 @@ public static class AppDbSeeder
         ];
         string[] managerViewOnlyForms =
         [
-            "DASHBOARD", "USERS", "BRANCHES", "DOCUMENT_SEQUENCES", "GL_ACCOUNTS", "COST_CENTERS", "GL_JOURNALS", "NOTIFICATIONS"
+            "DASHBOARD", "USERS", "BRANCHES", "DOCUMENT_SEQUENCES", "GL_ACCOUNTS", "COST_CENTERS", "GL_JOURNALS", "NOTIFICATIONS",
+            "CURRENCIES", "EXCHANGE_RATES", "TAX_CODES", "FISCAL_YEARS", "BANK_ACCOUNTS"
         ];
 
         foreach (var formCode in managerTransactionalForms)
@@ -411,23 +584,27 @@ public static class AppDbSeeder
         foreach (var formCode in managerViewOnlyForms)
             Grant(managerRole.Id, formCode, view);
         Grant(managerRole.Id, "CUSTOMERS", manage);
+        Grant(managerRole.Id, "SUPPLIERS", manage);
 
         string[] staffTransactionalForms =
         [
             "GOODS_RECEIPTS", "GOODS_ISSUES", "STOCK_ADJUSTMENTS", "STOCK_OPNAMES",
-            "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS"
+            "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS", "PURCHASE_ORDERS"
         ];
         string[] staffViewOnlyForms =
         [
             "DASHBOARD", "CUSTOMERS", "UOMS", "ITEM_CATEGORIES", "WAREHOUSES", "STORAGE_LOCATIONS",
             "ITEMS", "ADJUSTMENT_REASONS", "ITEM_BRANCH_SETTINGS", "STOCK_RESERVATIONS",
-            "SERIAL_NUMBERS", "APPROVAL_REQUESTS", "NOTIFICATIONS"
+            "SERIAL_NUMBERS", "APPROVAL_REQUESTS", "NOTIFICATIONS", "SUPPLIERS"
         ];
 
         foreach (var formCode in staffTransactionalForms)
             Grant(staffRole.Id, formCode, prepare);
         foreach (var formCode in staffViewOnlyForms)
             Grant(staffRole.Id, formCode, view);
+
+        if (permissions.Count == 0)
+            return;
 
         context.RolePermissions.AddRange(permissions);
         await context.SaveChangesAsync();
