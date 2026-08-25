@@ -1,4 +1,4 @@
-namespace ZARI.Application.Features.Purchasing.PurchaseOrders.Update;
+﻿namespace ZARI.Application.Features.Purchasing.PurchaseOrders.Update;
 
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Purchasing.PurchaseOrders.Create;
@@ -12,5 +12,6 @@ public sealed record UpdatePurchaseOrderCommand(
     DateTimeOffset OrderDate,
     DateTimeOffset? ExpectedDate,
     string? Remarks,
+    Guid? PurchaseRequestId,
     string? UpdatedBy,
     List<PurchaseOrderLineInput> Lines) : ICommand<Result<PurchaseOrderResponse>>;

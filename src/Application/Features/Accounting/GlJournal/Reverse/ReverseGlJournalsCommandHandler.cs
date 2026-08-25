@@ -43,7 +43,7 @@ public sealed class ReverseGlJournalsCommandHandler(
                 JournalNo = numberResult.Value!.DocumentNumber,
                 BranchId = original.BranchId,
                 JournalDate = command.JournalDate,
-                SourceModule = "INVENTORY",
+                SourceModule = original.SourceModule,
                 SourceReferenceTable = command.SourceReferenceTable,
                 SourceReferenceId = command.SourceReferenceId,
                 Description = command.Description ?? $"Reversal of {original.JournalNo}",

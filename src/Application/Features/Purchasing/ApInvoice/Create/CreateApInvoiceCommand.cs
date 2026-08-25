@@ -1,0 +1,18 @@
+﻿namespace ZARI.Application.Features.Purchasing.ApInvoices.Create;
+
+using ZARI.Application.Abstractions.Messaging;
+using ZARI.Application.Features.Purchasing.ApInvoices.GetAll;
+using ZARI.Domain.Common;
+
+public sealed record ApInvoiceLineInput(Guid ItemId, decimal Qty, Guid UomId, decimal UnitCost);
+
+public sealed record CreateApInvoiceCommand(
+    string BranchId,
+    Guid SupplierId,
+    Guid GoodsReceiptPoId,
+    string SupplierInvoiceNo,
+    DateTimeOffset InvoiceDate,
+    DateTimeOffset? DueDate,
+    string? Remarks,
+    string? CreatedBy,
+    List<ApInvoiceLineInput> Lines) : ICommand<Result<ApInvoiceResponse>>;

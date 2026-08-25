@@ -150,7 +150,7 @@ public sealed class ApproveGoodsIssueCommandHandler(
 
         var description = $"Goods Issue {issue.GiNo} — {issue.ReferenceType.Replace("_", " ").ToLowerInvariant()}";
         var postResult = await postGlJournalHandler.HandleAsync(
-            new PostGlJournalCommand(issue.BranchId, issue.GiDate, "GoodsIssue", issue.Id.ToString(), description, lines), cancellationToken);
+            new PostGlJournalCommand(issue.BranchId, issue.GiDate, "INVENTORY", "GoodsIssue", issue.Id.ToString(), description, lines), cancellationToken);
         return postResult.IsSuccess ? Result.Success() : Result.Failure(postResult.Error!);
     }
 

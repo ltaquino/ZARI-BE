@@ -176,7 +176,7 @@ public sealed class PostStockOpnameCommandHandler(
 
         var description = $"Stock Opname {opname.OpnameNo}";
         var postResult = await postGlJournalHandler.HandleAsync(
-            new PostGlJournalCommand(opname.BranchId, opname.CountDate, "StockOpname", opname.Id.ToString(), description, lines), cancellationToken);
+            new PostGlJournalCommand(opname.BranchId, opname.CountDate, "INVENTORY", "StockOpname", opname.Id.ToString(), description, lines), cancellationToken);
         return postResult.IsSuccess ? Result.Success() : Result.Failure(postResult.Error!);
     }
 

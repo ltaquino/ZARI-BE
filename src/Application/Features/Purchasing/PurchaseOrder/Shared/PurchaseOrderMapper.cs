@@ -1,4 +1,4 @@
-namespace ZARI.Application.Features.Purchasing.PurchaseOrders.Shared;
+﻿namespace ZARI.Application.Features.Purchasing.PurchaseOrders.Shared;
 
 using ZARI.Application.Features.Purchasing.PurchaseOrders.GetAll;
 using ZARI.Domain.Entities;
@@ -16,6 +16,7 @@ internal static class PurchaseOrderMapper
         order.ExpectedDate,
         order.Status,
         order.Remarks,
+        order.PurchaseRequestId,
         order.Lines.Select(ToLineResponse).ToList(),
         order.CancelledBy,
         order.CancelledAt,

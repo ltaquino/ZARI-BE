@@ -1,4 +1,4 @@
-namespace ZARI.Application.Features.Purchasing.PurchaseOrders.GetAll;
+﻿namespace ZARI.Application.Features.Purchasing.PurchaseOrders.GetAll;
 
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
@@ -27,6 +27,7 @@ public sealed record PurchaseOrderResponse(
     DateTimeOffset? ExpectedDate,
     string Status,
     string? Remarks,
+    Guid? PurchaseRequestId,
     List<PurchaseOrderLineResponse> Lines,
     string? CancelledBy,
     DateTimeOffset? CancelledAt,

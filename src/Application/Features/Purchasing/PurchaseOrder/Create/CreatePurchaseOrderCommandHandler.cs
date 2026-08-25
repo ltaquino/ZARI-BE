@@ -1,4 +1,4 @@
-namespace ZARI.Application.Features.Purchasing.PurchaseOrders.Create;
+﻿namespace ZARI.Application.Features.Purchasing.PurchaseOrders.Create;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
@@ -32,6 +32,13 @@ public sealed class CreatePurchaseOrderCommandHandler(
         if (supplier is null)
             return Result.Failure<PurchaseOrderResponse>(Error.NotFound("Supplier.NotFound", $"Supplier with ID '{command.SupplierId}' was not found."));
 
+        if (command.PurchaseRequestId is not null)
+        {
+            var purchaseRequestExists = await dbContext.PurchaseRequests.AnyAsync(r => r.Id == command.PurchaseRequestId, cancellationToken);
+            if (!purchaseRequestExists)
+                return Result.Failure<PurchaseOrderResponse>(Error.NotFound("PurchaseRequest.NotFound", $"Purchase request with ID '{command.PurchaseRequestId}' was not found."));
+        }
+
         var itemIds = command.Lines.Select(l => l.ItemId).Distinct().ToList();
         var items = await dbContext.Items.Where(i => itemIds.Contains(i.Id)).ToDictionaryAsync(i => i.Id, cancellationToken);
         if (items.Count != itemIds.Count)
@@ -55,6 +62,7 @@ public sealed class CreatePurchaseOrderCommandHandler(
             ExpectedDate = command.ExpectedDate,
             Status = "DRAFT",
             Remarks = command.Remarks,
+            PurchaseRequestId = command.PurchaseRequestId,
             CreatedBy = command.CreatedBy,
             Lines = command.Lines.Select(l => new PurchaseOrderLine
             {

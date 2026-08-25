@@ -219,6 +219,14 @@ public static class AppDbSeeder
             ("br-north", "JV", "NB-JV-", 1),
             ("br-hq", "SLT", "HQ-SLT-", 1),
             ("br-north", "SLT", "NB-SLT-", 1),
+            ("br-hq", "PR", "HQ-PR-", 1),
+            ("br-north", "PR", "NB-PR-", 1),
+            ("br-hq", "GRPO", "HQ-GRPO-", 1),
+            ("br-north", "GRPO", "NB-GRPO-", 1),
+            ("br-hq", "GRTN", "HQ-GRTN-", 1),
+            ("br-north", "GRTN", "NB-GRTN-", 1),
+            ("br-hq", "APINV", "HQ-APINV-", 1),
+            ("br-north", "APINV", "NB-APINV-", 1),
         ];
 
         context.DocumentSequences.AddRange(sequences.Select(s => new DocumentSequence
@@ -242,21 +250,38 @@ public static class AppDbSeeder
     /// </summary>
     private static async Task SeedGlAccountsAsync(AppDbContext context, ILogger logger)
     {
-        if (await context.GlAccounts.AnyAsync())
+        (string Code, string Name, string AccountType, string NormalBalance)[] accounts =
+        [
+            ("1000", "Cash on Hand", "Asset", "Debit"),
+            ("1200", "Accounts Receivable", "Asset", "Debit"),
+            ("1400", "Inventory Asset", "Asset", "Debit"),
+            ("1450", "Inventory In-Transit", "Asset", "Debit"),
+            ("2000", "Accounts Payable", "Liability", "Credit"),
+            // Holds the liability for goods physically received but not yet formally billed by the
+            // vendor — GRPO credits it (Dr Inventory), AP Invoice debits it (Cr Accounts Payable) to
+            // convert the holding liability into a real payable. Goods Return reverses GRPO's side.
+            ("2100", "Goods Received Not Invoiced", "Liability", "Credit"),
+            ("4000", "Sales Revenue", "Revenue", "Credit"),
+            ("5000", "Cost of Goods Sold", "Cogs", "Debit"),
+            ("5100", "Inventory Variance / Shrinkage", "Cogs", "Debit"),
+        ];
+
+        var existingCodes = await context.GlAccounts.Select(a => a.Code).ToListAsync();
+        var missing = accounts.Where(a => !existingCodes.Contains(a.Code)).ToList();
+        if (missing.Count == 0)
             return;
 
-        context.GlAccounts.AddRange(
-            new GlAccount { Code = "1000", Name = "Cash on Hand", AccountType = "Asset", NormalBalance = "Debit", Status = "active" },
-            new GlAccount { Code = "1200", Name = "Accounts Receivable", AccountType = "Asset", NormalBalance = "Debit", Status = "active" },
-            new GlAccount { Code = "1400", Name = "Inventory Asset", AccountType = "Asset", NormalBalance = "Debit", Status = "active" },
-            new GlAccount { Code = "1450", Name = "Inventory In-Transit", AccountType = "Asset", NormalBalance = "Debit", Status = "active" },
-            new GlAccount { Code = "2000", Name = "Accounts Payable", AccountType = "Liability", NormalBalance = "Credit", Status = "active" },
-            new GlAccount { Code = "4000", Name = "Sales Revenue", AccountType = "Revenue", NormalBalance = "Credit", Status = "active" },
-            new GlAccount { Code = "5000", Name = "Cost of Goods Sold", AccountType = "Cogs", NormalBalance = "Debit", Status = "active" },
-            new GlAccount { Code = "5100", Name = "Inventory Variance / Shrinkage", AccountType = "Cogs", NormalBalance = "Debit", Status = "active" });
+        context.GlAccounts.AddRange(missing.Select(a => new GlAccount
+        {
+            Code = a.Code,
+            Name = a.Name,
+            AccountType = a.AccountType,
+            NormalBalance = a.NormalBalance,
+            Status = "active"
+        }));
 
         await context.SaveChangesAsync();
-        logger.LogInformation("Seeded default GL accounts");
+        logger.LogInformation("Seeded {Count} GL accounts", missing.Count);
     }
 
     private static async Task SeedCostCentersAsync(AppDbContext context, ILogger logger)
@@ -478,6 +503,11 @@ public static class AppDbSeeder
 
             ("SUPPLIERS", "Suppliers", "Purchasing"),
             ("PURCHASE_ORDERS", "Purchase Orders", "Purchasing"),
+            ("PURCHASE_REQUESTS", "Purchase Requests", "Purchasing"),
+            ("GOODS_RECEIPT_PO", "Goods Receipt (PO)", "Purchasing"),
+            ("GOODS_RETURNS", "Goods Returns", "Purchasing"),
+            ("AP_INVOICES", "AP Invoices", "Purchasing"),
+            ("PURCHASE_RETURN_REASONS", "Purchase Return Reasons", "Purchasing"),
 
             ("UOMS", "Units of Measure", "Inventory"),
             ("ITEM_CATEGORIES", "Item Categories", "Inventory"),
@@ -564,12 +594,14 @@ public static class AppDbSeeder
         string[] managerTransactionalForms =
         [
             "GOODS_RECEIPTS", "GOODS_ISSUES", "STOCK_ADJUSTMENTS", "STOCK_OPNAMES",
-            "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS", "APPROVAL_REQUESTS", "PURCHASE_ORDERS"
+            "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS", "APPROVAL_REQUESTS", "PURCHASE_ORDERS",
+            "PURCHASE_REQUESTS", "GOODS_RECEIPT_PO", "GOODS_RETURNS", "AP_INVOICES"
         ];
         string[] managerMasterDataForms =
         [
             "UOMS", "ITEM_CATEGORIES", "WAREHOUSES", "STORAGE_LOCATIONS", "ITEMS",
-            "ADJUSTMENT_REASONS", "ITEM_BRANCH_SETTINGS", "STOCK_RESERVATIONS", "SERIAL_NUMBERS"
+            "ADJUSTMENT_REASONS", "ITEM_BRANCH_SETTINGS", "STOCK_RESERVATIONS", "SERIAL_NUMBERS",
+            "PURCHASE_RETURN_REASONS"
         ];
         string[] managerViewOnlyForms =
         [
@@ -589,13 +621,14 @@ public static class AppDbSeeder
         string[] staffTransactionalForms =
         [
             "GOODS_RECEIPTS", "GOODS_ISSUES", "STOCK_ADJUSTMENTS", "STOCK_OPNAMES",
-            "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS", "PURCHASE_ORDERS"
+            "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS", "PURCHASE_ORDERS",
+            "PURCHASE_REQUESTS", "GOODS_RECEIPT_PO", "GOODS_RETURNS", "AP_INVOICES"
         ];
         string[] staffViewOnlyForms =
         [
             "DASHBOARD", "CUSTOMERS", "UOMS", "ITEM_CATEGORIES", "WAREHOUSES", "STORAGE_LOCATIONS",
             "ITEMS", "ADJUSTMENT_REASONS", "ITEM_BRANCH_SETTINGS", "STOCK_RESERVATIONS",
-            "SERIAL_NUMBERS", "APPROVAL_REQUESTS", "NOTIFICATIONS", "SUPPLIERS"
+            "SERIAL_NUMBERS", "APPROVAL_REQUESTS", "NOTIFICATIONS", "SUPPLIERS", "PURCHASE_RETURN_REASONS"
         ];
 
         foreach (var formCode in staffTransactionalForms)

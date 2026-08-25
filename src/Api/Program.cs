@@ -144,6 +144,11 @@ try
     app.MapBankAccountEndpoints();
     app.MapSupplierEndpoints();
     app.MapPurchaseOrderEndpoints();
+    app.MapPurchaseRequestEndpoints();
+    app.MapGoodsReceiptPoEndpoints();
+    app.MapGoodsReturnEndpoints();
+    app.MapApInvoiceEndpoints();
+    app.MapPurchaseReturnReasonEndpoints();
     //app.MapGet("/debug-user", (HttpContext ctx) =>
     //{
     //    return new

@@ -9,6 +9,7 @@ public sealed record PostGlJournalLineInput(Guid AccountId, Guid? CostCenterId, 
 public sealed record PostGlJournalCommand(
     string BranchId,
     DateTimeOffset JournalDate,
+    string SourceModule,
     string SourceReferenceTable,
     string SourceReferenceId,
     string? Description,

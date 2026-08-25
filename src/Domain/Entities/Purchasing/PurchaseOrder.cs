@@ -1,4 +1,4 @@
-namespace ZARI.Domain.Entities;
+﻿namespace ZARI.Domain.Entities;
 
 using ZARI.Domain.Common;
 
@@ -18,4 +18,8 @@ public sealed class PurchaseOrder : AuditableEntity
     public string? CancelledBy { get; set; }
     public DateTimeOffset? CancelledAt { get; set; }
     public string? CancelReason { get; set; }
+
+    // Optional -- set when this PO was created from an approved Purchase Request.
+    public Guid? PurchaseRequestId { get; set; }
+    public PurchaseRequest? PurchaseRequest { get; set; }
 }

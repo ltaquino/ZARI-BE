@@ -1,4 +1,4 @@
-namespace ZARI.Application.Features.Purchasing.PurchaseOrders.Update;
+﻿namespace ZARI.Application.Features.Purchasing.PurchaseOrders.Update;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
@@ -40,6 +40,13 @@ public sealed class UpdatePurchaseOrderCommandHandler(
         if (supplier is null)
             return Result.Failure<PurchaseOrderResponse>(Error.NotFound("Supplier.NotFound", $"Supplier with ID '{command.SupplierId}' was not found."));
 
+        if (command.PurchaseRequestId is not null)
+        {
+            var purchaseRequestExists = await dbContext.PurchaseRequests.AnyAsync(r => r.Id == command.PurchaseRequestId, cancellationToken);
+            if (!purchaseRequestExists)
+                return Result.Failure<PurchaseOrderResponse>(Error.NotFound("PurchaseRequest.NotFound", $"Purchase request with ID '{command.PurchaseRequestId}' was not found."));
+        }
+
         var itemIds = command.Lines.Select(l => l.ItemId).Distinct().ToList();
         var items = await dbContext.Items.Where(i => itemIds.Contains(i.Id)).ToDictionaryAsync(i => i.Id, cancellationToken);
         if (items.Count != itemIds.Count)
@@ -55,6 +62,7 @@ public sealed class UpdatePurchaseOrderCommandHandler(
         order.OrderDate = command.OrderDate;
         order.ExpectedDate = command.ExpectedDate;
         order.Remarks = command.Remarks;
+        order.PurchaseRequestId = command.PurchaseRequestId;
 
         order.Lines.Clear();
         foreach (var line in command.Lines)

@@ -46,7 +46,7 @@ public sealed class PostGlJournalCommandHandler(
             JournalNo = numberResult.Value!.DocumentNumber,
             BranchId = command.BranchId,
             JournalDate = command.JournalDate,
-            SourceModule = "INVENTORY",
+            SourceModule = command.SourceModule,
             SourceReferenceTable = command.SourceReferenceTable,
             SourceReferenceId = command.SourceReferenceId,
             Description = command.Description,

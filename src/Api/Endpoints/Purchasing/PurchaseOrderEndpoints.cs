@@ -1,4 +1,4 @@
-using FluentValidation;
+﻿using FluentValidation;
 using ZARI.Api.Extensions;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Purchasing.PurchaseOrders.ApproveCancellation;
@@ -73,7 +73,7 @@ public static class PurchaseOrderEndpoints
 
         group.MapPost("/{id:guid}/reject-cancellation", RejectCancellation)
             .WithName("RejectPurchaseOrderCancellation")
-            .WithSummary("Reject a cancellation request — the document stands as posted");
+            .WithSummary("Reject a cancellation request â€” the document stands as posted");
     }
 
     private static async Task<IResult> GetAll(
@@ -112,7 +112,7 @@ public static class PurchaseOrderEndpoints
         CancellationToken cancellationToken)
     {
         var command = new UpdatePurchaseOrderCommand(
-            id, request.BranchId, request.SupplierId, request.OrderDate, request.ExpectedDate, request.Remarks, request.UpdatedBy, request.Lines);
+            id, request.BranchId, request.SupplierId, request.OrderDate, request.ExpectedDate, request.Remarks, request.PurchaseRequestId, request.UpdatedBy, request.Lines);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
         var result = await handler.HandleAsync(command, cancellationToken);
@@ -233,6 +233,7 @@ public sealed record UpdatePurchaseOrderRequest(
     DateTimeOffset OrderDate,
     DateTimeOffset? ExpectedDate,
     string? Remarks,
+    Guid? PurchaseRequestId,
     string? UpdatedBy,
     List<PurchaseOrderLineInput> Lines);
 

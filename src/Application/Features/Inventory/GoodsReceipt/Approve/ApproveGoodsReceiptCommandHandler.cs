@@ -146,7 +146,7 @@ public sealed class ApproveGoodsReceiptCommandHandler(
 
         var description = $"Goods Receipt {receipt.GrNo} — {(isTransfer ? "transfer in" : "manual receipt")}";
         var postResult = await postGlJournalHandler.HandleAsync(
-            new PostGlJournalCommand(receipt.BranchId, receipt.GrDate, "GoodsReceipt", receipt.Id.ToString(), description, lines), cancellationToken);
+            new PostGlJournalCommand(receipt.BranchId, receipt.GrDate, "INVENTORY", "GoodsReceipt", receipt.Id.ToString(), description, lines), cancellationToken);
         return postResult.IsSuccess ? Result.Success() : Result.Failure(postResult.Error!);
     }
 

@@ -184,7 +184,7 @@ public sealed class ApproveStockAdjustmentCommandHandler(
 
         var description = $"Stock Adjustment {adjustment.AdjustmentNo}";
         var postResult = await postGlJournalHandler.HandleAsync(
-            new PostGlJournalCommand(adjustment.BranchId, adjustment.AdjustmentDate, "StockAdjustment", adjustment.Id.ToString(), description, lines), cancellationToken);
+            new PostGlJournalCommand(adjustment.BranchId, adjustment.AdjustmentDate, "INVENTORY", "StockAdjustment", adjustment.Id.ToString(), description, lines), cancellationToken);
         return postResult.IsSuccess ? Result.Success() : Result.Failure(postResult.Error!);
     }
 

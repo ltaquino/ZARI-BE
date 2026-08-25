@@ -1,4 +1,4 @@
-using ZARI.Domain.Entities;
+﻿using ZARI.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -27,6 +27,11 @@ public sealed class PurchaseOrderConfiguration : BaseModelConfig, IEntityTypeCon
         builder.HasOne(p => p.Supplier)
             .WithMany()
             .HasForeignKey(p => p.SupplierId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(p => p.PurchaseRequest)
+            .WithMany()
+            .HasForeignKey(p => p.PurchaseRequestId)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasMany(p => p.Lines)

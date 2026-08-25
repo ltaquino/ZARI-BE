@@ -1,4 +1,4 @@
-namespace ZARI.Application.Features.Purchasing.PurchaseOrders.Create;
+﻿namespace ZARI.Application.Features.Purchasing.PurchaseOrders.Create;
 
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Purchasing.PurchaseOrders.GetAll;
@@ -12,5 +12,6 @@ public sealed record CreatePurchaseOrderCommand(
     DateTimeOffset OrderDate,
     DateTimeOffset? ExpectedDate,
     string? Remarks,
+    Guid? PurchaseRequestId,
     string? CreatedBy,
     List<PurchaseOrderLineInput> Lines) : ICommand<Result<PurchaseOrderResponse>>;
