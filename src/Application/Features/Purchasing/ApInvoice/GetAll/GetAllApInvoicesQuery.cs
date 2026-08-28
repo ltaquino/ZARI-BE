@@ -16,6 +16,14 @@ public sealed record ApInvoiceLineResponse(
     string UomCode,
     decimal UnitCost);
 
+public sealed record ApInvoiceExpenseLineResponse(
+    Guid Id,
+    Guid GlAccountId,
+    string GlAccountCode,
+    string GlAccountName,
+    string Description,
+    decimal Amount);
+
 public sealed record ApInvoiceResponse(
     Guid Id,
     string InvoiceNo,
@@ -23,14 +31,17 @@ public sealed record ApInvoiceResponse(
     Guid SupplierId,
     string SupplierCode,
     string SupplierName,
-    Guid GoodsReceiptPoId,
-    string GrpoNo,
+    string InvoiceType,
+    Guid? GoodsReceiptPoId,
+    string? GrpoNo,
     string SupplierInvoiceNo,
     DateTimeOffset InvoiceDate,
     DateTimeOffset? DueDate,
     string Status,
     string? Remarks,
     List<ApInvoiceLineResponse> Lines,
+    List<ApInvoiceExpenseLineResponse> ExpenseLines,
+    decimal AmountPaid,
     string? CancelledBy,
     DateTimeOffset? CancelledAt,
     string? CancelReason,

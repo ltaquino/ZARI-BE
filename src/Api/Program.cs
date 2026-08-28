@@ -149,6 +149,7 @@ try
     app.MapGoodsReturnEndpoints();
     app.MapApInvoiceEndpoints();
     app.MapPurchaseReturnReasonEndpoints();
+    app.MapOutgoingPaymentEndpoints();
     //app.MapGet("/debug-user", (HttpContext ctx) =>
     //{
     //    return new

@@ -34,9 +34,10 @@ public sealed class ApproveApInvoiceCommandHandler(
     {
         var invoice = await dbContext.ApInvoices
             .Include(i => i.Supplier)
-            .Include(i => i.GoodsReceiptPo)
+            .Include(i => i.GoodsReceiptPo).ThenInclude(g => g!.Lines)
             .Include(i => i.Lines).ThenInclude(l => l.Item)
             .Include(i => i.Lines).ThenInclude(l => l.Uom)
+            .Include(i => i.ExpenseLines).ThenInclude(l => l.GlAccount)
             .FirstOrDefaultAsync(i => i.Id == command.Id, cancellationToken);
 
         if (invoice is null)
@@ -76,11 +77,55 @@ public sealed class ApproveApInvoiceCommandHandler(
         return Result.Success(ApInvoiceMapper.ToResponse(invoice));
     }
 
-    private async Task<Result> PostApInvoiceJournalAsync(ApInvoice invoice, CancellationToken cancellationToken)
+    /// <summary>Dispatches to the ITEM (GRNI-clearing) or EXPENSE (direct-billing) journal shape.</summary>
+    private Task<Result> PostApInvoiceJournalAsync(ApInvoice invoice, CancellationToken cancellationToken) =>
+        invoice.InvoiceType == "EXPENSE"
+            ? PostExpenseInvoiceJournalAsync(invoice, cancellationToken)
+            : PostItemInvoiceJournalAsync(invoice, cancellationToken);
+
+    /// <summary>
+    /// No GRPO, no GRNI, no PPV — each expense line debits the GL account the encoder picked for it
+    /// (utilities, professional fees, manpower/salaries, etc.), one journal line per invoice line so
+    /// each keeps its own description as the line memo. Single balanced journal: Dr each expense
+    /// account for its own line amount = Cr AP(total).
+    /// </summary>
+    private async Task<Result> PostExpenseInvoiceJournalAsync(ApInvoice invoice, CancellationToken cancellationToken)
     {
-        var total = invoice.Lines.Sum(l => Math.Round(l.Qty * l.UnitCost, 4));
+        var total = invoice.ExpenseLines.Sum(l => Math.Round(l.Amount, 4));
         if (total <= 0)
             return Result.Success();
+
+        var apAccountResult = await GetDefaultAccountIdAsync("2000", "Accounts Payable", cancellationToken);
+        if (!apAccountResult.IsSuccess)
+            return Result.Failure(apAccountResult.Error!);
+
+        var lines = invoice.ExpenseLines
+            .Select(l => new PostGlJournalLineInput(l.GlAccountId, null, Math.Round(l.Amount, 4), 0, l.Description))
+            .ToList();
+        lines.Add(new PostGlJournalLineInput(apAccountResult.Value, null, 0, total, null));
+
+        var description = $"AP Invoice {invoice.InvoiceNo} — {invoice.Supplier.Name} (expense)";
+        var postResult = await postGlJournalHandler.HandleAsync(
+            new PostGlJournalCommand(invoice.BranchId, invoice.InvoiceDate, "PURCHASING", "ApInvoice", invoice.Id.ToString(), description, lines), cancellationToken);
+        return postResult.IsSuccess ? Result.Success() : Result.Failure(postResult.Error!);
+    }
+
+    /// <summary>
+    /// GRNI clears at the GRPO's own originally-received value, not the invoice's — if the vendor's
+    /// bill differs from what was actually received, the difference is swept into "5200 Purchase
+    /// Price Variance" rather than left as a stray balance in the GRNI holding account. Unfavorable
+    /// (invoiced more than received) debits PPV; favorable (invoiced less) credits it. Still a single
+    /// balanced journal: Dr GRNI(grpoTotal) [+ Dr PPV(variance) if unfavorable] = Cr AP(invoiceTotal)
+    /// [+ Cr PPV(-variance) if favorable].
+    /// </summary>
+    private async Task<Result> PostItemInvoiceJournalAsync(ApInvoice invoice, CancellationToken cancellationToken)
+    {
+        var invoiceTotal = invoice.Lines.Sum(l => Math.Round(l.Qty * l.UnitCost, 4));
+        if (invoiceTotal <= 0)
+            return Result.Success();
+
+        var grpoTotal = invoice.GoodsReceiptPo!.Lines.Sum(l => Math.Round(l.QtyReceived * l.UnitCost, 4));
+        var variance = invoiceTotal - grpoTotal;
 
         var grniAccountResult = await GetDefaultAccountIdAsync("2100", "Goods Received Not Invoiced", cancellationToken);
         if (!grniAccountResult.IsSuccess)
@@ -92,9 +137,20 @@ public sealed class ApproveApInvoiceCommandHandler(
 
         var lines = new List<PostGlJournalLineInput>
         {
-            new(grniAccountResult.Value, null, total, 0, null),
-            new(apAccountResult.Value, null, 0, total, null)
+            new(grniAccountResult.Value, null, grpoTotal, 0, null),
+            new(apAccountResult.Value, null, 0, invoiceTotal, null)
         };
+
+        if (variance != 0)
+        {
+            var ppvAccountResult = await GetDefaultAccountIdAsync("5200", "Purchase Price Variance", cancellationToken);
+            if (!ppvAccountResult.IsSuccess)
+                return Result.Failure(ppvAccountResult.Error!);
+
+            lines.Add(variance > 0
+                ? new PostGlJournalLineInput(ppvAccountResult.Value, null, variance, 0, null)
+                : new PostGlJournalLineInput(ppvAccountResult.Value, null, 0, -variance, null));
+        }
 
         var description = $"AP Invoice {invoice.InvoiceNo} — {invoice.Supplier.Name}";
         var postResult = await postGlJournalHandler.HandleAsync(

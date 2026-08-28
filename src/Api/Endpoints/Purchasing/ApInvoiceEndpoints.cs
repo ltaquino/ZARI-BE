@@ -112,7 +112,7 @@ public static class ApInvoiceEndpoints
         CancellationToken cancellationToken)
     {
         var command = new UpdateApInvoiceCommand(
-            id, request.SupplierInvoiceNo, request.InvoiceDate, request.DueDate, request.Remarks, request.UpdatedBy, request.Lines);
+            id, request.SupplierInvoiceNo, request.InvoiceDate, request.DueDate, request.Remarks, request.UpdatedBy, request.Lines, request.ExpenseLines);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
         var result = await handler.HandleAsync(command, cancellationToken);
@@ -233,7 +233,8 @@ public sealed record UpdateApInvoiceRequest(
     DateTimeOffset? DueDate,
     string? Remarks,
     string? UpdatedBy,
-    List<ApInvoiceLineInput> Lines);
+    List<ApInvoiceLineInput> Lines,
+    List<ApInvoiceExpenseLineInput> ExpenseLines);
 
 public sealed record SubmitApInvoiceRequest(string RequestedBy);
 public sealed record DecideApInvoiceRequest(string ApproverUserId, string? Comments);

@@ -229,13 +229,18 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("DueDate")
                         .HasColumnType("datetime(6)");
 
-                    b.Property<Guid>("GoodsReceiptPoId")
+                    b.Property<Guid?>("GoodsReceiptPoId")
                         .HasColumnType("char(36)");
 
                     b.Property<DateTimeOffset>("InvoiceDate")
                         .HasColumnType("datetime(6)");
 
                     b.Property<string>("InvoiceNo")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("InvoiceType")
                         .IsRequired()
                         .HasMaxLength(25)
                         .HasColumnType("varchar(25)");
@@ -276,6 +281,35 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.ToTable("ApInvoices");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.ApInvoiceExpenseLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<Guid>("ApInvoiceId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<Guid>("GlAccountId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApInvoiceId");
+
+                    b.HasIndex("GlAccountId");
+
+                    b.ToTable("ApInvoiceExpenseLines");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.ApInvoiceLine", b =>
@@ -1966,6 +2000,105 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.ToTable("NotificationReads");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.OutgoingPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("BankAccountId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CancelledBy")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset>("PaymentDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("PaymentNo")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("RefNo")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<Guid>("SupplierId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BankAccountId");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("PaymentNo")
+                        .IsUnique();
+
+                    b.HasIndex("SupplierId");
+
+                    b.ToTable("OutgoingPayments");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.OutgoingPaymentLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<Guid>("ApInvoiceId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("OutgoingPaymentId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApInvoiceId");
+
+                    b.HasIndex("OutgoingPaymentId");
+
+                    b.ToTable("OutgoingPaymentLines");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.PurchaseOrder", b =>
                 {
                     b.Property<Guid>("Id")
@@ -3404,8 +3537,7 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.HasOne("ZARI.Domain.Entities.GoodsReceiptPo", "GoodsReceiptPo")
                         .WithMany()
                         .HasForeignKey("GoodsReceiptPoId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.Restrict);
 
                     b.HasOne("ZARI.Domain.Entities.Supplier", "Supplier")
                         .WithMany()
@@ -3418,6 +3550,25 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Navigation("GoodsReceiptPo");
 
                     b.Navigation("Supplier");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.ApInvoiceExpenseLine", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.ApInvoice", "ApInvoice")
+                        .WithMany("ExpenseLines")
+                        .HasForeignKey("ApInvoiceId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.GlAccount", "GlAccount")
+                        .WithMany()
+                        .HasForeignKey("GlAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("ApInvoice");
+
+                    b.Navigation("GlAccount");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.ApInvoiceLine", b =>
@@ -3940,6 +4091,52 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Navigation("Notification");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.OutgoingPayment", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.BankAccount", "BankAccount")
+                        .WithMany()
+                        .HasForeignKey("BankAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Supplier", "Supplier")
+                        .WithMany()
+                        .HasForeignKey("SupplierId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("BankAccount");
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Supplier");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.OutgoingPaymentLine", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.ApInvoice", "ApInvoice")
+                        .WithMany()
+                        .HasForeignKey("ApInvoiceId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.OutgoingPayment", "OutgoingPayment")
+                        .WithMany("Lines")
+                        .HasForeignKey("OutgoingPaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("ApInvoice");
+
+                    b.Navigation("OutgoingPayment");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.PurchaseOrder", b =>
                 {
                     b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
@@ -4445,6 +4642,8 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
             modelBuilder.Entity("ZARI.Domain.Entities.ApInvoice", b =>
                 {
+                    b.Navigation("ExpenseLines");
+
                     b.Navigation("Lines");
                 });
 
@@ -4481,6 +4680,11 @@ namespace ZARI.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("ZARI.Domain.Entities.Notification", b =>
                 {
                     b.Navigation("Reads");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.OutgoingPayment", b =>
+                {
+                    b.Navigation("Lines");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.PurchaseOrder", b =>

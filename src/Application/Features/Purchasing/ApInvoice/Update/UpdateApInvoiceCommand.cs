@@ -1,4 +1,4 @@
-﻿namespace ZARI.Application.Features.Purchasing.ApInvoices.Update;
+namespace ZARI.Application.Features.Purchasing.ApInvoices.Update;
 
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Purchasing.ApInvoices.Create;
@@ -12,4 +12,5 @@ public sealed record UpdateApInvoiceCommand(
     DateTimeOffset? DueDate,
     string? Remarks,
     string? UpdatedBy,
-    List<ApInvoiceLineInput> Lines) : ICommand<Result<ApInvoiceResponse>>;
+    List<ApInvoiceLineInput> Lines,
+    List<ApInvoiceExpenseLineInput> ExpenseLines) : ICommand<Result<ApInvoiceResponse>>;

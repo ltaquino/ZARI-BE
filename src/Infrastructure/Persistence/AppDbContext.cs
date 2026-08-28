@@ -66,7 +66,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<GoodsReturnLine> GoodsReturnLines => Set<GoodsReturnLine>();
     public DbSet<ApInvoice> ApInvoices => Set<ApInvoice>();
     public DbSet<ApInvoiceLine> ApInvoiceLines => Set<ApInvoiceLine>();
+    public DbSet<ApInvoiceExpenseLine> ApInvoiceExpenseLines => Set<ApInvoiceExpenseLine>();
     public DbSet<PurchaseReturnReason> PurchaseReturnReasons => Set<PurchaseReturnReason>();
+    public DbSet<OutgoingPayment> OutgoingPayments => Set<OutgoingPayment>();
+    public DbSet<OutgoingPaymentLine> OutgoingPaymentLines => Set<OutgoingPaymentLine>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

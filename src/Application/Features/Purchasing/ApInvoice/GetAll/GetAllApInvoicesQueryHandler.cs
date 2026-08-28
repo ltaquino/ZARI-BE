@@ -19,9 +19,11 @@ public sealed class GetAllApInvoicesQueryHandler(IAppDbContext dbContext, IPermi
             .Include(i => i.GoodsReceiptPo)
             .Include(i => i.Lines).ThenInclude(l => l.Item)
             .Include(i => i.Lines).ThenInclude(l => l.Uom)
+            .Include(i => i.ExpenseLines).ThenInclude(l => l.GlAccount)
             .OrderByDescending(i => i.InvoiceDate)
             .ToListAsync(cancellationToken);
 
-        return Result.Success(invoices.Select(ApInvoiceMapper.ToResponse).ToList());
+        var amountsPaid = await ApInvoicePaymentBalance.GetAmountsPaidAsync(dbContext, invoices.Select(i => i.Id), cancellationToken);
+        return Result.Success(invoices.Select(i => ApInvoiceMapper.ToResponse(i, amountsPaid[i.Id])).ToList());
     }
 }

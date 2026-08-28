@@ -12,6 +12,7 @@ public sealed class ApInvoiceConfiguration : BaseModelConfig, IEntityTypeConfigu
 
         builder.Property(i => i.InvoiceNo).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
         builder.Property(i => i.BranchId).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
+        builder.Property(i => i.InvoiceType).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
         builder.Property(i => i.SupplierInvoiceNo).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_150);
         builder.Property(i => i.Status).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
         builder.Property(i => i.Remarks).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
@@ -37,9 +38,15 @@ public sealed class ApInvoiceConfiguration : BaseModelConfig, IEntityTypeConfigu
         builder.HasOne(i => i.GoodsReceiptPo)
             .WithMany()
             .HasForeignKey(i => i.GoodsReceiptPoId)
-            .OnDelete(DeleteBehavior.Restrict);
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
 
         builder.HasMany(i => i.Lines)
+            .WithOne(l => l.ApInvoice)
+            .HasForeignKey(l => l.ApInvoiceId)
+            .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(i => i.ExpenseLines)
             .WithOne(l => l.ApInvoice)
             .HasForeignKey(l => l.ApInvoiceId)
             .OnDelete(DeleteBehavior.Cascade);

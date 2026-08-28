@@ -227,6 +227,8 @@ public static class AppDbSeeder
             ("br-north", "GRTN", "NB-GRTN-", 1),
             ("br-hq", "APINV", "HQ-APINV-", 1),
             ("br-north", "APINV", "NB-APINV-", 1),
+            ("br-hq", "OP", "HQ-OP-", 1),
+            ("br-north", "OP", "NB-OP-", 1),
         ];
 
         context.DocumentSequences.AddRange(sequences.Select(s => new DocumentSequence
@@ -264,6 +266,18 @@ public static class AppDbSeeder
             ("4000", "Sales Revenue", "Revenue", "Credit"),
             ("5000", "Cost of Goods Sold", "Cogs", "Debit"),
             ("5100", "Inventory Variance / Shrinkage", "Cogs", "Debit"),
+            // Absorbs the difference when an AP Invoice's billed amount differs from the GRPO's
+            // originally-received value, so GRNI always clears at the exact amount the GRPO posted.
+            ("5200", "Purchase Price Variance", "Cogs", "Debit"),
+            // Starter operating-expense accounts for EXPENSE-type AP Invoices (service/expense
+            // billing with no GRPO — utilities, professional fees, manpower/salaries, etc.). The
+            // expense line picker isn't restricted to just these — any active Expense/Cogs account
+            // works — but these cover the common cases out of the box.
+            ("6000", "Utilities Expense", "Expense", "Debit"),
+            ("6010", "Professional Fees", "Expense", "Debit"),
+            ("6020", "Salaries and Wages", "Expense", "Debit"),
+            ("6030", "Rent Expense", "Expense", "Debit"),
+            ("6900", "Other Operating Expense", "Expense", "Debit"),
         ];
 
         var existingCodes = await context.GlAccounts.Select(a => a.Code).ToListAsync();
@@ -507,6 +521,7 @@ public static class AppDbSeeder
             ("GOODS_RECEIPT_PO", "Goods Receipt (PO)", "Purchasing"),
             ("GOODS_RETURNS", "Goods Returns", "Purchasing"),
             ("AP_INVOICES", "AP Invoices", "Purchasing"),
+            ("OUTGOING_PAYMENTS", "Outgoing Payments", "Purchasing"),
             ("PURCHASE_RETURN_REASONS", "Purchase Return Reasons", "Purchasing"),
 
             ("UOMS", "Units of Measure", "Inventory"),
@@ -595,7 +610,7 @@ public static class AppDbSeeder
         [
             "GOODS_RECEIPTS", "GOODS_ISSUES", "STOCK_ADJUSTMENTS", "STOCK_OPNAMES",
             "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS", "APPROVAL_REQUESTS", "PURCHASE_ORDERS",
-            "PURCHASE_REQUESTS", "GOODS_RECEIPT_PO", "GOODS_RETURNS", "AP_INVOICES"
+            "PURCHASE_REQUESTS", "GOODS_RECEIPT_PO", "GOODS_RETURNS", "AP_INVOICES", "OUTGOING_PAYMENTS"
         ];
         string[] managerMasterDataForms =
         [
@@ -622,7 +637,7 @@ public static class AppDbSeeder
         [
             "GOODS_RECEIPTS", "GOODS_ISSUES", "STOCK_ADJUSTMENTS", "STOCK_OPNAMES",
             "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS", "PURCHASE_ORDERS",
-            "PURCHASE_REQUESTS", "GOODS_RECEIPT_PO", "GOODS_RETURNS", "AP_INVOICES"
+            "PURCHASE_REQUESTS", "GOODS_RECEIPT_PO", "GOODS_RETURNS", "AP_INVOICES", "OUTGOING_PAYMENTS"
         ];
         string[] staffViewOnlyForms =
         [

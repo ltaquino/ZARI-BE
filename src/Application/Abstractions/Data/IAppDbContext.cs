@@ -64,7 +64,10 @@ public interface IAppDbContext
     DbSet<GoodsReturnLine> GoodsReturnLines { get; }
     DbSet<ApInvoice> ApInvoices { get; }
     DbSet<ApInvoiceLine> ApInvoiceLines { get; }
+    DbSet<ApInvoiceExpenseLine> ApInvoiceExpenseLines { get; }
     DbSet<PurchaseReturnReason> PurchaseReturnReasons { get; }
+    DbSet<OutgoingPayment> OutgoingPayments { get; }
+    DbSet<OutgoingPaymentLine> OutgoingPaymentLines { get; }
 
     // Exposed only for the stock-ledger posting handlers, which need an explicit transaction plus
     // raw-SQL "FOR UPDATE" locking (see Application/Features/Inventory/StockLedger/Shared/

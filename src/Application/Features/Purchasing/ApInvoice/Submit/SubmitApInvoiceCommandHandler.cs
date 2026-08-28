@@ -27,6 +27,7 @@ public sealed class SubmitApInvoiceCommandHandler(
             .Include(i => i.GoodsReceiptPo)
             .Include(i => i.Lines).ThenInclude(l => l.Item)
             .Include(i => i.Lines).ThenInclude(l => l.Uom)
+            .Include(i => i.ExpenseLines).ThenInclude(l => l.GlAccount)
             .FirstOrDefaultAsync(i => i.Id == command.Id, cancellationToken);
 
         if (invoice is null)
@@ -38,7 +39,7 @@ public sealed class SubmitApInvoiceCommandHandler(
         if (invoice.Status != "DRAFT")
             return Result.Failure<ApInvoiceResponse>(Error.Validation("ApInvoice.NotDraft", "Only draft AP invoices can be submitted for approval."));
 
-        if (invoice.Lines.Count == 0)
+        if (invoice.Lines.Count == 0 && invoice.ExpenseLines.Count == 0)
             return Result.Failure<ApInvoiceResponse>(Error.Validation("ApInvoice.NoLines", "Add at least one line before submitting for approval."));
 
         var submitResult = await submitForApprovalHandler.HandleAsync(

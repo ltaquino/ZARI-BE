@@ -35,6 +35,7 @@ public sealed class ApproveApInvoiceCancellationCommandHandler(
             .Include(i => i.GoodsReceiptPo)
             .Include(i => i.Lines).ThenInclude(l => l.Item)
             .Include(i => i.Lines).ThenInclude(l => l.Uom)
+            .Include(i => i.ExpenseLines).ThenInclude(l => l.GlAccount)
             .FirstOrDefaultAsync(i => i.Id == command.Id, cancellationToken);
 
         if (invoice is null)

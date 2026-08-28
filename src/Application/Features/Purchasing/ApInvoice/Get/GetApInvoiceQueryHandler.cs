@@ -17,6 +17,7 @@ public sealed class GetApInvoiceQueryHandler(IAppDbContext dbContext, IPermissio
             .Include(i => i.GoodsReceiptPo)
             .Include(i => i.Lines).ThenInclude(l => l.Item)
             .Include(i => i.Lines).ThenInclude(l => l.Uom)
+            .Include(i => i.ExpenseLines).ThenInclude(l => l.GlAccount)
             .FirstOrDefaultAsync(i => i.Id == query.Id, cancellationToken);
 
         if (invoice is null)
@@ -25,6 +26,7 @@ public sealed class GetApInvoiceQueryHandler(IAppDbContext dbContext, IPermissio
         if (!await permissionService.HasPermissionOnBranchAsync("AP_INVOICES", FormAction.View, invoice.BranchId, cancellationToken))
             return Result.Failure<ApInvoiceResponse>(Error.Forbidden("ApInvoice.Forbidden", "You do not have permission to view AP invoices for this branch."));
 
-        return Result.Success(ApInvoiceMapper.ToResponse(invoice));
+        var amountPaid = await ApInvoicePaymentBalance.GetAmountPaidAsync(dbContext, invoice.Id, cancellationToken);
+        return Result.Success(ApInvoiceMapper.ToResponse(invoice, amountPaid));
     }
 }
