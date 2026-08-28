@@ -11,6 +11,7 @@ public sealed record UpdateApInvoiceCommand(
     DateTimeOffset InvoiceDate,
     DateTimeOffset? DueDate,
     string? Remarks,
+    Guid? CostCenterId,
     string? UpdatedBy,
     List<ApInvoiceLineInput> Lines,
     List<ApInvoiceExpenseLineInput> ExpenseLines) : ICommand<Result<ApInvoiceResponse>>;

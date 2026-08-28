@@ -21,6 +21,7 @@ internal static class GoodsIssueMapper
         issue.Lines.Select(ToLineResponse).ToList(),
         issue.StockTransferRequestRefNo,
         issue.StockTransferRequestId,
+        issue.CostCenterId,
         issue.CancelledBy,
         issue.CancelledAt,
         issue.CancelReason,

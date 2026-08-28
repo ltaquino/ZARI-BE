@@ -40,6 +40,12 @@ public sealed class GoodsReturnConfiguration : BaseModelConfig, IEntityTypeConfi
             .HasForeignKey(r => r.GoodsReceiptPoId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(r => r.CostCenter)
+            .WithMany()
+            .HasForeignKey(r => r.CostCenterId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
         builder.HasMany(r => r.Lines)
             .WithOne(l => l.GoodsReturn)
             .HasForeignKey(l => l.GoodsReturnId)

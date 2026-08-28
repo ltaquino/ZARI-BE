@@ -58,6 +58,9 @@ public sealed class UpdateGoodsReceiptCommandHandler(
                 return Result.Failure<GoodsReceiptResponse>(Error.NotFound("StorageLocation.NotFound", "One or more storage locations on this receipt were not found."));
         }
 
+        if (command.CostCenterId.HasValue && !await dbContext.CostCenters.AnyAsync(c => c.Id == command.CostCenterId.Value, cancellationToken))
+            return Result.Failure<GoodsReceiptResponse>(Error.NotFound("CostCenter.NotFound", $"Cost center with ID '{command.CostCenterId}' was not found."));
+
         receipt.BranchId = command.BranchId;
         receipt.WarehouseId = command.WarehouseId;
         receipt.ReceiptType = command.ReceiptType;
@@ -67,6 +70,7 @@ public sealed class UpdateGoodsReceiptCommandHandler(
         receipt.GoodsIssueRefNo = command.GoodsIssueRefNo;
         receipt.GoodsIssueId = command.ReceiptType == "TRANSFER_IN" ? command.GoodsIssueId : null;
         receipt.ReasonCode = command.ReasonCode;
+        receipt.CostCenterId = command.CostCenterId;
 
         receipt.Lines.Clear();
         foreach (var line in command.Lines)

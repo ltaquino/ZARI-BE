@@ -21,6 +21,7 @@ internal static class OutgoingPaymentMapper
         payment.Remarks,
         payment.Lines.Sum(l => l.Amount),
         payment.Lines.Select(ToLineResponse).ToList(),
+        payment.CostCenterId,
         payment.CancelledBy,
         payment.CancelledAt,
         payment.CancelReason,

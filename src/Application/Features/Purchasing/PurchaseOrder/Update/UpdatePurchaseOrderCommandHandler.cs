@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
+using ZARI.Application.Features.Purchasing.PurchaseOrders.Create;
 using ZARI.Application.Features.Purchasing.PurchaseOrders.GetAll;
 using ZARI.Application.Features.Purchasing.PurchaseOrders.Shared;
 using ZARI.Application.Features.Workflow.Notifications.Create;
@@ -40,11 +41,38 @@ public sealed class UpdatePurchaseOrderCommandHandler(
         if (supplier is null)
             return Result.Failure<PurchaseOrderResponse>(Error.NotFound("Supplier.NotFound", $"Supplier with ID '{command.SupplierId}' was not found."));
 
+        PurchaseRequest? purchaseRequest = null;
         if (command.PurchaseRequestId is not null)
         {
-            var purchaseRequestExists = await dbContext.PurchaseRequests.AnyAsync(r => r.Id == command.PurchaseRequestId, cancellationToken);
-            if (!purchaseRequestExists)
+            purchaseRequest = await dbContext.PurchaseRequests
+                .Include(r => r.Lines).ThenInclude(l => l.Item)
+                .FirstOrDefaultAsync(r => r.Id == command.PurchaseRequestId, cancellationToken);
+            if (purchaseRequest is null)
                 return Result.Failure<PurchaseOrderResponse>(Error.NotFound("PurchaseRequest.NotFound", $"Purchase request with ID '{command.PurchaseRequestId}' was not found."));
+
+            if (purchaseRequest.Status != "APPROVED")
+                return Result.Failure<PurchaseOrderResponse>(Error.Validation("PurchaseOrder.PurchaseRequestNotApproved", "The referenced purchase request must be approved before a purchase order can be created against it."));
+        }
+        else if (command.Lines.Any(l => l.PurchaseRequestLineId.HasValue))
+        {
+            return Result.Failure<PurchaseOrderResponse>(Error.Validation("PurchaseOrder.UnexpectedPurchaseRequestLine", "Lines cannot reference a purchase request line unless this order itself references a purchase request."));
+        }
+
+        if (purchaseRequest is not null)
+        {
+            // This order is DRAFT (checked above), so it's never itself among the "POSTED" purchase
+            // orders being summed here — no self-exclusion needed, same reasoning as every other
+            // POSTED-only balance check in this codebase (e.g. ApInvoicePaymentBalance).
+            var referencedLineIds = command.Lines.Where(l => l.PurchaseRequestLineId.HasValue).Select(l => l.PurchaseRequestLineId!.Value).Distinct().ToList();
+            var alreadyOrdered = await dbContext.PurchaseOrderLines
+                .Where(l => l.PurchaseRequestLineId.HasValue && referencedLineIds.Contains(l.PurchaseRequestLineId.Value) && l.PurchaseOrder.Status == "POSTED")
+                .GroupBy(l => l.PurchaseRequestLineId!.Value)
+                .Select(g => new { PurchaseRequestLineId = g.Key, Qty = g.Sum(l => l.Qty) })
+                .ToDictionaryAsync(x => x.PurchaseRequestLineId, x => x.Qty, cancellationToken);
+
+            var validationResult = CreatePurchaseOrderCommandHandler.ValidateAgainstPurchaseRequest(purchaseRequest, command.Lines, alreadyOrdered);
+            if (!validationResult.IsSuccess)
+                return Result.Failure<PurchaseOrderResponse>(validationResult.Error!);
         }
 
         var itemIds = command.Lines.Select(l => l.ItemId).Distinct().ToList();
@@ -72,7 +100,8 @@ public sealed class UpdatePurchaseOrderCommandHandler(
                 ItemId = line.ItemId,
                 Qty = line.Qty,
                 UomId = line.UomId,
-                UnitCost = line.UnitCost
+                UnitCost = line.UnitCost,
+                PurchaseRequestLineId = line.PurchaseRequestLineId
             });
         }
 

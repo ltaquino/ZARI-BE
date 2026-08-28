@@ -35,6 +35,12 @@ public sealed class OutgoingPaymentConfiguration : BaseModelConfig, IEntityTypeC
             .HasForeignKey(p => p.BankAccountId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(p => p.CostCenter)
+            .WithMany()
+            .HasForeignKey(p => p.CostCenterId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
         builder.HasMany(p => p.Lines)
             .WithOne(l => l.OutgoingPayment)
             .HasForeignKey(l => l.OutgoingPaymentId)

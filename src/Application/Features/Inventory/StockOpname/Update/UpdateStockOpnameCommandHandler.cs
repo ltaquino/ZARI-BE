@@ -45,10 +45,14 @@ public sealed class UpdateStockOpnameCommandHandler(
         if (items.Count != itemIds.Count)
             return Result.Failure<StockOpnameResponse>(Error.NotFound("Item.NotFound", "One or more items on this stock count were not found."));
 
+        if (command.CostCenterId.HasValue && !await dbContext.CostCenters.AnyAsync(c => c.Id == command.CostCenterId.Value, cancellationToken))
+            return Result.Failure<StockOpnameResponse>(Error.NotFound("CostCenter.NotFound", $"Cost center with ID '{command.CostCenterId}' was not found."));
+
         opname.BranchId = command.BranchId;
         opname.WarehouseId = command.WarehouseId;
         opname.CountDate = command.CountDate;
         opname.Remarks = command.Remarks;
+        opname.CostCenterId = command.CostCenterId;
 
         opname.Lines.Clear();
         foreach (var line in command.Lines)

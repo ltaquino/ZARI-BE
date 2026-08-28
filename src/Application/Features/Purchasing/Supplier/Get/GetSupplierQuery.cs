@@ -10,7 +10,7 @@ public sealed record SupplierResponse(
     string Code,
     string Name,
     string? TaxId,
-    string? PaymentTerms,
+    int? PaymentTermsDays,
     string? CurrencyId,
     Guid? ApAccountId,
     string? Address,

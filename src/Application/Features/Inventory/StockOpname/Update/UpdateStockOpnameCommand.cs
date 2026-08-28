@@ -11,5 +11,6 @@ public sealed record UpdateStockOpnameCommand(
     Guid WarehouseId,
     DateTimeOffset CountDate,
     string? Remarks,
+    Guid? CostCenterId,
     string? UpdatedBy,
     List<StockOpnameLineInput> Lines) : ICommand<Result<StockOpnameResponse>>;

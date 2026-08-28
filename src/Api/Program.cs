@@ -123,6 +123,7 @@ try
     app.MapGlAccountEndpoints();
     app.MapCostCenterEndpoints();
     app.MapGlJournalEndpoints();
+    app.MapManualJournalEntryEndpoints();
     app.MapApprovalRequestEndpoints();
     app.MapNotificationEndpoints();
     app.MapGoodsReceiptEndpoints();

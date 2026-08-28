@@ -6,6 +6,7 @@ using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Accounting.GlJournals.GetAll;
 using ZARI.Application.Features.Accounting.GlJournals.Post;
+using ZARI.Application.Features.Purchasing.ApInvoices.Create;
 using ZARI.Application.Features.Purchasing.ApInvoices.GetAll;
 using ZARI.Application.Features.Purchasing.ApInvoices.Shared;
 using ZARI.Application.Features.Workflow.ApprovalRequests.Decide;
@@ -34,7 +35,7 @@ public sealed class ApproveApInvoiceCommandHandler(
     {
         var invoice = await dbContext.ApInvoices
             .Include(i => i.Supplier)
-            .Include(i => i.GoodsReceiptPo).ThenInclude(g => g!.Lines)
+            .Include(i => i.GoodsReceiptPo).ThenInclude(g => g!.Lines).ThenInclude(l => l.Item)
             .Include(i => i.Lines).ThenInclude(l => l.Item)
             .Include(i => i.Lines).ThenInclude(l => l.Uom)
             .Include(i => i.ExpenseLines).ThenInclude(l => l.GlAccount)
@@ -95,14 +96,14 @@ public sealed class ApproveApInvoiceCommandHandler(
         if (total <= 0)
             return Result.Success();
 
-        var apAccountResult = await GetDefaultAccountIdAsync("2000", "Accounts Payable", cancellationToken);
+        var apAccountResult = await ResolveApAccountIdAsync(invoice.Supplier, cancellationToken);
         if (!apAccountResult.IsSuccess)
             return Result.Failure(apAccountResult.Error!);
 
         var lines = invoice.ExpenseLines
-            .Select(l => new PostGlJournalLineInput(l.GlAccountId, null, Math.Round(l.Amount, 4), 0, l.Description))
+            .Select(l => new PostGlJournalLineInput(l.GlAccountId, invoice.CostCenterId, Math.Round(l.Amount, 4), 0, l.Description))
             .ToList();
-        lines.Add(new PostGlJournalLineInput(apAccountResult.Value, null, 0, total, null));
+        lines.Add(new PostGlJournalLineInput(apAccountResult.Value, invoice.CostCenterId, 0, total, null));
 
         var description = $"AP Invoice {invoice.InvoiceNo} — {invoice.Supplier.Name} (expense)";
         var postResult = await postGlJournalHandler.HandleAsync(
@@ -111,34 +112,55 @@ public sealed class ApproveApInvoiceCommandHandler(
     }
 
     /// <summary>
-    /// GRNI clears at the GRPO's own originally-received value, not the invoice's — if the vendor's
-    /// bill differs from what was actually received, the difference is swept into "5200 Purchase
-    /// Price Variance" rather than left as a stray balance in the GRNI holding account. Unfavorable
-    /// (invoiced more than received) debits PPV; favorable (invoiced less) credits it. Still a single
-    /// balanced journal: Dr GRNI(grpoTotal) [+ Dr PPV(variance) if unfavorable] = Cr AP(invoiceTotal)
-    /// [+ Cr PPV(-variance) if favorable].
+    /// GRNI clears at the GRPO's own originally-received value for just the lines/quantities THIS
+    /// invoice covers — not the invoice's own price, and not the GRPO's full total. A GRPO can now be
+    /// billed across multiple partial AP invoices (Phase 18 quantity-tracking), so debiting the whole
+    /// GRPO total on every one of them would over-clear GRNI; scoping to this invoice's own referenced
+    /// lines (at the GRPO line's unit cost, qty-weighted) keeps each invoice clearing exactly its own
+    /// share. If the vendor's bill differs from what was actually received, the difference is swept
+    /// into "5200 Purchase Price Variance" rather than left as a stray balance in the GRNI holding
+    /// account. Unfavorable (invoiced more than received) debits PPV; favorable (invoiced less)
+    /// credits it. Still a single balanced journal: Dr GRNI(receivedValue) [+ Dr PPV(variance) if
+    /// unfavorable] = Cr AP(invoiceTotal) [+ Cr PPV(-variance) if favorable].
     /// </summary>
     private async Task<Result> PostItemInvoiceJournalAsync(ApInvoice invoice, CancellationToken cancellationToken)
     {
+        // Authoritative re-check, closing the race a friendly Create/Update-time check can't: another
+        // AP invoice against the same GRPO line may have been approved in between. This invoice is
+        // still PENDING_APPROVAL (not POSTED) right now, so it's naturally excluded from its own
+        // "already invoiced" tally — same pattern as ApprovePurchaseOrderCommandHandler.
+        var referencedLineIds = invoice.Lines.Where(l => l.GoodsReceiptPoLineId.HasValue).Select(l => l.GoodsReceiptPoLineId!.Value).Distinct().ToList();
+        var alreadyInvoiced = await dbContext.ApInvoiceLines
+            .Where(l => l.GoodsReceiptPoLineId.HasValue && referencedLineIds.Contains(l.GoodsReceiptPoLineId.Value) && l.ApInvoice.Status == "POSTED")
+            .GroupBy(l => l.GoodsReceiptPoLineId!.Value)
+            .Select(g => new { GoodsReceiptPoLineId = g.Key, Qty = g.Sum(l => l.Qty) })
+            .ToDictionaryAsync(x => x.GoodsReceiptPoLineId, x => x.Qty, cancellationToken);
+
+        var lineInputs = invoice.Lines.Select(l => new ApInvoiceLineInput(l.ItemId, l.Qty, l.UomId, l.UnitCost, l.GoodsReceiptPoLineId)).ToList();
+        var validationResult = CreateApInvoiceCommandHandler.ValidateAgainstGoodsReceiptPo(invoice.GoodsReceiptPo!, lineInputs, alreadyInvoiced);
+        if (!validationResult.IsSuccess)
+            return Result.Failure(validationResult.Error!);
+
         var invoiceTotal = invoice.Lines.Sum(l => Math.Round(l.Qty * l.UnitCost, 4));
         if (invoiceTotal <= 0)
             return Result.Success();
 
-        var grpoTotal = invoice.GoodsReceiptPo!.Lines.Sum(l => Math.Round(l.QtyReceived * l.UnitCost, 4));
-        var variance = invoiceTotal - grpoTotal;
+        var grpoLinesById = invoice.GoodsReceiptPo!.Lines.ToDictionary(l => l.Id);
+        var receivedValue = invoice.Lines.Sum(l => Math.Round(l.Qty * grpoLinesById[l.GoodsReceiptPoLineId!.Value].UnitCost, 4));
+        var variance = invoiceTotal - receivedValue;
 
         var grniAccountResult = await GetDefaultAccountIdAsync("2100", "Goods Received Not Invoiced", cancellationToken);
         if (!grniAccountResult.IsSuccess)
             return Result.Failure(grniAccountResult.Error!);
 
-        var apAccountResult = await GetDefaultAccountIdAsync("2000", "Accounts Payable", cancellationToken);
+        var apAccountResult = await ResolveApAccountIdAsync(invoice.Supplier, cancellationToken);
         if (!apAccountResult.IsSuccess)
             return Result.Failure(apAccountResult.Error!);
 
         var lines = new List<PostGlJournalLineInput>
         {
-            new(grniAccountResult.Value, null, grpoTotal, 0, null),
-            new(apAccountResult.Value, null, 0, invoiceTotal, null)
+            new(grniAccountResult.Value, invoice.CostCenterId, receivedValue, 0, null),
+            new(apAccountResult.Value, invoice.CostCenterId, 0, invoiceTotal, null)
         };
 
         if (variance != 0)
@@ -148,8 +170,8 @@ public sealed class ApproveApInvoiceCommandHandler(
                 return Result.Failure(ppvAccountResult.Error!);
 
             lines.Add(variance > 0
-                ? new PostGlJournalLineInput(ppvAccountResult.Value, null, variance, 0, null)
-                : new PostGlJournalLineInput(ppvAccountResult.Value, null, 0, -variance, null));
+                ? new PostGlJournalLineInput(ppvAccountResult.Value, invoice.CostCenterId, variance, 0, null)
+                : new PostGlJournalLineInput(ppvAccountResult.Value, invoice.CostCenterId, 0, -variance, null));
         }
 
         var description = $"AP Invoice {invoice.InvoiceNo} — {invoice.Supplier.Name}";
@@ -165,4 +187,12 @@ public sealed class ApproveApInvoiceCommandHandler(
             ? Result.Failure<Guid>(Error.NotFound("GlAccount.NotFound", $"Default GL account '{label}' ({code}) is not configured — check the seeded chart of accounts."))
             : Result.Success(accountId.Value);
     }
+
+    /// Uses the supplier's own AP control-account override if one is configured, falling back to the
+    /// default "2000 Accounts Payable". A supplier's ApAccountId can never point at a deleted GL
+    /// account — DeleteGlAccountCommandHandler already blocks that — so no existence re-check here.
+    private Task<Result<Guid>> ResolveApAccountIdAsync(Supplier supplier, CancellationToken cancellationToken) =>
+        supplier.ApAccountId.HasValue
+            ? Task.FromResult(Result.Success(supplier.ApAccountId.Value))
+            : GetDefaultAccountIdAsync("2000", "Accounts Payable", cancellationToken);
 }

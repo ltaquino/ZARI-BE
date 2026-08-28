@@ -16,7 +16,8 @@ public sealed record GoodsReturnLineResponse(
     decimal QtyReturned,
     Guid UomId,
     string UomCode,
-    decimal UnitCost);
+    decimal UnitCost,
+    Guid? GoodsReceiptPoLineId);
 
 public sealed record GoodsReturnResponse(
     Guid Id,
@@ -32,6 +33,7 @@ public sealed record GoodsReturnResponse(
     string Status,
     string? Remarks,
     List<GoodsReturnLineResponse> Lines,
+    Guid? CostCenterId,
     string? CancelledBy,
     DateTimeOffset? CancelledAt,
     string? CancelReason,

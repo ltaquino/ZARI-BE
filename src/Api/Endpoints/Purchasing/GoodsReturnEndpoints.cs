@@ -113,7 +113,7 @@ public static class GoodsReturnEndpoints
     {
         var command = new UpdateGoodsReturnCommand(
             id, request.BranchId, request.WarehouseId, request.SupplierId, request.GoodsReceiptPoId,
-            request.ReasonCode, request.ReturnDate, request.Remarks, request.UpdatedBy, request.Lines);
+            request.ReasonCode, request.ReturnDate, request.Remarks, request.CostCenterId, request.UpdatedBy, request.Lines);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
         var result = await handler.HandleAsync(command, cancellationToken);
@@ -236,6 +236,7 @@ public sealed record UpdateGoodsReturnRequest(
     string ReasonCode,
     DateTimeOffset ReturnDate,
     string? Remarks,
+    Guid? CostCenterId,
     string? UpdatedBy,
     List<GoodsReturnLineInput> Lines);
 

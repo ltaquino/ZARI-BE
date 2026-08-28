@@ -113,7 +113,7 @@ public static class GoodsReceiptPoEndpoints
     {
         var command = new UpdateGoodsReceiptPoCommand(
             id, request.BranchId, request.WarehouseId, request.SupplierId, request.PurchaseOrderId,
-            request.SupplierInvoiceNo, request.ReceiptDate, request.Remarks, request.UpdatedBy, request.Lines);
+            request.SupplierInvoiceNo, request.ReceiptDate, request.Remarks, request.CostCenterId, request.UpdatedBy, request.Lines);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
         var result = await handler.HandleAsync(command, cancellationToken);
@@ -236,6 +236,7 @@ public sealed record UpdateGoodsReceiptPoRequest(
     string? SupplierInvoiceNo,
     DateTimeOffset ReceiptDate,
     string? Remarks,
+    Guid? CostCenterId,
     string? UpdatedBy,
     List<GoodsReceiptPoLineInput> Lines);
 

@@ -40,7 +40,7 @@ public sealed class UpdateSupplierCommandHandler(IAppDbContext dbContext, IPermi
         supplier.Code = command.Code;
         supplier.Name = command.Name;
         supplier.TaxId = command.TaxId;
-        supplier.PaymentTerms = command.PaymentTerms;
+        supplier.PaymentTermsDays = command.PaymentTermsDays;
         supplier.CurrencyId = command.CurrencyId;
         supplier.ApAccountId = command.ApAccountId;
         supplier.Address = command.Address;

@@ -17,5 +17,6 @@ public sealed record CreateGoodsIssueCommand(
     string? Remarks,
     string? StockTransferRequestRefNo,
     string? StockTransferRequestId,
+    Guid? CostCenterId,
     string? CreatedBy,
     List<GoodsIssueLineInput> Lines) : ICommand<Result<GoodsIssueResponse>>;

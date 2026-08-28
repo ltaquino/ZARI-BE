@@ -16,5 +16,6 @@ public sealed record UpdateGoodsReceiptCommand(
     string? GoodsIssueRefNo,
     string? GoodsIssueId,
     string? ReasonCode,
+    Guid? CostCenterId,
     string? UpdatedBy,
     List<GoodsReceiptLineInput> Lines) : ICommand<Result<GoodsReceiptResponse>>;

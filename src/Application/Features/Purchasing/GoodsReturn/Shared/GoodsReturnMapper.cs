@@ -19,6 +19,7 @@ internal static class GoodsReturnMapper
         goodsReturn.Status,
         goodsReturn.Remarks,
         goodsReturn.Lines.Select(ToLineResponse).ToList(),
+        goodsReturn.CostCenterId,
         goodsReturn.CancelledBy,
         goodsReturn.CancelledAt,
         goodsReturn.CancelReason,
@@ -36,5 +37,6 @@ internal static class GoodsReturnMapper
         line.QtyReturned,
         line.UomId,
         line.Uom.Code,
-        line.UnitCost);
+        line.UnitCost,
+        line.GoodsReceiptPoLineId);
 }

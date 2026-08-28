@@ -26,6 +26,7 @@ internal static class ApInvoiceMapper
         invoice.Lines.Select(ToLineResponse).ToList(),
         invoice.ExpenseLines.Select(ToExpenseLineResponse).ToList(),
         amountPaid,
+        invoice.CostCenterId,
         invoice.CancelledBy,
         invoice.CancelledAt,
         invoice.CancelReason,
@@ -41,7 +42,8 @@ internal static class ApInvoiceMapper
         line.Qty,
         line.UomId,
         line.Uom.Code,
-        line.UnitCost);
+        line.UnitCost,
+        line.GoodsReceiptPoLineId);
 
     private static ApInvoiceExpenseLineResponse ToExpenseLineResponse(ApInvoiceExpenseLine line) => new(
         line.Id,

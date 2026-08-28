@@ -38,7 +38,7 @@ public sealed class CreateSupplierCommandHandler(IAppDbContext dbContext, IPermi
             Code = command.Code,
             Name = command.Name,
             TaxId = command.TaxId,
-            PaymentTerms = command.PaymentTerms,
+            PaymentTermsDays = command.PaymentTermsDays,
             CurrencyId = command.CurrencyId,
             ApAccountId = command.ApAccountId,
             Address = command.Address,
@@ -51,7 +51,7 @@ public sealed class CreateSupplierCommandHandler(IAppDbContext dbContext, IPermi
         dbContext.Suppliers.Add(supplier);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var response = new SupplierResponse(supplier.Id, supplier.Code, supplier.Name, supplier.TaxId, supplier.PaymentTerms,
+        var response = new SupplierResponse(supplier.Id, supplier.Code, supplier.Name, supplier.TaxId, supplier.PaymentTermsDays,
             supplier.CurrencyId, supplier.ApAccountId, supplier.Address, supplier.ContactPerson, supplier.ContactNumber,
             supplier.Email, supplier.Status, supplier.CreatedAt);
         return Result.Success(response);

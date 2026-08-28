@@ -124,7 +124,7 @@ public static class GoodsIssueEndpoints
         var command = new UpdateGoodsIssueCommand(
             id, request.BranchId, request.WarehouseId, request.ReferenceType, request.DestBranchId, request.DestWarehouseId,
             request.ReasonCode, request.GiDate, request.Remarks, request.StockTransferRequestRefNo, request.StockTransferRequestId,
-            request.UpdatedBy, request.Lines);
+            request.CostCenterId, request.UpdatedBy, request.Lines);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
         var result = await handler.HandleAsync(command, cancellationToken);
@@ -278,6 +278,7 @@ public sealed record UpdateGoodsIssueRequest(
     string? Remarks,
     string? StockTransferRequestRefNo,
     string? StockTransferRequestId,
+    Guid? CostCenterId,
     string? UpdatedBy,
     List<GoodsIssueLineInput> Lines);
 

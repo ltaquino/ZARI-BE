@@ -113,7 +113,7 @@ public static class GoodsReceiptEndpoints
     {
         var command = new UpdateGoodsReceiptCommand(
             id, request.BranchId, request.WarehouseId, request.ReceiptType, request.ReceivedBy, request.GrDate, request.Remarks,
-            request.GoodsIssueRefNo, request.GoodsIssueId, request.ReasonCode, request.UpdatedBy, request.Lines);
+            request.GoodsIssueRefNo, request.GoodsIssueId, request.ReasonCode, request.CostCenterId, request.UpdatedBy, request.Lines);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
         var result = await handler.HandleAsync(command, cancellationToken);
@@ -238,6 +238,7 @@ public sealed record UpdateGoodsReceiptRequest(
     string? GoodsIssueRefNo,
     string? GoodsIssueId,
     string? ReasonCode,
+    Guid? CostCenterId,
     string? UpdatedBy,
     List<GoodsReceiptLineInput> Lines);
 

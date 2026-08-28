@@ -17,8 +17,9 @@ public sealed class CreateSupplierValidator : AbstractValidator<CreateSupplierCo
         RuleFor(x => x.TaxId)
             .MaximumLength(25);
 
-        RuleFor(x => x.PaymentTerms)
-            .MaximumLength(25);
+        RuleFor(x => x.PaymentTermsDays)
+            .GreaterThanOrEqualTo(0)
+            .When(x => x.PaymentTermsDays.HasValue);
 
         RuleFor(x => x.CurrencyId)
             .MaximumLength(25);

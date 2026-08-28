@@ -64,6 +64,9 @@ public sealed class UpdateGoodsIssueCommandHandler(
         if (uoms.Count != uomIds.Count)
             return Result.Failure<GoodsIssueResponse>(Error.NotFound("Uom.NotFound", "One or more units of measure on this issue were not found."));
 
+        if (command.CostCenterId.HasValue && !await dbContext.CostCenters.AnyAsync(c => c.Id == command.CostCenterId.Value, cancellationToken))
+            return Result.Failure<GoodsIssueResponse>(Error.NotFound("CostCenter.NotFound", $"Cost center with ID '{command.CostCenterId}' was not found."));
+
         var isTransfer = command.ReferenceType == "STOCK_TRANSFER";
         issue.BranchId = command.BranchId;
         issue.WarehouseId = command.WarehouseId;
@@ -75,6 +78,7 @@ public sealed class UpdateGoodsIssueCommandHandler(
         issue.Remarks = command.Remarks;
         issue.StockTransferRequestRefNo = command.StockTransferRequestRefNo;
         issue.StockTransferRequestId = command.StockTransferRequestId;
+        issue.CostCenterId = command.CostCenterId;
 
         issue.Lines.Clear();
         foreach (var line in command.Lines)

@@ -40,6 +40,12 @@ public sealed class GoodsReceiptPoConfiguration : BaseModelConfig, IEntityTypeCo
             .HasForeignKey(r => r.PurchaseOrderId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(r => r.CostCenter)
+            .WithMany()
+            .HasForeignKey(r => r.CostCenterId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
         builder.HasMany(r => r.Lines)
             .WithOne(l => l.GoodsReceiptPo)
             .HasForeignKey(l => l.GoodsReceiptPoId)

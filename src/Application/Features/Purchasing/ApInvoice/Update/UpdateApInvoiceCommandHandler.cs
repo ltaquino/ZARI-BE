@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
+using ZARI.Application.Features.Purchasing.ApInvoices.Create;
 using ZARI.Application.Features.Purchasing.ApInvoices.GetAll;
 using ZARI.Application.Features.Purchasing.ApInvoices.Shared;
 using ZARI.Application.Features.Workflow.Notifications.Create;
@@ -29,7 +30,7 @@ public sealed class UpdateApInvoiceCommandHandler(
     {
         var invoice = await dbContext.ApInvoices
             .Include(i => i.Supplier)
-            .Include(i => i.GoodsReceiptPo)
+            .Include(i => i.GoodsReceiptPo).ThenInclude(g => g!.Lines).ThenInclude(l => l.Item)
             .Include(i => i.Lines)
             .Include(i => i.ExpenseLines)
             .FirstOrDefaultAsync(i => i.Id == command.Id, cancellationToken);
@@ -89,12 +90,30 @@ public sealed class UpdateApInvoiceCommandHandler(
             uoms = await dbContext.Uoms.Where(u => uomIds.Contains(u.Id)).ToDictionaryAsync(u => u.Id, cancellationToken);
             if (uoms.Count != uomIds.Count)
                 return Result.Failure<ApInvoiceResponse>(Error.NotFound("Uom.NotFound", "One or more units of measure on this invoice were not found."));
+
+            // This invoice is DRAFT (checked above), so it's never itself among the "POSTED" AP
+            // invoices being summed here — no self-exclusion needed, same reasoning as PurchaseOrder's
+            // own Update-time re-check.
+            var referencedLineIds = command.Lines.Where(l => l.GoodsReceiptPoLineId.HasValue).Select(l => l.GoodsReceiptPoLineId!.Value).Distinct().ToList();
+            var alreadyInvoiced = await dbContext.ApInvoiceLines
+                .Where(l => l.GoodsReceiptPoLineId.HasValue && referencedLineIds.Contains(l.GoodsReceiptPoLineId.Value) && l.ApInvoice.Status == "POSTED")
+                .GroupBy(l => l.GoodsReceiptPoLineId!.Value)
+                .Select(g => new { GoodsReceiptPoLineId = g.Key, Qty = g.Sum(l => l.Qty) })
+                .ToDictionaryAsync(x => x.GoodsReceiptPoLineId, x => x.Qty, cancellationToken);
+
+            var validationResult = CreateApInvoiceCommandHandler.ValidateAgainstGoodsReceiptPo(invoice.GoodsReceiptPo!, command.Lines, alreadyInvoiced);
+            if (!validationResult.IsSuccess)
+                return Result.Failure<ApInvoiceResponse>(validationResult.Error!);
         }
+
+        if (command.CostCenterId.HasValue && !await dbContext.CostCenters.AnyAsync(c => c.Id == command.CostCenterId.Value, cancellationToken))
+            return Result.Failure<ApInvoiceResponse>(Error.NotFound("CostCenter.NotFound", $"Cost center with ID '{command.CostCenterId}' was not found."));
 
         invoice.SupplierInvoiceNo = command.SupplierInvoiceNo;
         invoice.InvoiceDate = command.InvoiceDate;
         invoice.DueDate = command.DueDate;
         invoice.Remarks = command.Remarks;
+        invoice.CostCenterId = command.CostCenterId;
 
         invoice.Lines.Clear();
         foreach (var line in command.Lines)
@@ -104,7 +123,8 @@ public sealed class UpdateApInvoiceCommandHandler(
                 ItemId = line.ItemId,
                 Qty = line.Qty,
                 UomId = line.UomId,
-                UnitCost = line.UnitCost
+                UnitCost = line.UnitCost,
+                GoodsReceiptPoLineId = line.GoodsReceiptPoLineId
             });
         }
 

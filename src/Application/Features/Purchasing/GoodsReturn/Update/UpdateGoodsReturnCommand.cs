@@ -14,5 +14,6 @@ public sealed record UpdateGoodsReturnCommand(
     string ReasonCode,
     DateTimeOffset ReturnDate,
     string? Remarks,
+    Guid? CostCenterId,
     string? UpdatedBy,
     List<GoodsReturnLineInput> Lines) : ICommand<Result<GoodsReturnResponse>>;

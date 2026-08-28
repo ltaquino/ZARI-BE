@@ -140,8 +140,8 @@ public sealed class ApproveGoodsReceiptCommandHandler(
             return Result.Failure(creditAccountResult.Error!);
 
         var lines = debitsByAccount
-            .Select(kv => new PostGlJournalLineInput(kv.Key, null, kv.Value, 0, null))
-            .Append(new PostGlJournalLineInput(creditAccountResult.Value, null, 0, totalValue, null))
+            .Select(kv => new PostGlJournalLineInput(kv.Key, receipt.CostCenterId, kv.Value, 0, null))
+            .Append(new PostGlJournalLineInput(creditAccountResult.Value, receipt.CostCenterId, 0, totalValue, null))
             .ToList();
 
         var description = $"Goods Receipt {receipt.GrNo} — {(isTransfer ? "transfer in" : "manual receipt")}";

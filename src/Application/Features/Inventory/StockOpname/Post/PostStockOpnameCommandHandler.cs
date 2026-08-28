@@ -169,10 +169,10 @@ public sealed class PostStockOpnameCommandHandler(
             return Result.Failure(varianceAccountResult.Error!);
 
         var lines = new List<PostGlJournalLineInput>();
-        lines.AddRange(increaseByAccount.Select(kv => new PostGlJournalLineInput(kv.Key, null, kv.Value, 0, null)));
-        lines.AddRange(decreaseByAccount.Select(kv => new PostGlJournalLineInput(kv.Key, null, 0, kv.Value, null)));
-        if (increaseTotal > 0) lines.Add(new PostGlJournalLineInput(varianceAccountResult.Value, null, 0, increaseTotal, null));
-        if (decreaseTotal > 0) lines.Add(new PostGlJournalLineInput(varianceAccountResult.Value, null, decreaseTotal, 0, null));
+        lines.AddRange(increaseByAccount.Select(kv => new PostGlJournalLineInput(kv.Key, opname.CostCenterId, kv.Value, 0, null)));
+        lines.AddRange(decreaseByAccount.Select(kv => new PostGlJournalLineInput(kv.Key, opname.CostCenterId, 0, kv.Value, null)));
+        if (increaseTotal > 0) lines.Add(new PostGlJournalLineInput(varianceAccountResult.Value, opname.CostCenterId, 0, increaseTotal, null));
+        if (decreaseTotal > 0) lines.Add(new PostGlJournalLineInput(varianceAccountResult.Value, opname.CostCenterId, decreaseTotal, 0, null));
 
         var description = $"Stock Opname {opname.OpnameNo}";
         var postResult = await postGlJournalHandler.HandleAsync(

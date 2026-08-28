@@ -4,7 +4,7 @@ using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Purchasing.GoodsReturns.GetAll;
 using ZARI.Domain.Common;
 
-public sealed record GoodsReturnLineInput(Guid ItemId, string? BatchNo, string? SerialNo, decimal QtyReturned, Guid UomId, decimal UnitCost);
+public sealed record GoodsReturnLineInput(Guid ItemId, string? BatchNo, string? SerialNo, decimal QtyReturned, Guid UomId, decimal UnitCost, Guid? GoodsReceiptPoLineId);
 
 public sealed record CreateGoodsReturnCommand(
     string BranchId,
@@ -14,5 +14,6 @@ public sealed record CreateGoodsReturnCommand(
     string ReasonCode,
     DateTimeOffset ReturnDate,
     string? Remarks,
+    Guid? CostCenterId,
     string? CreatedBy,
     List<GoodsReturnLineInput> Lines) : ICommand<Result<GoodsReturnResponse>>;

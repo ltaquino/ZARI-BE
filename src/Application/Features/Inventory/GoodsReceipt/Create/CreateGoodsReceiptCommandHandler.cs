@@ -50,6 +50,9 @@ public sealed class CreateGoodsReceiptCommandHandler(
                 return Result.Failure<GoodsReceiptResponse>(Error.NotFound("StorageLocation.NotFound", "One or more storage locations on this receipt were not found."));
         }
 
+        if (command.CostCenterId.HasValue && !await dbContext.CostCenters.AnyAsync(c => c.Id == command.CostCenterId.Value, cancellationToken))
+            return Result.Failure<GoodsReceiptResponse>(Error.NotFound("CostCenter.NotFound", $"Cost center with ID '{command.CostCenterId}' was not found."));
+
         var numberResult = await nextDocumentNumberHandler.HandleAsync(new GetNextDocumentNumberCommand(command.BranchId, "GR"), cancellationToken);
         if (!numberResult.IsSuccess)
             return Result.Failure<GoodsReceiptResponse>(numberResult.Error!);
@@ -67,6 +70,7 @@ public sealed class CreateGoodsReceiptCommandHandler(
             GoodsIssueRefNo = command.GoodsIssueRefNo,
             GoodsIssueId = command.ReceiptType == "TRANSFER_IN" ? command.GoodsIssueId : null,
             ReasonCode = command.ReasonCode,
+            CostCenterId = command.CostCenterId,
             CreatedBy = command.CreatedBy,
             Lines = command.Lines.Select(l => new GoodsReceiptLine
             {

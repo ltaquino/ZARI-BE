@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
+using ZARI.Application.Features.Purchasing.PurchaseOrders.Create;
 using ZARI.Application.Features.Purchasing.PurchaseOrders.GetAll;
 using ZARI.Application.Features.Purchasing.PurchaseOrders.Shared;
 using ZARI.Application.Features.Workflow.ApprovalRequests.Decide;
@@ -40,6 +41,31 @@ public sealed class ApprovePurchaseOrderCommandHandler(
 
         if (order.Status != "PENDING_APPROVAL")
             return Result.Failure<PurchaseOrderResponse>(Error.Validation("PurchaseOrder.NotPendingApproval", "Only purchase orders pending approval can be approved."));
+
+        // Authoritative re-check, closing the race a friendly Create/Update-time check can't: another
+        // purchase order against the same purchase request line may have been approved in between.
+        // This order is still PENDING_APPROVAL (not POSTED) right now, so it's naturally excluded from
+        // its own "already ordered" tally — same pattern as OutgoingPayment's Approve-time re-check.
+        if (order.PurchaseRequestId is not null)
+        {
+            var purchaseRequest = await dbContext.PurchaseRequests
+                .Include(r => r.Lines).ThenInclude(l => l.Item)
+                .FirstOrDefaultAsync(r => r.Id == order.PurchaseRequestId, cancellationToken);
+            if (purchaseRequest is not null)
+            {
+                var referencedLineIds = order.Lines.Where(l => l.PurchaseRequestLineId.HasValue).Select(l => l.PurchaseRequestLineId!.Value).Distinct().ToList();
+                var alreadyOrdered = await dbContext.PurchaseOrderLines
+                    .Where(l => l.PurchaseRequestLineId.HasValue && referencedLineIds.Contains(l.PurchaseRequestLineId.Value) && l.PurchaseOrder.Status == "POSTED")
+                    .GroupBy(l => l.PurchaseRequestLineId!.Value)
+                    .Select(g => new { PurchaseRequestLineId = g.Key, Qty = g.Sum(l => l.Qty) })
+                    .ToDictionaryAsync(x => x.PurchaseRequestLineId, x => x.Qty, cancellationToken);
+
+                var lineInputs = order.Lines.Select(l => new PurchaseOrderLineInput(l.ItemId, l.Qty, l.UomId, l.UnitCost, l.PurchaseRequestLineId)).ToList();
+                var validationResult = CreatePurchaseOrderCommandHandler.ValidateAgainstPurchaseRequest(purchaseRequest, lineInputs, alreadyOrdered);
+                if (!validationResult.IsSuccess)
+                    return Result.Failure<PurchaseOrderResponse>(validationResult.Error!);
+            }
+        }
 
         var request = await dbContext.ApprovalRequests
             .Where(r => r.EntityType == "PURCHASE_ORDER" && r.EntityId == order.Id.ToString())

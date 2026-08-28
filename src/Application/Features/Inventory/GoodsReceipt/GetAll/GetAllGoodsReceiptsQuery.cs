@@ -36,6 +36,7 @@ public sealed record GoodsReceiptResponse(
     string? GoodsIssueRefNo,
     string? GoodsIssueId,
     string? ReasonCode,
+    Guid? CostCenterId,
     string? CancelledBy,
     DateTimeOffset? CancelledAt,
     string? CancelReason,

@@ -12,5 +12,6 @@ public sealed record UpdateStockAdjustmentCommand(
     DateTimeOffset AdjustmentDate,
     string? ReasonCode,
     string? Remarks,
+    Guid? CostCenterId,
     string? UpdatedBy,
     List<StockAdjustmentLineInput> Lines) : ICommand<Result<StockAdjustmentResponse>>;

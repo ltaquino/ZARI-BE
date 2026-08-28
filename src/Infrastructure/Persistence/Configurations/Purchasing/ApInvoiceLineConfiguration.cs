@@ -22,5 +22,11 @@ public sealed class ApInvoiceLineConfiguration : BaseModelConfig, IEntityTypeCon
             .WithMany()
             .HasForeignKey(l => l.UomId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(l => l.GoodsReceiptPoLine)
+            .WithMany()
+            .HasForeignKey(l => l.GoodsReceiptPoLineId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
     }
 }

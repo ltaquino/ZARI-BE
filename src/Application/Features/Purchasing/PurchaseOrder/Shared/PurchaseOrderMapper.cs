@@ -33,5 +33,6 @@ internal static class PurchaseOrderMapper
         line.Qty,
         line.UomId,
         line.Uom.Code,
-        line.UnitCost);
+        line.UnitCost,
+        line.PurchaseRequestLineId);
 }

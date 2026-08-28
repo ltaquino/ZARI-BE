@@ -237,6 +237,10 @@ public sealed record UpdatePurchaseOrderRequest(
     string? UpdatedBy,
     List<PurchaseOrderLineInput> Lines);
 
+// PurchaseOrderLineInput (with its new PurchaseRequestLineId field) is defined in
+// CreatePurchaseOrderCommand.cs and reused as-is for Update — same convention as every other
+// module's Update DTO in this codebase.
+
 public sealed record SubmitPurchaseOrderRequest(string RequestedBy);
 public sealed record DecidePurchaseOrderRequest(string ApproverUserId, string? Comments);
 public sealed record DecidePurchaseOrderRequiredCommentRequest(string ApproverUserId, string Comments);

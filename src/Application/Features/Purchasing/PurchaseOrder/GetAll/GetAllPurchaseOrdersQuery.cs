@@ -14,7 +14,8 @@ public sealed record PurchaseOrderLineResponse(
     decimal Qty,
     Guid UomId,
     string UomCode,
-    decimal UnitCost);
+    decimal UnitCost,
+    Guid? PurchaseRequestLineId);
 
 public sealed record PurchaseOrderResponse(
     Guid Id,

@@ -19,6 +19,7 @@ internal static class GoodsReceiptMapper
         receipt.GoodsIssueRefNo,
         receipt.GoodsIssueId,
         receipt.ReasonCode,
+        receipt.CostCenterId,
         receipt.CancelledBy,
         receipt.CancelledAt,
         receipt.CancelReason,

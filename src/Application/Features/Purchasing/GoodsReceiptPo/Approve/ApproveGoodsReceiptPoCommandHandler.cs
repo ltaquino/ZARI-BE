@@ -5,6 +5,7 @@ using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Accounting.GlJournals.GetAll;
 using ZARI.Application.Features.Accounting.GlJournals.Post;
+using ZARI.Application.Features.Purchasing.GoodsReceiptPos.Create;
 using ZARI.Application.Features.Purchasing.GoodsReceiptPos.GetAll;
 using ZARI.Application.Features.Purchasing.GoodsReceiptPos.Shared;
 using ZARI.Application.Features.Inventory.SerialNumbers.GetAll;
@@ -52,6 +53,31 @@ public sealed class ApproveGoodsReceiptPoCommandHandler(
 
         if (receipt.Status != "PENDING_APPROVAL")
             return Result.Failure<GoodsReceiptPoResponse>(Error.Validation("GoodsReceiptPo.NotPendingApproval", "Only goods receipts pending approval can be approved."));
+
+        // Authoritative re-check, closing the race a friendly Create/Update-time check can't: another
+        // goods receipt against the same purchase order line may have been approved in between. This
+        // receipt is still PENDING_APPROVAL (not POSTED) right now, so it's naturally excluded from
+        // its own "already received" tally — same pattern as PurchaseOrder's Approve-time re-check.
+        if (receipt.PurchaseOrderId is not null)
+        {
+            var purchaseOrder = await dbContext.PurchaseOrders
+                .Include(p => p.Lines).ThenInclude(l => l.Item)
+                .FirstOrDefaultAsync(p => p.Id == receipt.PurchaseOrderId, cancellationToken);
+            if (purchaseOrder is not null)
+            {
+                var referencedLineIds = receipt.Lines.Where(l => l.PurchaseOrderLineId.HasValue).Select(l => l.PurchaseOrderLineId!.Value).Distinct().ToList();
+                var alreadyReceived = await dbContext.GoodsReceiptPoLines
+                    .Where(l => l.PurchaseOrderLineId.HasValue && referencedLineIds.Contains(l.PurchaseOrderLineId.Value) && l.GoodsReceiptPo.Status == "POSTED")
+                    .GroupBy(l => l.PurchaseOrderLineId!.Value)
+                    .Select(g => new { PurchaseOrderLineId = g.Key, QtyReceived = g.Sum(l => l.QtyReceived) })
+                    .ToDictionaryAsync(x => x.PurchaseOrderLineId, x => x.QtyReceived, cancellationToken);
+
+                var lineInputs = receipt.Lines.Select(l => new GoodsReceiptPoLineInput(l.ItemId, l.BatchNo, l.SerialNo, l.QtyReceived, l.UomId, l.UnitCost, l.LocationId, l.PurchaseOrderLineId)).ToList();
+                var validationResult = CreateGoodsReceiptPoCommandHandler.ValidateAgainstPurchaseOrder(purchaseOrder, lineInputs, alreadyReceived);
+                if (!validationResult.IsSuccess)
+                    return Result.Failure<GoodsReceiptPoResponse>(validationResult.Error!);
+            }
+        }
 
         var request = await dbContext.ApprovalRequests
             .Where(r => r.EntityType == "GOODS_RECEIPT_PO" && r.EntityId == receipt.Id.ToString())
@@ -135,8 +161,8 @@ public sealed class ApproveGoodsReceiptPoCommandHandler(
             return Result.Failure(grniAccountResult.Error!);
 
         var lines = debitsByAccount
-            .Select(kv => new PostGlJournalLineInput(kv.Key, null, kv.Value, 0, null))
-            .Append(new PostGlJournalLineInput(grniAccountResult.Value, null, 0, totalValue, null))
+            .Select(kv => new PostGlJournalLineInput(kv.Key, receipt.CostCenterId, kv.Value, 0, null))
+            .Append(new PostGlJournalLineInput(grniAccountResult.Value, receipt.CostCenterId, 0, totalValue, null))
             .ToList();
 
         var description = $"Goods Receipt (PO) {receipt.GrpoNo} — {receipt.Supplier.Name}";

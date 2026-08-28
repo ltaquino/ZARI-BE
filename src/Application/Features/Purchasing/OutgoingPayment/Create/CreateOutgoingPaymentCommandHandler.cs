@@ -49,6 +49,7 @@ public sealed class CreateOutgoingPaymentCommandHandler(
 
         var invoices = await dbContext.ApInvoices
             .Include(i => i.Lines)
+            .Include(i => i.ExpenseLines)
             .Where(i => invoiceIds.Contains(i.Id))
             .ToDictionaryAsync(i => i.Id, cancellationToken);
         if (invoices.Count != invoiceIds.Count)
@@ -64,12 +65,15 @@ public sealed class CreateOutgoingPaymentCommandHandler(
             if (invoice.Status is not ("POSTED" or "PARTIALLY_PAID"))
                 return Result.Failure<OutgoingPaymentResponse>(Error.Validation("OutgoingPayment.InvoiceNotPayable", $"AP invoice '{invoice.InvoiceNo}' is not eligible for payment (status: {invoice.Status})."));
 
-            var invoiceTotal = invoice.Lines.Sum(l => Math.Round(l.Qty * l.UnitCost, 4));
+            var invoiceTotal = ApInvoicePaymentBalance.GetInvoiceTotal(invoice);
             var amountPaid = await ApInvoicePaymentBalance.GetAmountPaidAsync(dbContext, invoice.Id, cancellationToken);
             var balance = invoiceTotal - amountPaid;
             if (line.Amount > balance)
                 return Result.Failure<OutgoingPaymentResponse>(Error.Validation("OutgoingPayment.AmountExceedsBalance", $"The payment amount for AP invoice '{invoice.InvoiceNo}' cannot exceed its remaining balance of {balance}."));
         }
+
+        if (command.CostCenterId.HasValue && !await dbContext.CostCenters.AnyAsync(c => c.Id == command.CostCenterId.Value, cancellationToken))
+            return Result.Failure<OutgoingPaymentResponse>(Error.NotFound("CostCenter.NotFound", $"Cost center with ID '{command.CostCenterId}' was not found."));
 
         var numberResult = await nextDocumentNumberHandler.HandleAsync(new GetNextDocumentNumberCommand(command.BranchId, "OP"), cancellationToken);
         if (!numberResult.IsSuccess)
@@ -85,6 +89,7 @@ public sealed class CreateOutgoingPaymentCommandHandler(
             RefNo = command.RefNo,
             Status = "DRAFT",
             Remarks = command.Remarks,
+            CostCenterId = command.CostCenterId,
             CreatedBy = command.CreatedBy,
             Lines = command.Lines.Select(l => new OutgoingPaymentLine
             {

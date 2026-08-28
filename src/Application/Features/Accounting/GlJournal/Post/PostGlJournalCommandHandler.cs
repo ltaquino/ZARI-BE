@@ -29,6 +29,15 @@ public sealed class PostGlJournalCommandHandler(
                 "GlJournal.Unbalanced", $"Journal is unbalanced: debit {totalDebit} vs credit {totalCredit}."));
         }
 
+        var fiscalYear = await dbContext.FiscalYears.FirstOrDefaultAsync(
+            fy => command.JournalDate >= fy.StartDate && command.JournalDate <= fy.EndDate, cancellationToken);
+        if (fiscalYear is not null && fiscalYear.Status == "CLOSED")
+        {
+            return Result.Failure<GlJournalResponse>(Error.Validation(
+                "GlJournal.PeriodClosed",
+                $"Cannot post on {command.JournalDate:yyyy-MM-dd} — {fiscalYear.YearName} is closed."));
+        }
+
         var accountIds = command.Lines.Select(l => l.AccountId).Distinct().ToList();
         var existingAccountCount = await dbContext.GlAccounts.CountAsync(a => accountIds.Contains(a.Id), cancellationToken);
         if (existingAccountCount != accountIds.Count)

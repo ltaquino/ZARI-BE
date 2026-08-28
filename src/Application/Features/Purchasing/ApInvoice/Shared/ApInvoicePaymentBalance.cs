@@ -14,6 +14,16 @@ using ZARI.Application.Abstractions.Data;
 /// </summary>
 internal static class ApInvoicePaymentBalance
 {
+    /// <summary>
+    /// Total invoiced amount — branches on invoice type since ITEM invoices keep their amount in
+    /// `Lines` (Qty x UnitCost) while EXPENSE invoices keep it in `ExpenseLines` (Amount) instead;
+    /// `Lines` is always empty for an EXPENSE invoice, so summing it alone silently gives 0.
+    /// </summary>
+    public static decimal GetInvoiceTotal(ZARI.Domain.Entities.ApInvoice invoice) =>
+        invoice.InvoiceType == "EXPENSE"
+            ? invoice.ExpenseLines.Sum(l => Math.Round(l.Amount, 4))
+            : invoice.Lines.Sum(l => Math.Round(l.Qty * l.UnitCost, 4));
+
     public static Task<decimal> GetAmountPaidAsync(IAppDbContext dbContext, Guid apInvoiceId, CancellationToken cancellationToken) =>
         dbContext.OutgoingPaymentLines
             .Where(l => l.ApInvoiceId == apInvoiceId && l.OutgoingPayment.Status == "POSTED")

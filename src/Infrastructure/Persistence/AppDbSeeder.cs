@@ -229,6 +229,8 @@ public static class AppDbSeeder
             ("br-north", "APINV", "NB-APINV-", 1),
             ("br-hq", "OP", "HQ-OP-", 1),
             ("br-north", "OP", "NB-OP-", 1),
+            ("br-hq", "MJE", "HQ-MJE-", 1),
+            ("br-north", "MJE", "NB-MJE-", 1),
         ];
 
         context.DocumentSequences.AddRange(sequences.Select(s => new DocumentSequence
@@ -511,6 +513,7 @@ public static class AppDbSeeder
             ("GL_ACCOUNTS", "GL Accounts", "Accounting"),
             ("COST_CENTERS", "Cost Centers", "Accounting"),
             ("GL_JOURNALS", "Journal Entries", "Accounting"),
+            ("MANUAL_JOURNAL_ENTRIES", "Manual Journal Entries", "Accounting"),
             ("TAX_CODES", "Tax Codes", "Accounting"),
             ("FISCAL_YEARS", "Fiscal Years", "Accounting"),
             ("BANK_ACCOUNTS", "Bank Accounts", "Accounting"),
@@ -610,7 +613,8 @@ public static class AppDbSeeder
         [
             "GOODS_RECEIPTS", "GOODS_ISSUES", "STOCK_ADJUSTMENTS", "STOCK_OPNAMES",
             "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS", "APPROVAL_REQUESTS", "PURCHASE_ORDERS",
-            "PURCHASE_REQUESTS", "GOODS_RECEIPT_PO", "GOODS_RETURNS", "AP_INVOICES", "OUTGOING_PAYMENTS"
+            "PURCHASE_REQUESTS", "GOODS_RECEIPT_PO", "GOODS_RETURNS", "AP_INVOICES", "OUTGOING_PAYMENTS",
+            "MANUAL_JOURNAL_ENTRIES"
         ];
         string[] managerMasterDataForms =
         [
@@ -637,7 +641,8 @@ public static class AppDbSeeder
         [
             "GOODS_RECEIPTS", "GOODS_ISSUES", "STOCK_ADJUSTMENTS", "STOCK_OPNAMES",
             "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS", "PURCHASE_ORDERS",
-            "PURCHASE_REQUESTS", "GOODS_RECEIPT_PO", "GOODS_RETURNS", "AP_INVOICES", "OUTGOING_PAYMENTS"
+            "PURCHASE_REQUESTS", "GOODS_RECEIPT_PO", "GOODS_RETURNS", "AP_INVOICES", "OUTGOING_PAYMENTS",
+            "MANUAL_JOURNAL_ENTRIES"
         ];
         string[] staffViewOnlyForms =
         [

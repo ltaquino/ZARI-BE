@@ -17,5 +17,6 @@ public sealed record UpdateGoodsIssueCommand(
     string? Remarks,
     string? StockTransferRequestRefNo,
     string? StockTransferRequestId,
+    Guid? CostCenterId,
     string? UpdatedBy,
     List<GoodsIssueLineInput> Lines) : ICommand<Result<GoodsIssueResponse>>;

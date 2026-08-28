@@ -12,4 +12,11 @@ public sealed class PurchaseOrderLine : BaseEntity
     public Guid UomId { get; set; }
     public Uom Uom { get; set; } = default!;
     public decimal UnitCost { get; set; }
+
+    // Set only when the order itself references a PurchaseRequest — which of that request's lines
+    // this line is fulfilling. Caps how much can be ordered against that request line (see
+    // CreatePurchaseOrderCommandHandler) so the same requested qty can't be over-ordered across
+    // multiple purchase orders.
+    public Guid? PurchaseRequestLineId { get; set; }
+    public PurchaseRequestLine? PurchaseRequestLine { get; set; }
 }

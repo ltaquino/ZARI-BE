@@ -34,6 +34,12 @@ public sealed class StockOpnameConfiguration : BaseModelConfig, IEntityTypeConfi
             .HasForeignKey(o => o.BranchId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(o => o.CostCenter)
+            .WithMany()
+            .HasForeignKey(o => o.CostCenterId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
         builder.HasMany(o => o.Lines)
             .WithOne(l => l.StockOpname)
             .HasForeignKey(l => l.StockOpnameId)

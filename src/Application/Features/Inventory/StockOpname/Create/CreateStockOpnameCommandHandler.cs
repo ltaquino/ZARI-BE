@@ -37,6 +37,9 @@ public sealed class CreateStockOpnameCommandHandler(
         if (items.Count != itemIds.Count)
             return Result.Failure<StockOpnameResponse>(Error.NotFound("Item.NotFound", "One or more items on this stock count were not found."));
 
+        if (command.CostCenterId.HasValue && !await dbContext.CostCenters.AnyAsync(c => c.Id == command.CostCenterId.Value, cancellationToken))
+            return Result.Failure<StockOpnameResponse>(Error.NotFound("CostCenter.NotFound", $"Cost center with ID '{command.CostCenterId}' was not found."));
+
         var numberResult = await nextDocumentNumberHandler.HandleAsync(new GetNextDocumentNumberCommand(command.BranchId, "OPN"), cancellationToken);
         if (!numberResult.IsSuccess)
             return Result.Failure<StockOpnameResponse>(numberResult.Error!);
@@ -49,6 +52,7 @@ public sealed class CreateStockOpnameCommandHandler(
             CountDate = command.CountDate,
             Status = "DRAFT",
             Remarks = command.Remarks,
+            CostCenterId = command.CostCenterId,
             CreatedBy = command.CreatedBy,
             Lines = command.Lines.Select(l => new StockOpnameLine
             {

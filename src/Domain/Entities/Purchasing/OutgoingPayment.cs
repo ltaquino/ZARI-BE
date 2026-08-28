@@ -30,6 +30,10 @@ public sealed class OutgoingPayment : AuditableEntity
     public string? Remarks { get; set; }
     public List<OutgoingPaymentLine> Lines { get; set; } = [];
 
+    // Optional departmental tag, applied to every line of this document's posted GL journal.
+    public Guid? CostCenterId { get; set; }
+    public CostCenter? CostCenter { get; set; }
+
     public string? CancelledBy { get; set; }
     public DateTimeOffset? CancelledAt { get; set; }
     public string? CancelReason { get; set; }

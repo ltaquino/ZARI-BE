@@ -32,6 +32,7 @@ public sealed record StockAdjustmentResponse(
     string Status,
     string? Remarks,
     List<StockAdjustmentLineResponse> Lines,
+    Guid? CostCenterId,
     string? CancelledBy,
     DateTimeOffset? CancelledAt,
     string? CancelReason,

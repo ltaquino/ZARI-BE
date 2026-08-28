@@ -49,6 +49,12 @@ public sealed class GoodsIssueConfiguration : BaseModelConfig, IEntityTypeConfig
             .HasForeignKey(i => i.DestBranchId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(i => i.CostCenter)
+            .WithMany()
+            .HasForeignKey(i => i.CostCenterId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
         builder.HasMany(i => i.Lines)
             .WithOne(l => l.GoodsIssue)
             .HasForeignKey(l => l.GoodsIssueId)

@@ -112,7 +112,7 @@ public static class OutgoingPaymentEndpoints
         CancellationToken cancellationToken)
     {
         var command = new UpdateOutgoingPaymentCommand(
-            id, request.BankAccountId, request.PaymentDate, request.RefNo, request.Remarks, request.UpdatedBy, request.Lines);
+            id, request.BankAccountId, request.PaymentDate, request.RefNo, request.Remarks, request.CostCenterId, request.UpdatedBy, request.Lines);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
         var result = await handler.HandleAsync(command, cancellationToken);
@@ -232,6 +232,7 @@ public sealed record UpdateOutgoingPaymentRequest(
     DateTimeOffset PaymentDate,
     string? RefNo,
     string? Remarks,
+    Guid? CostCenterId,
     string? UpdatedBy,
     List<OutgoingPaymentLineInput> Lines);
 

@@ -101,7 +101,7 @@ public static class StockOpnameEndpoints
         ICommandHandler<UpdateStockOpnameCommand, Result<StockOpnameResponse>> handler,
         CancellationToken cancellationToken)
     {
-        var command = new UpdateStockOpnameCommand(id, request.BranchId, request.WarehouseId, request.CountDate, request.Remarks, request.UpdatedBy, request.Lines);
+        var command = new UpdateStockOpnameCommand(id, request.BranchId, request.WarehouseId, request.CountDate, request.Remarks, request.CostCenterId, request.UpdatedBy, request.Lines);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
         var result = await handler.HandleAsync(command, cancellationToken);
@@ -193,6 +193,7 @@ public sealed record UpdateStockOpnameRequest(
     Guid WarehouseId,
     DateTimeOffset CountDate,
     string? Remarks,
+    Guid? CostCenterId,
     string? UpdatedBy,
     List<StockOpnameLineInput> Lines);
 

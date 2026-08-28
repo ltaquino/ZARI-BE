@@ -38,6 +38,12 @@ public sealed class GoodsReceiptConfiguration : BaseModelConfig, IEntityTypeConf
             .HasForeignKey(r => r.BranchId)
             .OnDelete(DeleteBehavior.Restrict);
 
+        builder.HasOne(r => r.CostCenter)
+            .WithMany()
+            .HasForeignKey(r => r.CostCenterId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
         builder.HasMany(r => r.Lines)
             .WithOne(l => l.GoodsReceipt)
             .HasForeignKey(l => l.GoodsReceiptId)

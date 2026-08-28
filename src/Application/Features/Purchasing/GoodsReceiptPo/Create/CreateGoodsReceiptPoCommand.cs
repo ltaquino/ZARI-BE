@@ -4,7 +4,7 @@ using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Purchasing.GoodsReceiptPos.GetAll;
 using ZARI.Domain.Common;
 
-public sealed record GoodsReceiptPoLineInput(Guid ItemId, string? BatchNo, string? SerialNo, decimal QtyReceived, Guid UomId, decimal UnitCost, Guid? LocationId);
+public sealed record GoodsReceiptPoLineInput(Guid ItemId, string? BatchNo, string? SerialNo, decimal QtyReceived, Guid UomId, decimal UnitCost, Guid? LocationId, Guid? PurchaseOrderLineId);
 
 public sealed record CreateGoodsReceiptPoCommand(
     string BranchId,
@@ -14,5 +14,6 @@ public sealed record CreateGoodsReceiptPoCommand(
     string? SupplierInvoiceNo,
     DateTimeOffset ReceiptDate,
     string? Remarks,
+    Guid? CostCenterId,
     string? CreatedBy,
     List<GoodsReceiptPoLineInput> Lines) : ICommand<Result<GoodsReceiptPoResponse>>;

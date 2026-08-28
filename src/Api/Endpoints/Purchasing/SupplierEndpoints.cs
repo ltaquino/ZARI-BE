@@ -76,7 +76,7 @@ public static class SupplierEndpoints
         ICommandHandler<UpdateSupplierCommand, Result> handler,
         CancellationToken cancellationToken)
     {
-        var command = new UpdateSupplierCommand(id, request.Code, request.Name, request.TaxId, request.PaymentTerms,
+        var command = new UpdateSupplierCommand(id, request.Code, request.Name, request.TaxId, request.PaymentTermsDays,
             request.CurrencyId, request.ApAccountId, request.Address, request.ContactPerson, request.ContactNumber,
             request.Email, request.Status);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
@@ -99,7 +99,7 @@ public sealed record UpdateSupplierRequest(
     string Code,
     string Name,
     string? TaxId,
-    string? PaymentTerms,
+    int? PaymentTermsDays,
     string? CurrencyId,
     Guid? ApAccountId,
     string? Address,

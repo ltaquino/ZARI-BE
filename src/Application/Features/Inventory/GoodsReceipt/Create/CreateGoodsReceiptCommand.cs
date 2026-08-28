@@ -16,5 +16,6 @@ public sealed record CreateGoodsReceiptCommand(
     string? GoodsIssueRefNo,
     string? GoodsIssueId,
     string? ReasonCode,
+    Guid? CostCenterId,
     string? CreatedBy,
     List<GoodsReceiptLineInput> Lines) : ICommand<Result<GoodsReceiptResponse>>;

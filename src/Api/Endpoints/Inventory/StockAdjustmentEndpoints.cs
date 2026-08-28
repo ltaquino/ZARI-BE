@@ -112,7 +112,7 @@ public static class StockAdjustmentEndpoints
         CancellationToken cancellationToken)
     {
         var command = new UpdateStockAdjustmentCommand(
-            id, request.BranchId, request.WarehouseId, request.AdjustmentDate, request.ReasonCode, request.Remarks, request.UpdatedBy, request.Lines);
+            id, request.BranchId, request.WarehouseId, request.AdjustmentDate, request.ReasonCode, request.Remarks, request.CostCenterId, request.UpdatedBy, request.Lines);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
         var result = await handler.HandleAsync(command, cancellationToken);
@@ -233,6 +233,7 @@ public sealed record UpdateStockAdjustmentRequest(
     DateTimeOffset AdjustmentDate,
     string? ReasonCode,
     string? Remarks,
+    Guid? CostCenterId,
     string? UpdatedBy,
     List<StockAdjustmentLineInput> Lines);
 

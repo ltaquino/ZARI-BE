@@ -31,6 +31,15 @@ public sealed class ReverseGlJournalsCommandHandler(
         if (originals.Count == 0)
             return Result.Success(new List<GlJournalResponse>());
 
+        var fiscalYear = await dbContext.FiscalYears.FirstOrDefaultAsync(
+            fy => command.JournalDate >= fy.StartDate && command.JournalDate <= fy.EndDate, cancellationToken);
+        if (fiscalYear is not null && fiscalYear.Status == "CLOSED")
+        {
+            return Result.Failure<List<GlJournalResponse>>(Error.Validation(
+                "GlJournal.PeriodClosed",
+                $"Cannot post a reversal on {command.JournalDate:yyyy-MM-dd} — {fiscalYear.YearName} is closed."));
+        }
+
         var reversals = new List<GlJournal>();
         foreach (var original in originals)
         {

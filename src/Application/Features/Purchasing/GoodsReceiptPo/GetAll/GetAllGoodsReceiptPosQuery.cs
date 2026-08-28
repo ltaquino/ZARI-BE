@@ -17,7 +17,8 @@ public sealed record GoodsReceiptPoLineResponse(
     Guid UomId,
     string UomCode,
     decimal UnitCost,
-    Guid? LocationId);
+    Guid? LocationId,
+    Guid? PurchaseOrderLineId);
 
 public sealed record GoodsReceiptPoResponse(
     Guid Id,
@@ -33,6 +34,7 @@ public sealed record GoodsReceiptPoResponse(
     string Status,
     string? Remarks,
     List<GoodsReceiptPoLineResponse> Lines,
+    Guid? CostCenterId,
     string? CancelledBy,
     DateTimeOffset? CancelledAt,
     string? CancelReason,

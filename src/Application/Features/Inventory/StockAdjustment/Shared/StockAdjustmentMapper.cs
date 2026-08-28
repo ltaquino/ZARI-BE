@@ -15,6 +15,7 @@ internal static class StockAdjustmentMapper
         adjustment.Status,
         adjustment.Remarks,
         adjustment.Lines.Select(ToLineResponse).ToList(),
+        adjustment.CostCenterId,
         adjustment.CancelledBy,
         adjustment.CancelledAt,
         adjustment.CancelReason,

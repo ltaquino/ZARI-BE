@@ -56,6 +56,9 @@ public sealed class CreateGoodsIssueCommandHandler(
         if (uoms.Count != uomIds.Count)
             return Result.Failure<GoodsIssueResponse>(Error.NotFound("Uom.NotFound", "One or more units of measure on this issue were not found."));
 
+        if (command.CostCenterId.HasValue && !await dbContext.CostCenters.AnyAsync(c => c.Id == command.CostCenterId.Value, cancellationToken))
+            return Result.Failure<GoodsIssueResponse>(Error.NotFound("CostCenter.NotFound", $"Cost center with ID '{command.CostCenterId}' was not found."));
+
         var numberResult = await nextDocumentNumberHandler.HandleAsync(new GetNextDocumentNumberCommand(command.BranchId, "GI"), cancellationToken);
         if (!numberResult.IsSuccess)
             return Result.Failure<GoodsIssueResponse>(numberResult.Error!);
@@ -75,6 +78,7 @@ public sealed class CreateGoodsIssueCommandHandler(
             Remarks = command.Remarks,
             StockTransferRequestRefNo = command.StockTransferRequestRefNo,
             StockTransferRequestId = command.StockTransferRequestId,
+            CostCenterId = command.CostCenterId,
             CreatedBy = command.CreatedBy,
             Lines = command.Lines.Select(l => new GoodsIssueLine
             {

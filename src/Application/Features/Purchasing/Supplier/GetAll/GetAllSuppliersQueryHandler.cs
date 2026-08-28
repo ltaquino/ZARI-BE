@@ -16,7 +16,7 @@ public sealed class GetAllSuppliersQueryHandler(IAppDbContext dbContext, IPermis
 
         var items = await dbContext.Suppliers
             .OrderBy(s => s.Name)
-            .Select(s => new SupplierResponse(s.Id, s.Code, s.Name, s.TaxId, s.PaymentTerms, s.CurrencyId, s.ApAccountId,
+            .Select(s => new SupplierResponse(s.Id, s.Code, s.Name, s.TaxId, s.PaymentTermsDays, s.CurrencyId, s.ApAccountId,
                 s.Address, s.ContactPerson, s.ContactNumber, s.Email, s.Status, s.CreatedAt))
             .ToListAsync(cancellationToken);
 

@@ -38,6 +38,7 @@ public sealed class ApproveOutgoingPaymentCommandHandler(
             .Include(p => p.Supplier)
             .Include(p => p.BankAccount)
             .Include(p => p.Lines).ThenInclude(l => l.ApInvoice).ThenInclude(i => i.Lines)
+            .Include(p => p.Lines).ThenInclude(l => l.ApInvoice).ThenInclude(i => i.ExpenseLines)
             .FirstOrDefaultAsync(p => p.Id == command.Id, cancellationToken);
 
         if (payment is null)
@@ -58,7 +59,7 @@ public sealed class ApproveOutgoingPaymentCommandHandler(
             if (invoice.Status is not ("POSTED" or "PARTIALLY_PAID"))
                 return Result.Failure<OutgoingPaymentResponse>(Error.Validation("OutgoingPayment.InvoiceNotPayable", $"AP invoice '{invoice.InvoiceNo}' is no longer eligible for payment — it may already be fully paid or cancelled."));
 
-            var invoiceTotal = invoice.Lines.Sum(l => Math.Round(l.Qty * l.UnitCost, 4));
+            var invoiceTotal = ApInvoicePaymentBalance.GetInvoiceTotal(invoice);
             var amountPaidSoFar = await ApInvoicePaymentBalance.GetAmountPaidAsync(dbContext, invoice.Id, cancellationToken);
             if (line.Amount > invoiceTotal - amountPaidSoFar)
                 return Result.Failure<OutgoingPaymentResponse>(Error.Validation("OutgoingPayment.AmountExceedsBalance", $"AP invoice '{invoice.InvoiceNo}' no longer has enough remaining balance for this payment — it may have been paid down by another payment since this one was created."));
@@ -102,14 +103,14 @@ public sealed class ApproveOutgoingPaymentCommandHandler(
         if (total <= 0)
             return Result.Success();
 
-        var apAccountResult = await GetDefaultAccountIdAsync("2000", "Accounts Payable", cancellationToken);
+        var apAccountResult = await ResolveApAccountIdAsync(payment.Supplier, cancellationToken);
         if (!apAccountResult.IsSuccess)
             return Result.Failure(apAccountResult.Error!);
 
         var lines = new List<PostGlJournalLineInput>
         {
-            new(apAccountResult.Value, null, total, 0, null),
-            new(payment.BankAccount.GlAccountId, null, 0, total, null)
+            new(apAccountResult.Value, payment.CostCenterId, total, 0, null),
+            new(payment.BankAccount.GlAccountId, payment.CostCenterId, 0, total, null)
         };
 
         var description = $"Outgoing Payment {payment.PaymentNo} — {payment.Supplier.Name}";
@@ -125,4 +126,12 @@ public sealed class ApproveOutgoingPaymentCommandHandler(
             ? Result.Failure<Guid>(Error.NotFound("GlAccount.NotFound", $"Default GL account '{label}' ({code}) is not configured — check the seeded chart of accounts."))
             : Result.Success(accountId.Value);
     }
+
+    /// Uses the supplier's own AP control-account override if one is configured, falling back to the
+    /// default "2000 Accounts Payable" — matches ApInvoice's own resolution so a supplier billed via
+    /// an EXPENSE/ITEM invoice against a custom AP account is paid off against that same account.
+    private Task<Result<Guid>> ResolveApAccountIdAsync(Domain.Entities.Supplier supplier, CancellationToken cancellationToken) =>
+        supplier.ApAccountId.HasValue
+            ? Task.FromResult(Result.Success(supplier.ApAccountId.Value))
+            : GetDefaultAccountIdAsync("2000", "Accounts Payable", cancellationToken);
 }

@@ -14,5 +14,6 @@ public sealed record UpdateGoodsReceiptPoCommand(
     string? SupplierInvoiceNo,
     DateTimeOffset ReceiptDate,
     string? Remarks,
+    Guid? CostCenterId,
     string? UpdatedBy,
     List<GoodsReceiptPoLineInput> Lines) : ICommand<Result<GoodsReceiptPoResponse>>;

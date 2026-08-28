@@ -16,4 +16,11 @@ public sealed class GoodsReceiptPoLine : BaseEntity
     public decimal UnitCost { get; set; }
     public Guid? LocationId { get; set; }
     public StorageLocation? Location { get; set; }
+
+    // Set only when the receipt itself references a PurchaseOrder — which of that order's lines
+    // this line is receiving against. Caps how much can be received against that order line (see
+    // CreateGoodsReceiptPoCommandHandler) so the same ordered qty can't be over-received across
+    // multiple goods receipts.
+    public Guid? PurchaseOrderLineId { get; set; }
+    public PurchaseOrderLine? PurchaseOrderLine { get; set; }
 }

@@ -8,6 +8,7 @@ using ZARI.Application.Features.Accounting.GlJournals.GetAll;
 using ZARI.Application.Features.Accounting.GlJournals.Post;
 using ZARI.Application.Features.Inventory.SerialNumbers.Issue;
 using ZARI.Application.Features.Inventory.StockLedgers.Issue;
+using ZARI.Application.Features.Purchasing.GoodsReturns.Create;
 using ZARI.Application.Features.Purchasing.GoodsReturns.GetAll;
 using ZARI.Application.Features.Purchasing.GoodsReturns.Shared;
 using ZARI.Application.Features.Workflow.ApprovalRequests.Decide;
@@ -52,6 +53,31 @@ public sealed class ApproveGoodsReturnCommandHandler(
 
         if (goodsReturn.Status != "PENDING_APPROVAL")
             return Result.Failure<GoodsReturnResponse>(Error.Validation("GoodsReturn.NotPendingApproval", "Only goods returns pending approval can be approved."));
+
+        // Authoritative re-check, closing the race a friendly Create/Update-time check can't: another
+        // goods return against the same goods receipt (PO) line may have been approved in between.
+        // This return is still PENDING_APPROVAL (not POSTED) right now, so it's naturally excluded from
+        // its own "already returned" tally — same pattern as ApprovePurchaseOrderCommandHandler.
+        if (goodsReturn.GoodsReceiptPoId is not null)
+        {
+            var goodsReceiptPo = await dbContext.GoodsReceiptPos
+                .Include(g => g.Lines).ThenInclude(l => l.Item)
+                .FirstOrDefaultAsync(g => g.Id == goodsReturn.GoodsReceiptPoId, cancellationToken);
+            if (goodsReceiptPo is not null)
+            {
+                var referencedLineIds = goodsReturn.Lines.Where(l => l.GoodsReceiptPoLineId.HasValue).Select(l => l.GoodsReceiptPoLineId!.Value).Distinct().ToList();
+                var alreadyReturned = await dbContext.GoodsReturnLines
+                    .Where(l => l.GoodsReceiptPoLineId.HasValue && referencedLineIds.Contains(l.GoodsReceiptPoLineId.Value) && l.GoodsReturn.Status == "POSTED")
+                    .GroupBy(l => l.GoodsReceiptPoLineId!.Value)
+                    .Select(g => new { GoodsReceiptPoLineId = g.Key, Qty = g.Sum(l => l.QtyReturned) })
+                    .ToDictionaryAsync(x => x.GoodsReceiptPoLineId, x => x.Qty, cancellationToken);
+
+                var lineInputs = goodsReturn.Lines.Select(l => new GoodsReturnLineInput(l.ItemId, l.BatchNo, l.SerialNo, l.QtyReturned, l.UomId, l.UnitCost, l.GoodsReceiptPoLineId)).ToList();
+                var validationResult = CreateGoodsReturnCommandHandler.ValidateAgainstGoodsReceiptPo(goodsReceiptPo, lineInputs, alreadyReturned);
+                if (!validationResult.IsSuccess)
+                    return Result.Failure<GoodsReturnResponse>(validationResult.Error!);
+            }
+        }
 
         var request = await dbContext.ApprovalRequests
             .Where(r => r.EntityType == "GOODS_RETURNS" && r.EntityId == goodsReturn.Id.ToString())
@@ -126,8 +152,8 @@ public sealed class ApproveGoodsReturnCommandHandler(
         if (!grniAccountResult.IsSuccess)
             return Result.Failure(grniAccountResult.Error!);
 
-        var lines = new List<PostGlJournalLineInput> { new(grniAccountResult.Value, null, totalValue, 0, null) };
-        lines.AddRange(creditsByAccount.Select(kv => new PostGlJournalLineInput(kv.Key, null, 0, kv.Value, null)));
+        var lines = new List<PostGlJournalLineInput> { new(grniAccountResult.Value, goodsReturn.CostCenterId, totalValue, 0, null) };
+        lines.AddRange(creditsByAccount.Select(kv => new PostGlJournalLineInput(kv.Key, goodsReturn.CostCenterId, 0, kv.Value, null)));
 
         var description = $"Goods Return {goodsReturn.ReturnNo} — {goodsReturn.Supplier.Name}";
         var postResult = await postGlJournalHandler.HandleAsync(

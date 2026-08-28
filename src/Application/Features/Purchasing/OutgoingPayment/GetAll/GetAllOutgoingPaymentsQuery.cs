@@ -28,6 +28,7 @@ public sealed record OutgoingPaymentResponse(
     string? Remarks,
     decimal TotalAmount,
     List<OutgoingPaymentLineResponse> Lines,
+    Guid? CostCenterId,
     string? CancelledBy,
     DateTimeOffset? CancelledAt,
     string? CancelReason,

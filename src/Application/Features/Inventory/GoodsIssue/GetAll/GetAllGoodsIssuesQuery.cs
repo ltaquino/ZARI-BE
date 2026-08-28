@@ -36,6 +36,7 @@ public sealed record GoodsIssueResponse(
     List<GoodsIssueLineResponse> Lines,
     string? StockTransferRequestRefNo,
     string? StockTransferRequestId,
+    Guid? CostCenterId,
     string? CancelledBy,
     DateTimeOffset? CancelledAt,
     string? CancelReason,

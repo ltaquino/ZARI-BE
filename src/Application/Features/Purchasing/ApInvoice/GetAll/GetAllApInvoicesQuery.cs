@@ -14,7 +14,8 @@ public sealed record ApInvoiceLineResponse(
     decimal Qty,
     Guid UomId,
     string UomCode,
-    decimal UnitCost);
+    decimal UnitCost,
+    Guid? GoodsReceiptPoLineId);
 
 public sealed record ApInvoiceExpenseLineResponse(
     Guid Id,
@@ -42,6 +43,7 @@ public sealed record ApInvoiceResponse(
     List<ApInvoiceLineResponse> Lines,
     List<ApInvoiceExpenseLineResponse> ExpenseLines,
     decimal AmountPaid,
+    Guid? CostCenterId,
     string? CancelledBy,
     DateTimeOffset? CancelledAt,
     string? CancelReason,

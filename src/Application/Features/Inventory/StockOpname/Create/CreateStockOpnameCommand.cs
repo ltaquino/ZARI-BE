@@ -11,5 +11,6 @@ public sealed record CreateStockOpnameCommand(
     Guid WarehouseId,
     DateTimeOffset CountDate,
     string? Remarks,
+    Guid? CostCenterId,
     string? CreatedBy,
     List<StockOpnameLineInput> Lines) : ICommand<Result<StockOpnameResponse>>;

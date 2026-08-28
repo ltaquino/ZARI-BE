@@ -37,6 +37,9 @@ public sealed class CreateStockAdjustmentCommandHandler(
         if (items.Count != itemIds.Count)
             return Result.Failure<StockAdjustmentResponse>(Error.NotFound("Item.NotFound", "One or more items on this adjustment were not found."));
 
+        if (command.CostCenterId.HasValue && !await dbContext.CostCenters.AnyAsync(c => c.Id == command.CostCenterId.Value, cancellationToken))
+            return Result.Failure<StockAdjustmentResponse>(Error.NotFound("CostCenter.NotFound", $"Cost center with ID '{command.CostCenterId}' was not found."));
+
         var numberResult = await nextDocumentNumberHandler.HandleAsync(new GetNextDocumentNumberCommand(command.BranchId, "ADJ"), cancellationToken);
         if (!numberResult.IsSuccess)
             return Result.Failure<StockAdjustmentResponse>(numberResult.Error!);
@@ -50,6 +53,7 @@ public sealed class CreateStockAdjustmentCommandHandler(
             ReasonCode = command.ReasonCode,
             Status = "DRAFT",
             Remarks = command.Remarks,
+            CostCenterId = command.CostCenterId,
             CreatedBy = command.CreatedBy,
             Lines = command.Lines.Select(l => new StockAdjustmentLine
             {

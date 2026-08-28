@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
+using ZARI.Application.Features.Purchasing.GoodsReceiptPos.Create;
 using ZARI.Application.Features.Purchasing.GoodsReceiptPos.GetAll;
 using ZARI.Application.Features.Purchasing.GoodsReceiptPos.Shared;
 using ZARI.Application.Features.Workflow.Notifications.Create;
@@ -44,11 +45,38 @@ public sealed class UpdateGoodsReceiptPoCommandHandler(
         if (supplier is null)
             return Result.Failure<GoodsReceiptPoResponse>(Error.NotFound("Supplier.NotFound", $"Supplier with ID '{command.SupplierId}' was not found."));
 
+        PurchaseOrder? purchaseOrder = null;
         if (command.PurchaseOrderId.HasValue)
         {
-            var poExists = await dbContext.PurchaseOrders.AnyAsync(p => p.Id == command.PurchaseOrderId.Value, cancellationToken);
-            if (!poExists)
+            purchaseOrder = await dbContext.PurchaseOrders
+                .Include(p => p.Lines).ThenInclude(l => l.Item)
+                .FirstOrDefaultAsync(p => p.Id == command.PurchaseOrderId.Value, cancellationToken);
+            if (purchaseOrder is null)
                 return Result.Failure<GoodsReceiptPoResponse>(Error.NotFound("PurchaseOrder.NotFound", $"Purchase order with ID '{command.PurchaseOrderId}' was not found."));
+
+            if (purchaseOrder.Status != "POSTED")
+                return Result.Failure<GoodsReceiptPoResponse>(Error.Validation("GoodsReceiptPo.PurchaseOrderNotPosted", "The referenced purchase order must be approved before it can be received against."));
+        }
+        else if (command.Lines.Any(l => l.PurchaseOrderLineId.HasValue))
+        {
+            return Result.Failure<GoodsReceiptPoResponse>(Error.Validation("GoodsReceiptPo.UnexpectedPurchaseOrderLine", "Lines cannot reference a purchase order line unless this receipt itself references a purchase order."));
+        }
+
+        if (purchaseOrder is not null)
+        {
+            // This receipt is DRAFT (checked above), so it's never itself among the "POSTED" goods
+            // receipts being summed here — no self-exclusion needed, same reasoning as PurchaseOrder's
+            // own Update-time re-check against PurchaseRequest.
+            var referencedLineIds = command.Lines.Where(l => l.PurchaseOrderLineId.HasValue).Select(l => l.PurchaseOrderLineId!.Value).Distinct().ToList();
+            var alreadyReceived = await dbContext.GoodsReceiptPoLines
+                .Where(l => l.PurchaseOrderLineId.HasValue && referencedLineIds.Contains(l.PurchaseOrderLineId.Value) && l.GoodsReceiptPo.Status == "POSTED")
+                .GroupBy(l => l.PurchaseOrderLineId!.Value)
+                .Select(g => new { PurchaseOrderLineId = g.Key, QtyReceived = g.Sum(l => l.QtyReceived) })
+                .ToDictionaryAsync(x => x.PurchaseOrderLineId, x => x.QtyReceived, cancellationToken);
+
+            var validationResult = CreateGoodsReceiptPoCommandHandler.ValidateAgainstPurchaseOrder(purchaseOrder, command.Lines, alreadyReceived);
+            if (!validationResult.IsSuccess)
+                return Result.Failure<GoodsReceiptPoResponse>(validationResult.Error!);
         }
 
         var itemIds = command.Lines.Select(l => l.ItemId).Distinct().ToList();
@@ -69,6 +97,9 @@ public sealed class UpdateGoodsReceiptPoCommandHandler(
                 return Result.Failure<GoodsReceiptPoResponse>(Error.NotFound("StorageLocation.NotFound", "One or more storage locations on this receipt were not found."));
         }
 
+        if (command.CostCenterId.HasValue && !await dbContext.CostCenters.AnyAsync(c => c.Id == command.CostCenterId.Value, cancellationToken))
+            return Result.Failure<GoodsReceiptPoResponse>(Error.NotFound("CostCenter.NotFound", $"Cost center with ID '{command.CostCenterId}' was not found."));
+
         receipt.BranchId = command.BranchId;
         receipt.WarehouseId = command.WarehouseId;
         receipt.SupplierId = command.SupplierId;
@@ -76,6 +107,7 @@ public sealed class UpdateGoodsReceiptPoCommandHandler(
         receipt.SupplierInvoiceNo = command.SupplierInvoiceNo;
         receipt.ReceiptDate = command.ReceiptDate;
         receipt.Remarks = command.Remarks;
+        receipt.CostCenterId = command.CostCenterId;
 
         receipt.Lines.Clear();
         foreach (var line in command.Lines)
@@ -88,7 +120,8 @@ public sealed class UpdateGoodsReceiptPoCommandHandler(
                 QtyReceived = line.QtyReceived,
                 UomId = line.UomId,
                 UnitCost = line.UnitCost,
-                LocationId = line.LocationId
+                LocationId = line.LocationId,
+                PurchaseOrderLineId = line.PurchaseOrderLineId
             });
         }
 

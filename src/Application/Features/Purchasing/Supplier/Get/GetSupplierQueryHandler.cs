@@ -15,7 +15,7 @@ public sealed class GetSupplierQueryHandler(IAppDbContext dbContext, IPermission
 
         var supplier = await dbContext.Suppliers
             .Where(s => s.Id == query.Id)
-            .Select(s => new SupplierResponse(s.Id, s.Code, s.Name, s.TaxId, s.PaymentTerms, s.CurrencyId, s.ApAccountId,
+            .Select(s => new SupplierResponse(s.Id, s.Code, s.Name, s.TaxId, s.PaymentTermsDays, s.CurrencyId, s.ApAccountId,
                 s.Address, s.ContactPerson, s.ContactNumber, s.Email, s.Status, s.CreatedAt))
             .FirstOrDefaultAsync(cancellationToken);
 

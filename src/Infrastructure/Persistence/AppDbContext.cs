@@ -42,6 +42,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<GlAccount> GlAccounts => Set<GlAccount>();
     public DbSet<CostCenter> CostCenters => Set<CostCenter>();
     public DbSet<GlJournal> GlJournals => Set<GlJournal>();
+    public DbSet<ManualJournalEntry> ManualJournalEntries => Set<ManualJournalEntry>();
+    public DbSet<ManualJournalEntryLine> ManualJournalEntryLines => Set<ManualJournalEntryLine>();
     public DbSet<ApprovalRequest> ApprovalRequests => Set<ApprovalRequest>();
     public DbSet<ApprovalAction> ApprovalActions => Set<ApprovalAction>();
     public DbSet<Notification> Notifications => Set<Notification>();

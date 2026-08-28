@@ -29,5 +29,11 @@ public sealed class GoodsReceiptPoLineConfiguration : BaseModelConfig, IEntityTy
             .WithMany()
             .HasForeignKey(l => l.LocationId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(l => l.PurchaseOrderLine)
+            .WithMany()
+            .HasForeignKey(l => l.PurchaseOrderLineId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
     }
 }

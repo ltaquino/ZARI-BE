@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
+using ZARI.Application.Features.Purchasing.GoodsReturns.Create;
 using ZARI.Application.Features.Purchasing.GoodsReturns.GetAll;
 using ZARI.Application.Features.Purchasing.GoodsReturns.Shared;
 using ZARI.Application.Features.Workflow.Notifications.Create;
@@ -44,11 +45,38 @@ public sealed class UpdateGoodsReturnCommandHandler(
         if (supplier is null)
             return Result.Failure<GoodsReturnResponse>(Error.NotFound("Supplier.NotFound", $"Supplier with ID '{command.SupplierId}' was not found."));
 
+        GoodsReceiptPo? goodsReceiptPo = null;
         if (command.GoodsReceiptPoId.HasValue)
         {
-            var grpoExists = await dbContext.GoodsReceiptPos.AnyAsync(g => g.Id == command.GoodsReceiptPoId.Value, cancellationToken);
-            if (!grpoExists)
+            goodsReceiptPo = await dbContext.GoodsReceiptPos
+                .Include(g => g.Lines).ThenInclude(l => l.Item)
+                .FirstOrDefaultAsync(g => g.Id == command.GoodsReceiptPoId.Value, cancellationToken);
+            if (goodsReceiptPo is null)
                 return Result.Failure<GoodsReturnResponse>(Error.NotFound("GoodsReceiptPo.NotFound", $"Goods receipt (PO) with ID '{command.GoodsReceiptPoId}' was not found."));
+
+            if (goodsReceiptPo.Status != "POSTED")
+                return Result.Failure<GoodsReturnResponse>(Error.Validation("GoodsReturn.GoodsReceiptPoNotPosted", "The referenced goods receipt (PO) must be posted before items can be returned against it."));
+        }
+        else if (command.Lines.Any(l => l.GoodsReceiptPoLineId.HasValue))
+        {
+            return Result.Failure<GoodsReturnResponse>(Error.Validation("GoodsReturn.UnexpectedGoodsReceiptPoLine", "Lines cannot reference a goods receipt (PO) line unless this return itself references a goods receipt (PO)."));
+        }
+
+        if (goodsReceiptPo is not null)
+        {
+            // This return is DRAFT (checked above), so it's never itself among the "POSTED" goods
+            // returns being summed here — no self-exclusion needed, same reasoning as
+            // CreatePurchaseOrderCommandHandler's PurchaseRequest check.
+            var referencedLineIds = command.Lines.Where(l => l.GoodsReceiptPoLineId.HasValue).Select(l => l.GoodsReceiptPoLineId!.Value).Distinct().ToList();
+            var alreadyReturned = await dbContext.GoodsReturnLines
+                .Where(l => l.GoodsReceiptPoLineId.HasValue && referencedLineIds.Contains(l.GoodsReceiptPoLineId.Value) && l.GoodsReturn.Status == "POSTED")
+                .GroupBy(l => l.GoodsReceiptPoLineId!.Value)
+                .Select(g => new { GoodsReceiptPoLineId = g.Key, Qty = g.Sum(l => l.QtyReturned) })
+                .ToDictionaryAsync(x => x.GoodsReceiptPoLineId, x => x.Qty, cancellationToken);
+
+            var validationResult = CreateGoodsReturnCommandHandler.ValidateAgainstGoodsReceiptPo(goodsReceiptPo, command.Lines, alreadyReturned);
+            if (!validationResult.IsSuccess)
+                return Result.Failure<GoodsReturnResponse>(validationResult.Error!);
         }
 
         var reasonExists = await dbContext.PurchaseReturnReasons.AnyAsync(r => r.Code == command.ReasonCode, cancellationToken);
@@ -65,6 +93,9 @@ public sealed class UpdateGoodsReturnCommandHandler(
         if (uoms.Count != uomIds.Count)
             return Result.Failure<GoodsReturnResponse>(Error.NotFound("Uom.NotFound", "One or more units of measure on this return were not found."));
 
+        if (command.CostCenterId.HasValue && !await dbContext.CostCenters.AnyAsync(c => c.Id == command.CostCenterId.Value, cancellationToken))
+            return Result.Failure<GoodsReturnResponse>(Error.NotFound("CostCenter.NotFound", $"Cost center with ID '{command.CostCenterId}' was not found."));
+
         goodsReturn.BranchId = command.BranchId;
         goodsReturn.WarehouseId = command.WarehouseId;
         goodsReturn.SupplierId = command.SupplierId;
@@ -72,6 +103,7 @@ public sealed class UpdateGoodsReturnCommandHandler(
         goodsReturn.ReasonCode = command.ReasonCode;
         goodsReturn.ReturnDate = command.ReturnDate;
         goodsReturn.Remarks = command.Remarks;
+        goodsReturn.CostCenterId = command.CostCenterId;
 
         goodsReturn.Lines.Clear();
         foreach (var line in command.Lines)
@@ -83,7 +115,8 @@ public sealed class UpdateGoodsReturnCommandHandler(
                 SerialNo = line.SerialNo,
                 QtyReturned = line.QtyReturned,
                 UomId = line.UomId,
-                UnitCost = line.UnitCost
+                UnitCost = line.UnitCost,
+                GoodsReceiptPoLineId = line.GoodsReceiptPoLineId
             });
         }
 

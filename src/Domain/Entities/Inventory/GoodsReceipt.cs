@@ -24,6 +24,10 @@ public sealed class GoodsReceipt : AuditableEntity
     // AdjustmentReason code — required for MANUAL receipts, used to resolve the GL variance offset.
     public string? ReasonCode { get; set; }
 
+    // Optional departmental tag, applied to every line of this receipt's posted GL journal.
+    public Guid? CostCenterId { get; set; }
+    public CostCenter? CostCenter { get; set; }
+
     public string? CancelledBy { get; set; }
     public DateTimeOffset? CancelledAt { get; set; }
     public string? CancelReason { get; set; }

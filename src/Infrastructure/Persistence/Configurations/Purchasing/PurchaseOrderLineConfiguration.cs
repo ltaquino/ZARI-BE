@@ -22,5 +22,11 @@ public sealed class PurchaseOrderLineConfiguration : BaseModelConfig, IEntityTyp
             .WithMany()
             .HasForeignKey(l => l.UomId)
             .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(l => l.PurchaseRequestLine)
+            .WithMany()
+            .HasForeignKey(l => l.PurchaseRequestLineId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
     }
 }

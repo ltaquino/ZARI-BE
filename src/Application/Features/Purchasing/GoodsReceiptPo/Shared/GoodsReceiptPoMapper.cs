@@ -19,6 +19,7 @@ internal static class GoodsReceiptPoMapper
         receipt.Status,
         receipt.Remarks,
         receipt.Lines.Select(ToLineResponse).ToList(),
+        receipt.CostCenterId,
         receipt.CancelledBy,
         receipt.CancelledAt,
         receipt.CancelReason,
@@ -37,5 +38,6 @@ internal static class GoodsReceiptPoMapper
         line.UomId,
         line.Uom.Code,
         line.UnitCost,
-        line.LocationId);
+        line.LocationId,
+        line.PurchaseOrderLineId);
 }

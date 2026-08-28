@@ -41,6 +41,12 @@ public sealed class ApInvoiceConfiguration : BaseModelConfig, IEntityTypeConfigu
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired(false);
 
+        builder.HasOne(i => i.CostCenter)
+            .WithMany()
+            .HasForeignKey(i => i.CostCenterId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
         builder.HasMany(i => i.Lines)
             .WithOne(l => l.ApInvoice)
             .HasForeignKey(l => l.ApInvoiceId)

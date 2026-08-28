@@ -35,6 +35,7 @@ public sealed class ApproveOutgoingPaymentCancellationCommandHandler(
             .Include(p => p.Supplier)
             .Include(p => p.BankAccount)
             .Include(p => p.Lines).ThenInclude(l => l.ApInvoice).ThenInclude(i => i.Lines)
+            .Include(p => p.Lines).ThenInclude(l => l.ApInvoice).ThenInclude(i => i.ExpenseLines)
             .FirstOrDefaultAsync(p => p.Id == command.Id, cancellationToken);
 
         if (payment is null)
@@ -70,7 +71,7 @@ public sealed class ApproveOutgoingPaymentCancellationCommandHandler(
         foreach (var line in payment.Lines)
         {
             var invoice = line.ApInvoice;
-            var invoiceTotal = invoice.Lines.Sum(l => Math.Round(l.Qty * l.UnitCost, 4));
+            var invoiceTotal = ApInvoicePaymentBalance.GetInvoiceTotal(invoice);
             var amountPaidByOthers = await ApInvoicePaymentBalance.GetAmountPaidAsync(dbContext, invoice.Id, cancellationToken);
             invoice.Status = ApInvoicePaymentBalance.DetermineStatus(invoiceTotal, amountPaidByOthers);
         }

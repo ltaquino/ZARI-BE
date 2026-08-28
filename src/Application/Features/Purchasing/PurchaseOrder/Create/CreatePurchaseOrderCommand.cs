@@ -4,7 +4,7 @@ using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Purchasing.PurchaseOrders.GetAll;
 using ZARI.Domain.Common;
 
-public sealed record PurchaseOrderLineInput(Guid ItemId, decimal Qty, Guid UomId, decimal UnitCost);
+public sealed record PurchaseOrderLineInput(Guid ItemId, decimal Qty, Guid UomId, decimal UnitCost, Guid? PurchaseRequestLineId);
 
 public sealed record CreatePurchaseOrderCommand(
     string BranchId,

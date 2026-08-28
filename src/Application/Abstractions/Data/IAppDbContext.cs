@@ -40,6 +40,8 @@ public interface IAppDbContext
     DbSet<GlAccount> GlAccounts { get; }
     DbSet<CostCenter> CostCenters { get; }
     DbSet<GlJournal> GlJournals { get; }
+    DbSet<ManualJournalEntry> ManualJournalEntries { get; }
+    DbSet<ManualJournalEntryLine> ManualJournalEntryLines { get; }
     DbSet<ApprovalRequest> ApprovalRequests { get; }
     DbSet<ApprovalAction> ApprovalActions { get; }
     DbSet<Notification> Notifications { get; }

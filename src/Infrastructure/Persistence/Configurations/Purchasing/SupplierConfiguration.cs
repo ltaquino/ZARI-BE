@@ -13,7 +13,6 @@ public sealed class SupplierConfiguration : BaseModelConfig, IEntityTypeConfigur
         builder.Property(s => s.Code).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
         builder.Property(s => s.Name).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_150);
         builder.Property(s => s.TaxId).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
-        builder.Property(s => s.PaymentTerms).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
         builder.Property(s => s.CurrencyId).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
         builder.Property(s => s.Address).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
         builder.Property(s => s.ContactPerson).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_150);

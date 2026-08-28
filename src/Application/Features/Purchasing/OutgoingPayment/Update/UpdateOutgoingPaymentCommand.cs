@@ -11,5 +11,6 @@ public sealed record UpdateOutgoingPaymentCommand(
     DateTimeOffset PaymentDate,
     string? RefNo,
     string? Remarks,
+    Guid? CostCenterId,
     string? UpdatedBy,
     List<OutgoingPaymentLineInput> Lines) : ICommand<Result<OutgoingPaymentResponse>>;

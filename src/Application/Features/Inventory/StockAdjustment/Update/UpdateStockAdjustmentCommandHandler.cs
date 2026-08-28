@@ -45,11 +45,15 @@ public sealed class UpdateStockAdjustmentCommandHandler(
         if (items.Count != itemIds.Count)
             return Result.Failure<StockAdjustmentResponse>(Error.NotFound("Item.NotFound", "One or more items on this adjustment were not found."));
 
+        if (command.CostCenterId.HasValue && !await dbContext.CostCenters.AnyAsync(c => c.Id == command.CostCenterId.Value, cancellationToken))
+            return Result.Failure<StockAdjustmentResponse>(Error.NotFound("CostCenter.NotFound", $"Cost center with ID '{command.CostCenterId}' was not found."));
+
         adjustment.BranchId = command.BranchId;
         adjustment.WarehouseId = command.WarehouseId;
         adjustment.AdjustmentDate = command.AdjustmentDate;
         adjustment.ReasonCode = command.ReasonCode;
         adjustment.Remarks = command.Remarks;
+        adjustment.CostCenterId = command.CostCenterId;
 
         adjustment.Lines.Clear();
         foreach (var line in command.Lines)

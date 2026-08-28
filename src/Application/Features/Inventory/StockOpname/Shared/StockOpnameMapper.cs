@@ -14,6 +14,7 @@ internal static class StockOpnameMapper
         opname.Status,
         opname.Remarks,
         opname.Lines.Select(ToLineResponse).ToList(),
+        opname.CostCenterId,
         opname.PostedBy,
         opname.CancelledBy,
         opname.CancelledAt,

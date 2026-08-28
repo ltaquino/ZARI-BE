@@ -145,8 +145,8 @@ public sealed class ApproveGoodsIssueCommandHandler(
         if (!debitAccountResult.IsSuccess)
             return Result.Failure(debitAccountResult.Error!);
 
-        var lines = new List<PostGlJournalLineInput> { new(debitAccountResult.Value, null, totalValue, 0, null) };
-        lines.AddRange(creditsByAccount.Select(kv => new PostGlJournalLineInput(kv.Key, null, 0, kv.Value, null)));
+        var lines = new List<PostGlJournalLineInput> { new(debitAccountResult.Value, issue.CostCenterId, totalValue, 0, null) };
+        lines.AddRange(creditsByAccount.Select(kv => new PostGlJournalLineInput(kv.Key, issue.CostCenterId, 0, kv.Value, null)));
 
         var description = $"Goods Issue {issue.GiNo} — {issue.ReferenceType.Replace("_", " ").ToLowerInvariant()}";
         var postResult = await postGlJournalHandler.HandleAsync(

@@ -31,6 +31,7 @@ public sealed record StockOpnameResponse(
     string Status,
     string? Remarks,
     List<StockOpnameLineResponse> Lines,
+    Guid? CostCenterId,
     string? PostedBy,
     string? CancelledBy,
     DateTimeOffset? CancelledAt,

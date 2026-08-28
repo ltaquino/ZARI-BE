@@ -13,5 +13,6 @@ public sealed record CreateOutgoingPaymentCommand(
     DateTimeOffset PaymentDate,
     string? RefNo,
     string? Remarks,
+    Guid? CostCenterId,
     string? CreatedBy,
     List<OutgoingPaymentLineInput> Lines) : ICommand<Result<OutgoingPaymentResponse>>;

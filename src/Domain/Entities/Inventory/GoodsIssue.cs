@@ -20,6 +20,10 @@ public sealed class GoodsIssue : AuditableEntity
     // Required for INTERNAL_USE/DISPOSAL/PRODUCTION — which AdjustmentReason's GL account this posts its variance to.
     public string? ReasonCode { get; set; }
 
+    // Optional departmental tag, applied to every line of this issue's posted GL journal.
+    public Guid? CostCenterId { get; set; }
+    public CostCenter? CostCenter { get; set; }
+
     public DateTimeOffset GiDate { get; set; }
     public string Status { get; set; } = default!;
 

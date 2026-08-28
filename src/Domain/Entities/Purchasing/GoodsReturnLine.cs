@@ -14,4 +14,11 @@ public sealed class GoodsReturnLine : BaseEntity
     public Guid UomId { get; set; }
     public Uom Uom { get; set; } = default!;
     public decimal UnitCost { get; set; }
+
+    // Set only when the return itself references a GoodsReceiptPo — which of that receipt's lines
+    // this line is returning against. Caps how much can be returned against that receipt line (see
+    // CreateGoodsReturnCommandHandler) so the same received qty can't be over-returned across
+    // multiple goods returns.
+    public Guid? GoodsReceiptPoLineId { get; set; }
+    public GoodsReceiptPoLine? GoodsReceiptPoLine { get; set; }
 }

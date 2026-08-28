@@ -36,11 +36,35 @@ public sealed class CreateGoodsReceiptPoCommandHandler(
         if (supplier is null)
             return Result.Failure<GoodsReceiptPoResponse>(Error.NotFound("Supplier.NotFound", $"Supplier with ID '{command.SupplierId}' was not found."));
 
+        PurchaseOrder? purchaseOrder = null;
         if (command.PurchaseOrderId.HasValue)
         {
-            var poExists = await dbContext.PurchaseOrders.AnyAsync(p => p.Id == command.PurchaseOrderId.Value, cancellationToken);
-            if (!poExists)
+            purchaseOrder = await dbContext.PurchaseOrders
+                .Include(p => p.Lines).ThenInclude(l => l.Item)
+                .FirstOrDefaultAsync(p => p.Id == command.PurchaseOrderId.Value, cancellationToken);
+            if (purchaseOrder is null)
                 return Result.Failure<GoodsReceiptPoResponse>(Error.NotFound("PurchaseOrder.NotFound", $"Purchase order with ID '{command.PurchaseOrderId}' was not found."));
+
+            if (purchaseOrder.Status != "POSTED")
+                return Result.Failure<GoodsReceiptPoResponse>(Error.Validation("GoodsReceiptPo.PurchaseOrderNotPosted", "The referenced purchase order must be approved before it can be received against."));
+        }
+        else if (command.Lines.Any(l => l.PurchaseOrderLineId.HasValue))
+        {
+            return Result.Failure<GoodsReceiptPoResponse>(Error.Validation("GoodsReceiptPo.UnexpectedPurchaseOrderLine", "Lines cannot reference a purchase order line unless this receipt itself references a purchase order."));
+        }
+
+        if (purchaseOrder is not null)
+        {
+            var referencedLineIds = command.Lines.Where(l => l.PurchaseOrderLineId.HasValue).Select(l => l.PurchaseOrderLineId!.Value).Distinct().ToList();
+            var alreadyReceived = await dbContext.GoodsReceiptPoLines
+                .Where(l => l.PurchaseOrderLineId.HasValue && referencedLineIds.Contains(l.PurchaseOrderLineId.Value) && l.GoodsReceiptPo.Status == "POSTED")
+                .GroupBy(l => l.PurchaseOrderLineId!.Value)
+                .Select(g => new { PurchaseOrderLineId = g.Key, QtyReceived = g.Sum(l => l.QtyReceived) })
+                .ToDictionaryAsync(x => x.PurchaseOrderLineId, x => x.QtyReceived, cancellationToken);
+
+            var validationResult = ValidateAgainstPurchaseOrder(purchaseOrder, command.Lines, alreadyReceived);
+            if (!validationResult.IsSuccess)
+                return Result.Failure<GoodsReceiptPoResponse>(validationResult.Error!);
         }
 
         var itemIds = command.Lines.Select(l => l.ItemId).Distinct().ToList();
@@ -61,6 +85,9 @@ public sealed class CreateGoodsReceiptPoCommandHandler(
                 return Result.Failure<GoodsReceiptPoResponse>(Error.NotFound("StorageLocation.NotFound", "One or more storage locations on this receipt were not found."));
         }
 
+        if (command.CostCenterId.HasValue && !await dbContext.CostCenters.AnyAsync(c => c.Id == command.CostCenterId.Value, cancellationToken))
+            return Result.Failure<GoodsReceiptPoResponse>(Error.NotFound("CostCenter.NotFound", $"Cost center with ID '{command.CostCenterId}' was not found."));
+
         var numberResult = await nextDocumentNumberHandler.HandleAsync(new GetNextDocumentNumberCommand(command.BranchId, "GRPO"), cancellationToken);
         if (!numberResult.IsSuccess)
             return Result.Failure<GoodsReceiptPoResponse>(numberResult.Error!);
@@ -76,6 +103,7 @@ public sealed class CreateGoodsReceiptPoCommandHandler(
             ReceiptDate = command.ReceiptDate,
             Status = "DRAFT",
             Remarks = command.Remarks,
+            CostCenterId = command.CostCenterId,
             CreatedBy = command.CreatedBy,
             Lines = command.Lines.Select(l => new GoodsReceiptPoLine
             {
@@ -85,7 +113,8 @@ public sealed class CreateGoodsReceiptPoCommandHandler(
                 QtyReceived = l.QtyReceived,
                 UomId = l.UomId,
                 UnitCost = l.UnitCost,
-                LocationId = l.LocationId
+                LocationId = l.LocationId,
+                PurchaseOrderLineId = l.PurchaseOrderLineId
             }).ToList()
         };
 
@@ -107,5 +136,38 @@ public sealed class CreateGoodsReceiptPoCommandHandler(
             return Result.Failure<GoodsReceiptPoResponse>(notifyResult.Error!);
 
         return Result.Success(GoodsReceiptPoMapper.ToResponse(receipt));
+    }
+
+    /// <summary>
+    /// Structural checks (every line references a real line on the given order, for the same item)
+    /// plus the actual cap: a purchase order line can't be received past its own Qty once
+    /// <paramref name="alreadyReceivedByPurchaseOrderLine"/> (every OTHER posted goods receipt's
+    /// claim on that line) is added to what this command itself is receiving.
+    /// </summary>
+    internal static Result ValidateAgainstPurchaseOrder(
+        PurchaseOrder purchaseOrder, List<GoodsReceiptPoLineInput> lines, Dictionary<Guid, decimal> alreadyReceivedByPurchaseOrderLine)
+    {
+        if (lines.Any(l => !l.PurchaseOrderLineId.HasValue))
+            return Result.Failure(Error.Validation("GoodsReceiptPo.LineMissingPurchaseOrderLine", "Every line must reference a specific purchase order line when this receipt is created against a purchase order."));
+
+        var poLinesById = purchaseOrder.Lines.ToDictionary(l => l.Id);
+        foreach (var line in lines)
+        {
+            if (!poLinesById.TryGetValue(line.PurchaseOrderLineId!.Value, out var poLine))
+                return Result.Failure(Error.Validation("GoodsReceiptPo.InvalidPurchaseOrderLine", "One or more lines reference a purchase order line that doesn't belong to the referenced purchase order."));
+            if (poLine.ItemId != line.ItemId)
+                return Result.Failure(Error.Validation("GoodsReceiptPo.ItemMismatch", $"A line's item must match the purchase order line it references ('{poLine.Item.Code}')."));
+        }
+
+        foreach (var group in lines.GroupBy(l => l.PurchaseOrderLineId!.Value))
+        {
+            var poLine = poLinesById[group.Key];
+            var remaining = poLine.Qty - alreadyReceivedByPurchaseOrderLine.GetValueOrDefault(group.Key);
+            var requested = group.Sum(l => l.QtyReceived);
+            if (requested > remaining)
+                return Result.Failure(Error.Validation("GoodsReceiptPo.ExceedsOrderedQty", $"This receipt receives {requested} of '{poLine.Item.Code}' but only {remaining} of purchase order line quantity remains unreceived."));
+        }
+
+        return Result.Success();
     }
 }
