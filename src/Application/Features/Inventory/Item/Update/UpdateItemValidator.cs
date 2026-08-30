@@ -7,6 +7,7 @@ public sealed class UpdateItemValidator : AbstractValidator<UpdateItemCommand>
     private static readonly string[] ValidItemTypes = ["RawMaterial", "FinishedGood", "Service", "Asset", "Consumable"];
     private static readonly string[] ValidCostingMethods = ["Fifo", "Avg"];
     private static readonly string[] ValidStatuses = ["active", "inactive"];
+    private static readonly string[] ValidVatTypes = ["VATABLE", "VAT_EXEMPT", "ZERO_RATED"];
 
     public UpdateItemValidator()
     {
@@ -35,5 +36,10 @@ public sealed class UpdateItemValidator : AbstractValidator<UpdateItemCommand>
         RuleFor(x => x.PurchaseAccountId).MaximumLength(25);
         RuleFor(x => x.InventoryAccountId).MaximumLength(25);
         RuleFor(x => x.CogsAccountId).MaximumLength(25);
+
+        RuleFor(x => x.VatType)
+            .NotEmpty()
+            .Must(t => ValidVatTypes.Contains(t))
+            .WithMessage($"VAT type must be one of: {string.Join(", ", ValidVatTypes)}.");
     }
 }

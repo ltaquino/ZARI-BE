@@ -12,4 +12,7 @@ public sealed record UpdateCustomerCommand(
     string Status,
     string Owner,
     string Address,
-    string? Notes) : ICommand;
+    string? Notes,
+    Guid? ArAccountId,
+    int? PaymentTermsDays,
+    decimal? StandingDiscountPct) : ICommand;

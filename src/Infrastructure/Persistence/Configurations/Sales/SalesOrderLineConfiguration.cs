@@ -1,0 +1,28 @@
+using ZARI.Domain.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.Metadata.Builders;
+
+namespace ZARI.Infrastructure.Persistence.Configurations;
+
+public sealed class SalesOrderLineConfiguration : BaseModelConfig, IEntityTypeConfiguration<SalesOrderLine>
+{
+    public void Configure(EntityTypeBuilder<SalesOrderLine> builder)
+    {
+        builder.HasKey(l => l.Id);
+
+        builder.Property(l => l.Qty).HasColumnType(DefaultDecimal);
+        builder.Property(l => l.UnitPrice).HasColumnType(DefaultDecimal);
+        builder.Property(l => l.DiscountPct).HasColumnType(DefaultDecimal);
+        builder.Property(l => l.DiscountSourceType).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
+
+        builder.HasOne(l => l.Item)
+            .WithMany()
+            .HasForeignKey(l => l.ItemId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(l => l.Uom)
+            .WithMany()
+            .HasForeignKey(l => l.UomId)
+            .OnDelete(DeleteBehavior.Restrict);
+    }
+}

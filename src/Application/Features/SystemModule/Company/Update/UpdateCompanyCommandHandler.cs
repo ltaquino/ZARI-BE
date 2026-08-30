@@ -24,6 +24,12 @@ public sealed class UpdateCompanyCommandHandler(IAppDbContext dbContext, IPermis
         company.RegisteredAddress = command.RegisteredAddress;
         company.TradeName = command.TradeName;
         company.VatRegistrationType = command.VatRegistrationType;
+        company.MaxUnapprovedDiscountPct = command.MaxUnapprovedDiscountPct;
+        company.SalesOrderQuickPostEnabled = command.SalesOrderQuickPostEnabled;
+        company.DeliveryQuickPostEnabled = command.DeliveryQuickPostEnabled;
+        company.SalesInvoiceQuickPostEnabled = command.SalesInvoiceQuickPostEnabled;
+        company.CustomerPaymentQuickPostEnabled = command.CustomerPaymentQuickPostEnabled;
+        company.SalesReturnQuickPostEnabled = command.SalesReturnQuickPostEnabled;
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

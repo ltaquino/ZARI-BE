@@ -21,6 +21,8 @@ public sealed class ItemBranchSettingConfiguration : BaseModelConfig, IEntityTyp
         builder.Property(s => s.ReorderPoint).HasColumnType(DefaultDecimal);
         builder.Property(s => s.MinStock).HasColumnType(DefaultDecimal);
         builder.Property(s => s.MaxStock).HasColumnType(DefaultDecimal);
+        builder.Property(s => s.SellingPrice).HasColumnType(DefaultDecimal);
+        builder.Property(s => s.MarkupPct).HasColumnType(DefaultDecimal);
 
         builder.HasIndex(s => new { s.ItemId, s.BranchId }).IsUnique();
 

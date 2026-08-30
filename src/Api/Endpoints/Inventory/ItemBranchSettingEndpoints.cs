@@ -77,7 +77,8 @@ public static class ItemBranchSettingEndpoints
         CancellationToken cancellationToken)
     {
         var command = new UpdateItemBranchSettingCommand(
-            id, request.ItemId, request.BranchId, request.DefaultWarehouseId, request.ReorderPoint, request.MinStock, request.MaxStock, request.Status);
+            id, request.ItemId, request.BranchId, request.DefaultWarehouseId, request.ReorderPoint, request.MinStock, request.MaxStock,
+            request.SellingPrice, request.MarkupPct, request.Status);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
         var result = await handler.HandleAsync(command, cancellationToken);
@@ -95,4 +96,5 @@ public static class ItemBranchSettingEndpoints
 }
 
 public sealed record UpdateItemBranchSettingRequest(
-    Guid ItemId, string BranchId, Guid? DefaultWarehouseId, decimal ReorderPoint, decimal MinStock, decimal MaxStock, string Status);
+    Guid ItemId, string BranchId, Guid? DefaultWarehouseId, decimal ReorderPoint, decimal MinStock, decimal MaxStock,
+    decimal? SellingPrice, decimal? MarkupPct, string Status);

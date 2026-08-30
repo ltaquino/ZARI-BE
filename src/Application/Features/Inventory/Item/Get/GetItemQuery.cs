@@ -23,5 +23,6 @@ public sealed record ItemResponse(
     string? PurchaseAccountId,
     string? InventoryAccountId,
     string? CogsAccountId,
+    string VatType,
     string Status,
     DateTimeOffset CreatedAt);

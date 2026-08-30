@@ -37,6 +37,7 @@ public static class AppDbSeeder
         await SeedBankAccountsAsync(context, logger);
         await SeedSuppliersAsync(context, logger);
         await SeedPurchaseOrdersAsync(context, logger);
+        await SeedStatutoryDiscountTypesAsync(context, logger);
         await SeedFormsAsync(context, logger);
         await SeedRolePermissionsAsync(context, roleManager, logger);
     }
@@ -197,9 +198,12 @@ public static class AppDbSeeder
     /// </summary>
     private static async Task SeedDocumentSequencesAsync(AppDbContext context, ILogger logger)
     {
-        if (await context.DocumentSequences.AnyAsync())
-            return;
-
+        // Diff-based like SeedGlAccountsAsync — the original version of this method only ever ran
+        // once (on a fully empty table), so doc types added after go-live (e.g. Sales' "SO"/"DO"/
+        // "SINV"/etc. and the BIR-OR series) never got their seed row on an already-seeded DB, and
+        // silently fell back to GetNextDocumentNumberCommandHandler's timestamp-based numbering
+        // instead. Diffing by (BranchId, DocType) lets new doc types keep getting seeded going
+        // forward without re-touching branches/doc types that already have a row.
         (string BranchId, string DocType, string Prefix, int NextNumber)[] sequences =
         [
             ("br-hq", "PO", "HQ-PO-", 1),
@@ -231,9 +235,36 @@ public static class AppDbSeeder
             ("br-north", "OP", "NB-OP-", 1),
             ("br-hq", "MJE", "HQ-MJE-", 1),
             ("br-north", "MJE", "NB-MJE-", 1),
+            // Sales/Order-to-Cash doc types. "SO" already had an "br-hq" row above from before this
+            // method was diff-based; "br-north" is added here rather than duplicated above.
+            ("br-north", "SO", "NB-SO-", 1),
+            ("br-hq", "DO", "HQ-DO-", 1),
+            ("br-north", "DO", "NB-DO-", 1),
+            ("br-hq", "SINV", "HQ-SINV-", 1),
+            ("br-north", "SINV", "NB-SINV-", 1),
+            ("br-hq", "CRCPT", "HQ-CRCPT-", 1),
+            ("br-north", "CRCPT", "NB-CRCPT-", 1),
+            ("br-hq", "SRTN", "HQ-SRTN-", 1),
+            ("br-north", "SRTN", "NB-SRTN-", 1),
+            // BIR-compliant "OR/SI No." series (SalesModuleContext.md §3.7) — per-branch, active,
+            // actually printed on the receipt. Format ("000-000000") is a print-template concern;
+            // this just tracks the running number.
+            ("br-hq", "BIR-OR", "000-", 1),
+            ("br-north", "BIR-OR", "000-", 1),
+            // Company-wide "overall" series — reserved for future use, modeled here (parked on the
+            // head-office branch row since DocumentSequence requires a branch FK) but never surfaced
+            // in the UI or on a printed receipt until asked for.
+            ("br-hq", "BIR-OR-OVERALL", "000-", 1),
         ];
 
-        context.DocumentSequences.AddRange(sequences.Select(s => new DocumentSequence
+        var existingPairs = (await context.DocumentSequences.Select(s => new { s.BranchId, s.DocType }).ToListAsync())
+            .Select(s => (s.BranchId, s.DocType))
+            .ToHashSet();
+        var missing = sequences.Where(s => !existingPairs.Contains((s.BranchId, s.DocType))).ToList();
+        if (missing.Count == 0)
+            return;
+
+        context.DocumentSequences.AddRange(missing.Select(s => new DocumentSequence
         {
             BranchId = s.BranchId,
             DocType = s.DocType,
@@ -243,7 +274,7 @@ public static class AppDbSeeder
         }));
 
         await context.SaveChangesAsync();
-        logger.LogInformation("Seeded default document sequences");
+        logger.LogInformation("Seeded {Count} document sequences", missing.Count);
     }
 
     /// <summary>
@@ -265,7 +296,14 @@ public static class AppDbSeeder
             // vendor — GRPO credits it (Dr Inventory), AP Invoice debits it (Cr Accounts Payable) to
             // convert the holding liability into a real payable. Goods Return reverses GRPO's side.
             ("2100", "Goods Received Not Invoiced", "Liability", "Credit"),
+            // Output VAT liability — Sales Invoice credits this for the VAT portion of every VATable
+            // line (extracted per SalesInvoiceLineCalculator); Sales Return debits its share back out
+            // when a VATable sale is reversed. See SalesModuleContext.md §3.6.
+            ("2200", "VAT Payable", "Liability", "Credit"),
             ("4000", "Sales Revenue", "Revenue", "Credit"),
+            // Contra-revenue account for the credit-memo side of a Sales Return — debited alongside
+            // the VAT Payable reversal, against a credit to Accounts Receivable.
+            ("4100", "Sales Returns and Allowances", "Revenue", "Debit"),
             ("5000", "Cost of Goods Sold", "Cogs", "Debit"),
             ("5100", "Inventory Variance / Shrinkage", "Cogs", "Debit"),
             // Absorbs the difference when an AP Invoice's billed amount differs from the GRPO's
@@ -491,6 +529,41 @@ public static class AppDbSeeder
     }
 
     /// <summary>
+    /// Philippine statutory/special-law discount catalog (DiscountSchemeContext.md §4.6) — a
+    /// starting checklist of each category's general treatment, NOT a legal citation. Confirm the
+    /// current rate/coverage/VAT treatment against each law's own IRR and the latest BIR Revenue
+    /// Regulation before relying on these in production, especially Solo Parent's narrower coverage.
+    /// </summary>
+    private static async Task SeedStatutoryDiscountTypesAsync(AppDbContext context, ILogger logger)
+    {
+        (string Code, string Name, decimal DiscountPct, bool IsVatExempt, string RequiredIdLabel)[] types =
+        [
+            ("SENIOR_CITIZEN", "Senior Citizen (RA 9994)", 20m, true, "Senior Citizen ID No."),
+            ("PWD", "Person with Disability (RA 10754)", 20m, true, "PWD ID No."),
+            ("NATIONAL_ATHLETE", "National Athlete/Coach (RA 10699)", 20m, true, "Athlete/Coach Accreditation No."),
+            ("SOLO_PARENT", "Solo Parent (RA 11861)", 10m, true, "Solo Parent ID No."),
+        ];
+
+        var existingCodes = await context.StatutoryDiscountTypes.Select(t => t.Code).ToListAsync();
+        var missing = types.Where(t => !existingCodes.Contains(t.Code)).ToList();
+        if (missing.Count == 0)
+            return;
+
+        context.StatutoryDiscountTypes.AddRange(missing.Select(t => new StatutoryDiscountType
+        {
+            Code = t.Code,
+            Name = t.Name,
+            DiscountPct = t.DiscountPct,
+            IsVatExempt = t.IsVatExempt,
+            RequiredIdLabel = t.RequiredIdLabel,
+            Status = "active"
+        }));
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded {Count} statutory discount types", missing.Count);
+    }
+
+    /// <summary>
     /// One row per admin/transactional page the app actually has today — the catalog Role
     /// templates and per-user overrides grant Form-level action flags against.
     /// </summary>
@@ -546,6 +619,15 @@ public static class AppDbSeeder
 
             ("APPROVAL_REQUESTS", "Approval Requests", "Workflow"),
             ("NOTIFICATIONS", "Notifications", "Workflow"),
+
+            ("SALES_ORDERS", "Sales Orders", "Sales"),
+            ("DELIVERIES", "Deliveries", "Sales"),
+            ("SALES_INVOICES", "Sales Invoices", "Sales"),
+            ("CUSTOMER_PAYMENTS", "Customer Payments", "Sales"),
+            ("SALES_RETURNS", "Sales Returns", "Sales"),
+            ("POS_CLOSING", "Daily POS Closing", "Sales"),
+            ("DISCOUNT_RULES", "Discount Rules", "Sales"),
+            ("STATUTORY_DISCOUNT_TYPES", "Statutory Discount Types", "Sales"),
         ];
 
         var existingCodes = await context.Forms.Select(f => f.Code).ToListAsync();
@@ -614,13 +696,14 @@ public static class AppDbSeeder
             "GOODS_RECEIPTS", "GOODS_ISSUES", "STOCK_ADJUSTMENTS", "STOCK_OPNAMES",
             "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS", "APPROVAL_REQUESTS", "PURCHASE_ORDERS",
             "PURCHASE_REQUESTS", "GOODS_RECEIPT_PO", "GOODS_RETURNS", "AP_INVOICES", "OUTGOING_PAYMENTS",
-            "MANUAL_JOURNAL_ENTRIES"
+            "MANUAL_JOURNAL_ENTRIES",
+            "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING"
         ];
         string[] managerMasterDataForms =
         [
             "UOMS", "ITEM_CATEGORIES", "WAREHOUSES", "STORAGE_LOCATIONS", "ITEMS",
             "ADJUSTMENT_REASONS", "ITEM_BRANCH_SETTINGS", "STOCK_RESERVATIONS", "SERIAL_NUMBERS",
-            "PURCHASE_RETURN_REASONS"
+            "PURCHASE_RETURN_REASONS", "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES"
         ];
         string[] managerViewOnlyForms =
         [
@@ -642,13 +725,15 @@ public static class AppDbSeeder
             "GOODS_RECEIPTS", "GOODS_ISSUES", "STOCK_ADJUSTMENTS", "STOCK_OPNAMES",
             "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS", "PURCHASE_ORDERS",
             "PURCHASE_REQUESTS", "GOODS_RECEIPT_PO", "GOODS_RETURNS", "AP_INVOICES", "OUTGOING_PAYMENTS",
-            "MANUAL_JOURNAL_ENTRIES"
+            "MANUAL_JOURNAL_ENTRIES",
+            "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING"
         ];
         string[] staffViewOnlyForms =
         [
             "DASHBOARD", "CUSTOMERS", "UOMS", "ITEM_CATEGORIES", "WAREHOUSES", "STORAGE_LOCATIONS",
             "ITEMS", "ADJUSTMENT_REASONS", "ITEM_BRANCH_SETTINGS", "STOCK_RESERVATIONS",
-            "SERIAL_NUMBERS", "APPROVAL_REQUESTS", "NOTIFICATIONS", "SUPPLIERS", "PURCHASE_RETURN_REASONS"
+            "SERIAL_NUMBERS", "APPROVAL_REQUESTS", "NOTIFICATIONS", "SUPPLIERS", "PURCHASE_RETURN_REASONS",
+            "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES"
         ];
 
         foreach (var formCode in staffTransactionalForms)

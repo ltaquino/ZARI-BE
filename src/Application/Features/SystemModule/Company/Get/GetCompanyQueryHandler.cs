@@ -16,7 +16,9 @@ public sealed class GetCompanyQueryHandler(IAppDbContext dbContext, IPermissionS
         var company = await dbContext.Companies
             .Select(c => new CompanyResponse(
                 c.Id, c.Code, c.Name, c.TaxId, c.BaseCurrencyId, c.CreatedAt,
-                c.RegisteredAddress, c.TradeName, c.VatRegistrationType))
+                c.RegisteredAddress, c.TradeName, c.VatRegistrationType,
+                c.MaxUnapprovedDiscountPct, c.SalesOrderQuickPostEnabled, c.DeliveryQuickPostEnabled,
+                c.SalesInvoiceQuickPostEnabled, c.CustomerPaymentQuickPostEnabled, c.SalesReturnQuickPostEnabled))
             .FirstOrDefaultAsync(cancellationToken);
 
         if (company is null)

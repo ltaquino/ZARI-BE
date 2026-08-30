@@ -44,13 +44,16 @@ public sealed class CreateItemBranchSettingCommandHandler(IAppDbContext dbContex
             ReorderPoint = command.ReorderPoint,
             MinStock = command.MinStock,
             MaxStock = command.MaxStock,
+            SellingPrice = command.SellingPrice,
+            MarkupPct = command.MarkupPct,
             Status = command.Status
         };
 
         dbContext.ItemBranchSettings.Add(setting);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var response = new ItemBranchSettingResponse(setting.Id, setting.ItemId, setting.BranchId, setting.DefaultWarehouseId, setting.ReorderPoint, setting.MinStock, setting.MaxStock, setting.Status, setting.CreatedAt);
+        var response = new ItemBranchSettingResponse(setting.Id, setting.ItemId, setting.BranchId, setting.DefaultWarehouseId, setting.ReorderPoint, setting.MinStock, setting.MaxStock,
+            setting.SellingPrice, setting.MarkupPct, setting.Status, setting.CreatedAt);
         return Result.Success(response);
     }
 }

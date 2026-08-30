@@ -38,6 +38,8 @@ public sealed class ItemConfiguration : BaseModelConfig, IEntityTypeConfiguratio
         builder.Property(i => i.InventoryAccountId).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
         builder.Property(i => i.CogsAccountId).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
 
+        builder.Property(i => i.VatType).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT).HasDefaultValue("VATABLE");
+
         builder.HasIndex(i => i.Code).IsUnique();
 
         builder.HasOne(i => i.Category)

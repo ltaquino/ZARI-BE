@@ -16,6 +16,8 @@ public sealed class CreateCustomerValidator : AbstractValidator<CreateCustomerCo
         RuleFor(x => x.Owner).NotEmpty().MaximumLength(150);
         RuleFor(x => x.Address).NotEmpty().MaximumLength(300);
         RuleFor(x => x.Notes).MaximumLength(300);
+        RuleFor(x => x.PaymentTermsDays).GreaterThanOrEqualTo(0).When(x => x.PaymentTermsDays.HasValue);
+        RuleFor(x => x.StandingDiscountPct).InclusiveBetween(0, 100).When(x => x.StandingDiscountPct.HasValue);
 
         RuleFor(x => x.Type)
             .NotEmpty()

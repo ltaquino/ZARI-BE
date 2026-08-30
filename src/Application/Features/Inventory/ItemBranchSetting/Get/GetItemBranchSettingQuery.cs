@@ -13,5 +13,7 @@ public sealed record ItemBranchSettingResponse(
     decimal ReorderPoint,
     decimal MinStock,
     decimal MaxStock,
+    decimal? SellingPrice,
+    decimal? MarkupPct,
     string Status,
     DateTimeOffset CreatedAt);

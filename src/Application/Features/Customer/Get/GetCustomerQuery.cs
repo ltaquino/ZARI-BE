@@ -16,4 +16,7 @@ public sealed record CustomerResponse(
     string Owner,
     string Address,
     string? Notes,
+    Guid? ArAccountId,
+    int? PaymentTermsDays,
+    decimal? StandingDiscountPct,
     DateTimeOffset CreatedAt);

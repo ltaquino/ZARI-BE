@@ -17,5 +17,6 @@ public sealed class UpdateCompanyValidator : AbstractValidator<UpdateCompanyComm
         RuleFor(x => x.VatRegistrationType)
             .Must(v => v is null || ValidVatRegistrationTypes.Contains(v))
             .WithMessage($"VAT registration type must be one of: {string.Join(", ", ValidVatRegistrationTypes)}.");
+        RuleFor(x => x.MaxUnapprovedDiscountPct).InclusiveBetween(0, 100).When(x => x.MaxUnapprovedDiscountPct.HasValue);
     }
 }

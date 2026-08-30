@@ -33,4 +33,9 @@ public sealed class Branch
     /// Machine Identification Number — BIR-issued, unique per POS/cash-register unit.
     public string? MachineIdentificationNumber { get; set; }
     public string? MachineSerialNumber { get; set; }
+
+    // BIR Z-Counter (ZARI-FE/frs/sales/SalesModuleContext.md §3.7) — a sequential, per-branch count
+    // of how many end-of-day Z-Readings this branch's POS has produced. Must stay unbroken;
+    // incremented only by RunZReadingCommand, never edited directly.
+    public int ZCounter { get; set; }
 }

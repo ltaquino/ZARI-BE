@@ -18,4 +18,16 @@ public sealed class Customer : AuditableEntity
     public string Owner { get; set; } = default!;
     public string Address { get; set; } = default!;
     public string? Notes { get; set; }
+
+    // Mirrors Supplier.ApAccountId/PaymentTermsDays (Phase 17) exactly, on the AR side: an override
+    // GL account for this customer's receivable (falls back to "1200" Accounts Receivable when
+    // null) and a net-days default for Sales Invoice due dates (null = no default, purely manual).
+    public Guid? ArAccountId { get; set; }
+    public GlAccount? ArAccount { get; set; }
+    public int? PaymentTermsDays { get; set; }
+
+    // Discount Scheme (ZARI-FE/frs/sales/DiscountSchemeContext.md §2.2): a standing % suggested by
+    // default on every new Sales Order/Invoice line for this customer — a suggestion only, always
+    // freely overridable, never enforced.
+    public decimal? StandingDiscountPct { get; set; }
 }

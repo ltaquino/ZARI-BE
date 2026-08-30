@@ -12,7 +12,8 @@ public sealed class GetItemBranchSettingQueryHandler(IAppDbContext dbContext, IP
     {
         var setting = await dbContext.ItemBranchSettings
             .Where(s => s.Id == query.Id)
-            .Select(s => new ItemBranchSettingResponse(s.Id, s.ItemId, s.BranchId, s.DefaultWarehouseId, s.ReorderPoint, s.MinStock, s.MaxStock, s.Status, s.CreatedAt))
+            .Select(s => new ItemBranchSettingResponse(s.Id, s.ItemId, s.BranchId, s.DefaultWarehouseId, s.ReorderPoint, s.MinStock, s.MaxStock,
+                s.SellingPrice, s.MarkupPct, s.Status, s.CreatedAt))
             .FirstOrDefaultAsync(cancellationToken);
 
         if (setting is null)

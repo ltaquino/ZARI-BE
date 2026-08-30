@@ -23,4 +23,21 @@ public sealed class Company : AuditableEntity
     /// "VAT" or "NON_VAT" — determines whether receipts need a VATable/VAT-Exempt/Zero-Rated
     /// breakdown or the simpler non-VAT boilerplate.
     public string? VatRegistrationType { get; set; }
+
+    // Discount Scheme approval gating (ZARI-FE/frs/sales/DiscountSchemeContext.md §2.6): null =
+    // no threshold enforced. If a Sales document's discretionary discount % exceeds this, it is
+    // always forced through DRAFT -> PENDING_APPROVAL -> POSTED, regardless of the quick-post
+    // toggles below. Statutory discounts (StatutoryDiscountType) never count toward this check —
+    // they're a legal entitlement, not a staff-granted concession.
+    public decimal? MaxUnapprovedDiscountPct { get; set; }
+
+    // Per-document-type "quick post" toggles — when true (and the discount threshold above isn't
+    // breached), that document's Create can post straight to POSTED, skipping Draft/Approval
+    // entirely. Default false everywhere: every Sales document goes through the normal workflow
+    // unless the business explicitly opts a document type into quick-post.
+    public bool SalesOrderQuickPostEnabled { get; set; }
+    public bool DeliveryQuickPostEnabled { get; set; }
+    public bool SalesInvoiceQuickPostEnabled { get; set; }
+    public bool CustomerPaymentQuickPostEnabled { get; set; }
+    public bool SalesReturnQuickPostEnabled { get; set; }
 }

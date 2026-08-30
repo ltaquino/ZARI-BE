@@ -20,4 +20,5 @@ public sealed record UpdateItemCommand(
     string? PurchaseAccountId,
     string? InventoryAccountId,
     string? CogsAccountId,
+    string VatType,
     string Status) : ICommand;

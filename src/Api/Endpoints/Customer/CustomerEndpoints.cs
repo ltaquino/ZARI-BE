@@ -77,7 +77,8 @@ public static class CustomerEndpoints
         CancellationToken cancellationToken)
     {
         var command = new UpdateCustomerCommand(id, request.Name, request.Type, request.Email, request.Phone,
-            request.BranchId, request.Status, request.Owner, request.Address, request.Notes);
+            request.BranchId, request.Status, request.Owner, request.Address, request.Notes,
+            request.ArAccountId, request.PaymentTermsDays, request.StandingDiscountPct);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
         var result = await handler.HandleAsync(command, cancellationToken);
@@ -103,4 +104,7 @@ public sealed record UpdateCustomerRequest(
     string Status,
     string Owner,
     string Address,
-    string? Notes);
+    string? Notes,
+    Guid? ArAccountId,
+    int? PaymentTermsDays,
+    decimal? StandingDiscountPct);

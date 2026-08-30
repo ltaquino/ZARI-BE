@@ -44,6 +44,8 @@ public sealed class UpdateItemBranchSettingCommandHandler(IAppDbContext dbContex
         setting.ReorderPoint = command.ReorderPoint;
         setting.MinStock = command.MinStock;
         setting.MaxStock = command.MaxStock;
+        setting.SellingPrice = command.SellingPrice;
+        setting.MarkupPct = command.MarkupPct;
         setting.Status = command.Status;
 
         await dbContext.SaveChangesAsync(cancellationToken);

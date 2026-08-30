@@ -13,4 +13,7 @@ public sealed record CreateCustomerCommand(
     string Status,
     string Owner,
     string Address,
-    string? Notes) : ICommand<Result<CustomerResponse>>;
+    string? Notes,
+    Guid? ArAccountId,
+    int? PaymentTermsDays,
+    decimal? StandingDiscountPct) : ICommand<Result<CustomerResponse>>;

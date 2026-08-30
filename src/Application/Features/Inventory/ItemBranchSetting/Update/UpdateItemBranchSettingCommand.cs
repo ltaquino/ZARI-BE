@@ -10,4 +10,6 @@ public sealed record UpdateItemBranchSettingCommand(
     decimal ReorderPoint,
     decimal MinStock,
     decimal MaxStock,
+    decimal? SellingPrice,
+    decimal? MarkupPct,
     string Status) : ICommand;

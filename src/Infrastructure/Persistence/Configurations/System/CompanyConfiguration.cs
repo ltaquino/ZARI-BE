@@ -17,6 +17,7 @@ public sealed class CompanyConfiguration : BaseModelConfig, IEntityTypeConfigura
         builder.Property(c => c.RegisteredAddress).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
         builder.Property(c => c.TradeName).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_150);
         builder.Property(c => c.VatRegistrationType).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
+        builder.Property(c => c.MaxUnapprovedDiscountPct).HasColumnType(DefaultDecimal);
 
         builder.HasOne(c => c.BaseCurrency)
             .WithMany()

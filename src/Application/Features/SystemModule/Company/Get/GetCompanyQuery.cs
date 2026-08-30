@@ -14,4 +14,10 @@ public sealed record CompanyResponse(
     DateTimeOffset CreatedAt,
     string? RegisteredAddress,
     string? TradeName,
-    string? VatRegistrationType);
+    string? VatRegistrationType,
+    decimal? MaxUnapprovedDiscountPct,
+    bool SalesOrderQuickPostEnabled,
+    bool DeliveryQuickPostEnabled,
+    bool SalesInvoiceQuickPostEnabled,
+    bool CustomerPaymentQuickPostEnabled,
+    bool SalesReturnQuickPostEnabled);

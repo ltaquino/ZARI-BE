@@ -21,4 +21,5 @@ public sealed record CreateItemCommand(
     string? PurchaseAccountId,
     string? InventoryAccountId,
     string? CogsAccountId,
+    string VatType,
     string Status) : ICommand<Result<ItemResponse>>;

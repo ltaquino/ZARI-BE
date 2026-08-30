@@ -16,7 +16,8 @@ public sealed class GetAllItemBranchSettingsQueryHandler(IAppDbContext dbContext
 
         var items = await dbContext.ItemBranchSettings
             .OrderBy(s => s.BranchId).ThenBy(s => s.ItemId)
-            .Select(s => new ItemBranchSettingResponse(s.Id, s.ItemId, s.BranchId, s.DefaultWarehouseId, s.ReorderPoint, s.MinStock, s.MaxStock, s.Status, s.CreatedAt))
+            .Select(s => new ItemBranchSettingResponse(s.Id, s.ItemId, s.BranchId, s.DefaultWarehouseId, s.ReorderPoint, s.MinStock, s.MaxStock,
+                s.SellingPrice, s.MarkupPct, s.Status, s.CreatedAt))
             .ToListAsync(cancellationToken);
 
         return Result.Success(items);

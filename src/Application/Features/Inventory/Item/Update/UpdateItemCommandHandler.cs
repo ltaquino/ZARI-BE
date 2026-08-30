@@ -48,6 +48,7 @@ public sealed class UpdateItemCommandHandler(IAppDbContext dbContext, IPermissio
         item.PurchaseAccountId = command.PurchaseAccountId;
         item.InventoryAccountId = command.InventoryAccountId;
         item.CogsAccountId = command.CogsAccountId;
+        item.VatType = command.VatType;
         item.Status = command.Status;
 
         await dbContext.SaveChangesAsync(cancellationToken);

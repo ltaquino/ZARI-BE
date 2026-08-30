@@ -26,5 +26,11 @@ public sealed class Item : AuditableEntity
     public string? InventoryAccountId { get; set; }
     public string? CogsAccountId { get; set; }
 
+    // Default VAT classification for this item's Sales Invoice lines (BIR VAT breakdown — see
+    // ZARI-FE/frs/sales/SalesModuleContext.md §3.6). "VATABLE" / "VAT_EXEMPT" / "ZERO_RATED".
+    // A smart default only — always overridable per line, and a statutory discount on a line
+    // (see StatutoryDiscountType) always forces VAT_EXEMPT regardless of this default.
+    public string VatType { get; set; } = "VATABLE";
+
     public string Status { get; set; } = default!;
 }

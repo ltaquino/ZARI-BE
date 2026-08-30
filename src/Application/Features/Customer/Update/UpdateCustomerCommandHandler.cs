@@ -21,6 +21,13 @@ public sealed class UpdateCustomerCommandHandler(IAppDbContext dbContext, IPermi
         if (!branchExists)
             return Result.Failure(Error.NotFound("Branch.NotFound", $"Branch with ID '{command.BranchId}' was not found."));
 
+        if (command.ArAccountId is not null)
+        {
+            var glAccountExists = await dbContext.GlAccounts.AnyAsync(a => a.Id == command.ArAccountId, cancellationToken);
+            if (!glAccountExists)
+                return Result.Failure(Error.NotFound("GlAccount.NotFound", $"GL account with ID '{command.ArAccountId}' was not found."));
+        }
+
         customer.Name = command.Name;
         customer.Type = command.Type;
         customer.Email = command.Email;
@@ -30,6 +37,9 @@ public sealed class UpdateCustomerCommandHandler(IAppDbContext dbContext, IPermi
         customer.Owner = command.Owner;
         customer.Address = command.Address;
         customer.Notes = command.Notes;
+        customer.ArAccountId = command.ArAccountId;
+        customer.PaymentTermsDays = command.PaymentTermsDays;
+        customer.StandingDiscountPct = command.StandingDiscountPct;
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

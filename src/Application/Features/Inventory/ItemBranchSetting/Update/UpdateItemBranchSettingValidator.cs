@@ -14,6 +14,8 @@ public sealed class UpdateItemBranchSettingValidator : AbstractValidator<UpdateI
         RuleFor(x => x.ReorderPoint).GreaterThanOrEqualTo(0);
         RuleFor(x => x.MinStock).GreaterThanOrEqualTo(0);
         RuleFor(x => x.MaxStock).GreaterThanOrEqualTo(0);
+        RuleFor(x => x.SellingPrice).GreaterThanOrEqualTo(0).When(x => x.SellingPrice.HasValue);
+        RuleFor(x => x.MarkupPct).GreaterThanOrEqualTo(0).When(x => x.MarkupPct.HasValue);
 
         RuleFor(x => x.Status)
             .NotEmpty()

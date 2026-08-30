@@ -11,4 +11,6 @@ public sealed record CreateItemBranchSettingCommand(
     decimal ReorderPoint,
     decimal MinStock,
     decimal MaxStock,
+    decimal? SellingPrice,
+    decimal? MarkupPct,
     string Status) : ICommand<Result<ItemBranchSettingResponse>>;

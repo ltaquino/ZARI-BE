@@ -12,7 +12,8 @@ public sealed class GetCustomerQueryHandler(IAppDbContext dbContext, IPermission
     {
         var customer = await dbContext.Customers
             .Where(c => c.Id == query.Id)
-            .Select(c => new CustomerResponse(c.Id, c.Name, c.Type, c.Email, c.Phone, c.BranchId, c.Status, c.Owner, c.Address, c.Notes, c.CreatedAt))
+            .Select(c => new CustomerResponse(c.Id, c.Name, c.Type, c.Email, c.Phone, c.BranchId, c.Status, c.Owner, c.Address, c.Notes,
+                c.ArAccountId, c.PaymentTermsDays, c.StandingDiscountPct, c.CreatedAt))
             .FirstOrDefaultAsync(cancellationToken);
 
         if (customer is null)

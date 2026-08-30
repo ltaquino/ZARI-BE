@@ -17,5 +17,15 @@ public sealed class ItemBranchSetting : AuditableEntity
     public decimal ReorderPoint { get; set; }
     public decimal MinStock { get; set; }
     public decimal MaxStock { get; set; }
+
+    // Selling price — Sales' "markup suggests, override wins" mechanic (see
+    // ZARI-FE/frs/sales/SalesModuleContext.md §3.5). SellingPrice is the single stored,
+    // authoritative value every Sales document actually reads at transaction time; MarkupPct is a
+    // convenience that computes a one-time *suggested* SellingPrice off this item's branch-wide
+    // AvgUnitCost (from StockBalance) when the FE's "recalculate" action is used — never a live
+    // formula that silently recomputes SellingPrice on its own.
+    public decimal? SellingPrice { get; set; }
+    public decimal? MarkupPct { get; set; }
+
     public string Status { get; set; } = default!;
 }

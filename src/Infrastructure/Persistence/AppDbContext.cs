@@ -72,6 +72,18 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<PurchaseReturnReason> PurchaseReturnReasons => Set<PurchaseReturnReason>();
     public DbSet<OutgoingPayment> OutgoingPayments => Set<OutgoingPayment>();
     public DbSet<OutgoingPaymentLine> OutgoingPaymentLines => Set<OutgoingPaymentLine>();
+    public DbSet<SalesOrder> SalesOrders => Set<SalesOrder>();
+    public DbSet<SalesOrderLine> SalesOrderLines => Set<SalesOrderLine>();
+    public DbSet<DeliveryOrder> DeliveryOrders => Set<DeliveryOrder>();
+    public DbSet<DeliveryOrderLine> DeliveryOrderLines => Set<DeliveryOrderLine>();
+    public DbSet<SalesInvoice> SalesInvoices => Set<SalesInvoice>();
+    public DbSet<SalesInvoiceLine> SalesInvoiceLines => Set<SalesInvoiceLine>();
+    public DbSet<CustomerPayment> CustomerPayments => Set<CustomerPayment>();
+    public DbSet<CustomerPaymentLine> CustomerPaymentLines => Set<CustomerPaymentLine>();
+    public DbSet<SalesReturn> SalesReturns => Set<SalesReturn>();
+    public DbSet<SalesReturnLine> SalesReturnLines => Set<SalesReturnLine>();
+    public DbSet<DiscountRule> DiscountRules => Set<DiscountRule>();
+    public DbSet<StatutoryDiscountType> StatutoryDiscountTypes => Set<StatutoryDiscountType>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

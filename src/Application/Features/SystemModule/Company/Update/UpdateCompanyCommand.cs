@@ -9,4 +9,10 @@ public sealed record UpdateCompanyCommand(
     string BaseCurrencyId,
     string? RegisteredAddress,
     string? TradeName,
-    string? VatRegistrationType) : ICommand;
+    string? VatRegistrationType,
+    decimal? MaxUnapprovedDiscountPct,
+    bool SalesOrderQuickPostEnabled,
+    bool DeliveryQuickPostEnabled,
+    bool SalesInvoiceQuickPostEnabled,
+    bool CustomerPaymentQuickPostEnabled,
+    bool SalesReturnQuickPostEnabled) : ICommand;

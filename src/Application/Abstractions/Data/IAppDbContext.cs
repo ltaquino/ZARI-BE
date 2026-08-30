@@ -70,6 +70,18 @@ public interface IAppDbContext
     DbSet<PurchaseReturnReason> PurchaseReturnReasons { get; }
     DbSet<OutgoingPayment> OutgoingPayments { get; }
     DbSet<OutgoingPaymentLine> OutgoingPaymentLines { get; }
+    DbSet<SalesOrder> SalesOrders { get; }
+    DbSet<SalesOrderLine> SalesOrderLines { get; }
+    DbSet<DeliveryOrder> DeliveryOrders { get; }
+    DbSet<DeliveryOrderLine> DeliveryOrderLines { get; }
+    DbSet<SalesInvoice> SalesInvoices { get; }
+    DbSet<SalesInvoiceLine> SalesInvoiceLines { get; }
+    DbSet<CustomerPayment> CustomerPayments { get; }
+    DbSet<CustomerPaymentLine> CustomerPaymentLines { get; }
+    DbSet<SalesReturn> SalesReturns { get; }
+    DbSet<SalesReturnLine> SalesReturnLines { get; }
+    DbSet<DiscountRule> DiscountRules { get; }
+    DbSet<StatutoryDiscountType> StatutoryDiscountTypes { get; }
 
     // Exposed only for the stock-ledger posting handlers, which need an explicit transaction plus
     // raw-SQL "FOR UPDATE" locking (see Application/Features/Inventory/StockLedger/Shared/

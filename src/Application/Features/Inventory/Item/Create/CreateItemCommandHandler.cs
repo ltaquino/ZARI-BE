@@ -48,6 +48,7 @@ public sealed class CreateItemCommandHandler(IAppDbContext dbContext, IPermissio
             PurchaseAccountId = command.PurchaseAccountId,
             InventoryAccountId = command.InventoryAccountId,
             CogsAccountId = command.CogsAccountId,
+            VatType = command.VatType,
             Status = command.Status
         };
 
@@ -58,7 +59,7 @@ public sealed class CreateItemCommandHandler(IAppDbContext dbContext, IPermissio
             item.Id, item.Code, item.Name, item.Description, item.CategoryId, item.BaseUomId, item.ItemType, item.CostingMethod,
             item.IsSerialized, item.IsBatchTracked, item.IsSold, item.IsPurchased, item.IsStocked,
             item.SalesAccountId, item.PurchaseAccountId, item.InventoryAccountId, item.CogsAccountId,
-            item.Status, item.CreatedAt);
+            item.VatType, item.Status, item.CreatedAt);
 
         return Result.Success(response);
     }

@@ -19,6 +19,13 @@ public sealed class CreateCustomerCommandHandler(IAppDbContext dbContext, IPermi
         if (!branchExists)
             return Result.Failure<CustomerResponse>(Error.NotFound("Branch.NotFound", $"Branch with ID '{command.BranchId}' was not found."));
 
+        if (command.ArAccountId is not null)
+        {
+            var glAccountExists = await dbContext.GlAccounts.AnyAsync(a => a.Id == command.ArAccountId, cancellationToken);
+            if (!glAccountExists)
+                return Result.Failure<CustomerResponse>(Error.NotFound("GlAccount.NotFound", $"GL account with ID '{command.ArAccountId}' was not found."));
+        }
+
         var customer = new Customer
         {
             Name = command.Name,
@@ -29,14 +36,18 @@ public sealed class CreateCustomerCommandHandler(IAppDbContext dbContext, IPermi
             Status = command.Status,
             Owner = command.Owner,
             Address = command.Address,
-            Notes = command.Notes
+            Notes = command.Notes,
+            ArAccountId = command.ArAccountId,
+            PaymentTermsDays = command.PaymentTermsDays,
+            StandingDiscountPct = command.StandingDiscountPct
         };
 
         dbContext.Customers.Add(customer);
         await dbContext.SaveChangesAsync(cancellationToken);
 
         var response = new CustomerResponse(customer.Id, customer.Name, customer.Type, customer.Email, customer.Phone,
-            customer.BranchId, customer.Status, customer.Owner, customer.Address, customer.Notes, customer.CreatedAt);
+            customer.BranchId, customer.Status, customer.Owner, customer.Address, customer.Notes,
+            customer.ArAccountId, customer.PaymentTermsDays, customer.StandingDiscountPct, customer.CreatedAt);
         return Result.Success(response);
     }
 }
