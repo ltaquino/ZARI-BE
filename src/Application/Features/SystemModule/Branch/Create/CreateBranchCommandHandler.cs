@@ -28,7 +28,12 @@ public sealed class CreateBranchCommandHandler(IAppDbContext dbContext, IPermiss
             Address = command.Address,
             Phone = command.Phone,
             Status = command.Status,
-            IsHeadOffice = command.IsHeadOffice
+            IsHeadOffice = command.IsHeadOffice,
+            BirBranchCode = command.BirBranchCode,
+            PosPermitNumber = command.PosPermitNumber,
+            PosPermitDateIssued = command.PosPermitDateIssued,
+            MachineIdentificationNumber = command.MachineIdentificationNumber,
+            MachineSerialNumber = command.MachineSerialNumber
         };
 
         if (command.IsHeadOffice)
@@ -40,7 +45,9 @@ public sealed class CreateBranchCommandHandler(IAppDbContext dbContext, IPermiss
         dbContext.Branches.Add(branch);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var response = new BranchResponse(branch.Id, branch.Name, branch.Code, branch.City, branch.Address, branch.Phone, branch.Status, branch.IsHeadOffice);
+        var response = new BranchResponse(
+            branch.Id, branch.Name, branch.Code, branch.City, branch.Address, branch.Phone, branch.Status, branch.IsHeadOffice,
+            branch.BirBranchCode, branch.PosPermitNumber, branch.PosPermitDateIssued, branch.MachineIdentificationNumber, branch.MachineSerialNumber);
         return Result.Success(response);
     }
 }

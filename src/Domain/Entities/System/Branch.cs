@@ -20,4 +20,17 @@ public sealed class Branch
     // The HQ branch — an Admin assigned here is the only one who may approve cancellation of a
     // posted document (see the FE type's doc comment). At most one branch has this set.
     public bool IsHeadOffice { get; set; }
+
+    // BIR (Bureau of Internal Revenue, Philippines) POS/Cash-Register accreditation — genuinely
+    // per-branch (each outlet's machine is separately accredited), unlike Company's VAT
+    // registration which applies to the whole legal entity. All optional/nullable.
+    /// The BIR-assigned branch-code suffix (e.g. "0001") appended to Company.TaxId to form the
+    /// full TIN printed on this branch's receipts — distinct from Code, which is ZARI's own
+    /// internal branch slug and has no BIR meaning.
+    public string? BirBranchCode { get; set; }
+    public string? PosPermitNumber { get; set; }
+    public DateTime? PosPermitDateIssued { get; set; }
+    /// Machine Identification Number — BIR-issued, unique per POS/cash-register unit.
+    public string? MachineIdentificationNumber { get; set; }
+    public string? MachineSerialNumber { get; set; }
 }

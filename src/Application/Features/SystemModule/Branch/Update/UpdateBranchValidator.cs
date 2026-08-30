@@ -19,5 +19,10 @@ public sealed class UpdateBranchValidator : AbstractValidator<UpdateBranchComman
             .NotEmpty()
             .Must(s => ValidStatuses.Contains(s))
             .WithMessage($"Status must be one of: {string.Join(", ", ValidStatuses)}.");
+
+        RuleFor(x => x.BirBranchCode).MaximumLength(25);
+        RuleFor(x => x.PosPermitNumber).MaximumLength(25);
+        RuleFor(x => x.MachineIdentificationNumber).MaximumLength(25);
+        RuleFor(x => x.MachineSerialNumber).MaximumLength(25);
     }
 }

@@ -5,4 +5,13 @@ using ZARI.Domain.Common;
 
 public sealed record GetCompanyQuery : IQuery<Result<CompanyResponse>>;
 
-public sealed record CompanyResponse(Guid Id, string Code, string Name, string? TaxId, string BaseCurrencyId, DateTimeOffset CreatedAt);
+public sealed record CompanyResponse(
+    Guid Id,
+    string Code,
+    string Name,
+    string? TaxId,
+    string BaseCurrencyId,
+    DateTimeOffset CreatedAt,
+    string? RegisteredAddress,
+    string? TradeName,
+    string? VatRegistrationType);

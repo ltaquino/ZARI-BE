@@ -13,4 +13,14 @@ public sealed class Company : AuditableEntity
 
     public string BaseCurrencyId { get; set; } = default!;
     public Currency BaseCurrency { get; set; } = default!;
+
+    // BIR (Bureau of Internal Revenue, Philippines) compliance fields — company-wide, since VAT
+    // registration and the registered address are properties of the legal entity (the TIN itself),
+    // not any one branch. Per-branch/per-POS-machine BIR details (permit numbers, MIN) live on
+    // Branch instead. All optional/nullable — additive fields, no backfill required.
+    public string? RegisteredAddress { get; set; }
+    public string? TradeName { get; set; }
+    /// "VAT" or "NON_VAT" — determines whether receipts need a VATable/VAT-Exempt/Zero-Rated
+    /// breakdown or the simpler non-VAT boilerplate.
+    public string? VatRegistrationType { get; set; }
 }

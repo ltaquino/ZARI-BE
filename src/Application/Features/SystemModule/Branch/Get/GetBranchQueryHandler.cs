@@ -15,7 +15,9 @@ public sealed class GetBranchQueryHandler(IAppDbContext dbContext, IPermissionSe
 
         var branch = await dbContext.Branches
             .Where(b => b.Id == query.Id)
-            .Select(b => new BranchResponse(b.Id, b.Name, b.Code, b.City, b.Address, b.Phone, b.Status, b.IsHeadOffice))
+            .Select(b => new BranchResponse(
+                b.Id, b.Name, b.Code, b.City, b.Address, b.Phone, b.Status, b.IsHeadOffice,
+                b.BirBranchCode, b.PosPermitNumber, b.PosPermitDateIssued, b.MachineIdentificationNumber, b.MachineSerialNumber))
             .FirstOrDefaultAsync(cancellationToken);
 
         if (branch is null)

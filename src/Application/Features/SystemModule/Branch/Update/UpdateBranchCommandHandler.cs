@@ -34,6 +34,11 @@ public sealed class UpdateBranchCommandHandler(IAppDbContext dbContext, IPermiss
         branch.Phone = command.Phone;
         branch.Status = command.Status;
         branch.IsHeadOffice = command.IsHeadOffice;
+        branch.BirBranchCode = command.BirBranchCode;
+        branch.PosPermitNumber = command.PosPermitNumber;
+        branch.PosPermitDateIssued = command.PosPermitDateIssued;
+        branch.MachineIdentificationNumber = command.MachineIdentificationNumber;
+        branch.MachineSerialNumber = command.MachineSerialNumber;
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

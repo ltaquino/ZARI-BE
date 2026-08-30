@@ -11,4 +11,9 @@ public sealed record CreateBranchCommand(
     string Address,
     string Phone,
     string Status,
-    bool IsHeadOffice) : ICommand<Result<BranchResponse>>;
+    bool IsHeadOffice,
+    string? BirBranchCode = null,
+    string? PosPermitNumber = null,
+    DateTime? PosPermitDateIssued = null,
+    string? MachineIdentificationNumber = null,
+    string? MachineSerialNumber = null) : ICommand<Result<BranchResponse>>;

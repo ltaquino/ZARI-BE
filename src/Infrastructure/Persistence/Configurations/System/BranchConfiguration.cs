@@ -17,6 +17,10 @@ public sealed class BranchConfiguration : BaseModelConfig, IEntityTypeConfigurat
         builder.Property(b => b.Address).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
         builder.Property(b => b.Phone).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_100);
         builder.Property(b => b.Status).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
+        builder.Property(b => b.BirBranchCode).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
+        builder.Property(b => b.PosPermitNumber).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
+        builder.Property(b => b.MachineIdentificationNumber).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
+        builder.Property(b => b.MachineSerialNumber).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
 
         builder.HasIndex(b => b.Code).IsUnique();
     }

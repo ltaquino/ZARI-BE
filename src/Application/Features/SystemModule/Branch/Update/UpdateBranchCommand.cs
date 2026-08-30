@@ -10,4 +10,9 @@ public sealed record UpdateBranchCommand(
     string Address,
     string Phone,
     string Status,
-    bool IsHeadOffice) : ICommand;
+    bool IsHeadOffice,
+    string? BirBranchCode,
+    string? PosPermitNumber,
+    DateTime? PosPermitDateIssued,
+    string? MachineIdentificationNumber,
+    string? MachineSerialNumber) : ICommand;

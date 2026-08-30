@@ -76,7 +76,9 @@ public static class BranchEndpoints
         ICommandHandler<UpdateBranchCommand, Result> handler,
         CancellationToken cancellationToken)
     {
-        var command = new UpdateBranchCommand(id, request.Name, request.Code, request.City, request.Address, request.Phone, request.Status, request.IsHeadOffice);
+        var command = new UpdateBranchCommand(
+            id, request.Name, request.Code, request.City, request.Address, request.Phone, request.Status, request.IsHeadOffice,
+            request.BirBranchCode, request.PosPermitNumber, request.PosPermitDateIssued, request.MachineIdentificationNumber, request.MachineSerialNumber);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
         var result = await handler.HandleAsync(command, cancellationToken);
@@ -93,4 +95,16 @@ public static class BranchEndpoints
     }
 }
 
-public sealed record UpdateBranchRequest(string Name, string Code, string City, string Address, string Phone, string Status, bool IsHeadOffice);
+public sealed record UpdateBranchRequest(
+    string Name,
+    string Code,
+    string City,
+    string Address,
+    string Phone,
+    string Status,
+    bool IsHeadOffice,
+    string? BirBranchCode,
+    string? PosPermitNumber,
+    DateTime? PosPermitDateIssued,
+    string? MachineIdentificationNumber,
+    string? MachineSerialNumber);

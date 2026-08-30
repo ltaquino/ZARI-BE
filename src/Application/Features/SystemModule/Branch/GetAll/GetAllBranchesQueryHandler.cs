@@ -16,7 +16,9 @@ public sealed class GetAllBranchesQueryHandler(IAppDbContext dbContext, IPermiss
 
         var branches = await dbContext.Branches
             .OrderBy(b => b.Name)
-            .Select(b => new BranchResponse(b.Id, b.Name, b.Code, b.City, b.Address, b.Phone, b.Status, b.IsHeadOffice))
+            .Select(b => new BranchResponse(
+                b.Id, b.Name, b.Code, b.City, b.Address, b.Phone, b.Status, b.IsHeadOffice,
+                b.BirBranchCode, b.PosPermitNumber, b.PosPermitDateIssued, b.MachineIdentificationNumber, b.MachineSerialNumber))
             .ToListAsync(cancellationToken);
 
         return Result.Success(branches);

@@ -21,6 +21,9 @@ public sealed class UpdateCompanyCommandHandler(IAppDbContext dbContext, IPermis
         company.Name = command.Name;
         company.TaxId = command.TaxId;
         company.BaseCurrencyId = command.BaseCurrencyId;
+        company.RegisteredAddress = command.RegisteredAddress;
+        company.TradeName = command.TradeName;
+        company.VatRegistrationType = command.VatRegistrationType;
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

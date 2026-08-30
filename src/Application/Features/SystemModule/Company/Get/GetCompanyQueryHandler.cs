@@ -14,7 +14,9 @@ public sealed class GetCompanyQueryHandler(IAppDbContext dbContext, IPermissionS
             return Result.Failure<CompanyResponse>(Error.Forbidden("Company.Forbidden", "You do not have permission to view the company."));
 
         var company = await dbContext.Companies
-            .Select(c => new CompanyResponse(c.Id, c.Code, c.Name, c.TaxId, c.BaseCurrencyId, c.CreatedAt))
+            .Select(c => new CompanyResponse(
+                c.Id, c.Code, c.Name, c.TaxId, c.BaseCurrencyId, c.CreatedAt,
+                c.RegisteredAddress, c.TradeName, c.VatRegistrationType))
             .FirstOrDefaultAsync(cancellationToken);
 
         if (company is null)
