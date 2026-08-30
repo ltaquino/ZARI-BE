@@ -37,6 +37,10 @@ public sealed class RequestPurchaseOrderCancellationCommandHandler(
         if (order.Status != "POSTED")
             return Result.Failure<PurchaseOrderResponse>(Error.Validation("PurchaseOrder.NotPosted", "Only a posted purchase order can have its cancellation requested."));
 
+        var downstreamCheckResult = await CheckNoPostedReceiptsAsync(dbContext, order.Lines.Select(l => l.Id).ToList(), cancellationToken);
+        if (!downstreamCheckResult.IsSuccess)
+            return Result.Failure<PurchaseOrderResponse>(downstreamCheckResult.Error!);
+
         var submitResult = await submitForApprovalHandler.HandleAsync(
             new SubmitForApprovalCommand("PURCHASE_ORDER", order.Id.ToString(), order.BranchId, command.RequestedBy, "CANCEL", command.Reason),
             cancellationToken);
@@ -55,5 +59,22 @@ public sealed class RequestPurchaseOrderCancellationCommandHandler(
             return Result.Failure<PurchaseOrderResponse>(notifyResult.Error!);
 
         return Result.Success(PurchaseOrderMapper.ToResponse(order));
+    }
+
+    /// <summary>
+    /// Blocks cancelling a PO that's already been (partially or fully) received — cancelling it
+    /// would drop it out of the "already ordered" tally `ValidateAgainstPurchaseRequest` uses,
+    /// letting a brand-new PO be posted for up to the full PR-requested quantity again even though
+    /// some of it was already physically received under this one. Checked here (friendly, at
+    /// request time) and again in ApprovePurchaseOrderCancellationCommandHandler (authoritative,
+    /// since a GRPO could be approved in the gap between request and approval).
+    /// </summary>
+    internal static async Task<Result> CheckNoPostedReceiptsAsync(IAppDbContext dbContext, List<Guid> lineIds, CancellationToken cancellationToken)
+    {
+        var hasPostedReceipt = await dbContext.GoodsReceiptPoLines
+            .AnyAsync(l => l.PurchaseOrderLineId.HasValue && lineIds.Contains(l.PurchaseOrderLineId.Value) && l.GoodsReceiptPo.Status == "POSTED", cancellationToken);
+        return hasPostedReceipt
+            ? Result.Failure(Error.Validation("PurchaseOrder.HasPostedReceipt", "This purchase order can't be cancelled — a posted goods receipt already references it."))
+            : Result.Success();
     }
 }

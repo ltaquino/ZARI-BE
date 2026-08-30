@@ -50,6 +50,21 @@ public sealed class ApproveApInvoiceCommandHandler(
         if (invoice.Status != "PENDING_APPROVAL")
             return Result.Failure<ApInvoiceResponse>(Error.Validation("ApInvoice.NotPendingApproval", "Only AP invoices pending approval can be approved."));
 
+        // Authoritative re-check, run BEFORE deciding the approval request — DecideApprovalRequestCommand
+        // is an atomic, one-shot compare-and-swap with no way back (a second decide attempt on the same
+        // request always fails with ApprovalRequest.AlreadyDecided). If this quantity check instead ran
+        // after decide (as part of posting the journal, where it used to live), a second invoice racing
+        // the same GRPO line could get its ApprovalRequest flipped to APPROVED and then fail the journal
+        // step — leaving the document permanently stuck: approved-but-not-POSTED, with no code path left
+        // to approve, reject, or cancel it. Same ordering ApproveGoodsReceiptPo/ApproveGoodsReturn/
+        // ApprovePurchaseOrder already use.
+        if (invoice.InvoiceType != "EXPENSE")
+        {
+            var quantityCheckResult = await ValidateItemInvoiceQuantitiesAsync(invoice, cancellationToken);
+            if (!quantityCheckResult.IsSuccess)
+                return Result.Failure<ApInvoiceResponse>(quantityCheckResult.Error!);
+        }
+
         var request = await dbContext.ApprovalRequests
             .Where(r => r.EntityType == "AP_INVOICE" && r.EntityId == invoice.Id.ToString())
             .OrderByDescending(r => r.RequestedAt)
@@ -125,22 +140,6 @@ public sealed class ApproveApInvoiceCommandHandler(
     /// </summary>
     private async Task<Result> PostItemInvoiceJournalAsync(ApInvoice invoice, CancellationToken cancellationToken)
     {
-        // Authoritative re-check, closing the race a friendly Create/Update-time check can't: another
-        // AP invoice against the same GRPO line may have been approved in between. This invoice is
-        // still PENDING_APPROVAL (not POSTED) right now, so it's naturally excluded from its own
-        // "already invoiced" tally — same pattern as ApprovePurchaseOrderCommandHandler.
-        var referencedLineIds = invoice.Lines.Where(l => l.GoodsReceiptPoLineId.HasValue).Select(l => l.GoodsReceiptPoLineId!.Value).Distinct().ToList();
-        var alreadyInvoiced = await dbContext.ApInvoiceLines
-            .Where(l => l.GoodsReceiptPoLineId.HasValue && referencedLineIds.Contains(l.GoodsReceiptPoLineId.Value) && l.ApInvoice.Status == "POSTED")
-            .GroupBy(l => l.GoodsReceiptPoLineId!.Value)
-            .Select(g => new { GoodsReceiptPoLineId = g.Key, Qty = g.Sum(l => l.Qty) })
-            .ToDictionaryAsync(x => x.GoodsReceiptPoLineId, x => x.Qty, cancellationToken);
-
-        var lineInputs = invoice.Lines.Select(l => new ApInvoiceLineInput(l.ItemId, l.Qty, l.UomId, l.UnitCost, l.GoodsReceiptPoLineId)).ToList();
-        var validationResult = CreateApInvoiceCommandHandler.ValidateAgainstGoodsReceiptPo(invoice.GoodsReceiptPo!, lineInputs, alreadyInvoiced);
-        if (!validationResult.IsSuccess)
-            return Result.Failure(validationResult.Error!);
-
         var invoiceTotal = invoice.Lines.Sum(l => Math.Round(l.Qty * l.UnitCost, 4));
         if (invoiceTotal <= 0)
             return Result.Success();
@@ -178,6 +177,27 @@ public sealed class ApproveApInvoiceCommandHandler(
         var postResult = await postGlJournalHandler.HandleAsync(
             new PostGlJournalCommand(invoice.BranchId, invoice.InvoiceDate, "PURCHASING", "ApInvoice", invoice.Id.ToString(), description, lines), cancellationToken);
         return postResult.IsSuccess ? Result.Success() : Result.Failure(postResult.Error!);
+    }
+
+    /// <summary>
+    /// Authoritative re-check, closing the race a friendly Create/Update-time check can't: another
+    /// AP invoice against the same GRPO line may have been approved in between. This invoice is
+    /// still PENDING_APPROVAL (not POSTED) right now, so it's naturally excluded from its own
+    /// "already invoiced" tally — same pattern as ApprovePurchaseOrderCommandHandler. Called from
+    /// HandleAsync BEFORE the approval request is decided (see the comment there for why the
+    /// ordering matters).
+    /// </summary>
+    private async Task<Result> ValidateItemInvoiceQuantitiesAsync(ApInvoice invoice, CancellationToken cancellationToken)
+    {
+        var referencedLineIds = invoice.Lines.Where(l => l.GoodsReceiptPoLineId.HasValue).Select(l => l.GoodsReceiptPoLineId!.Value).Distinct().ToList();
+        var alreadyInvoiced = await dbContext.ApInvoiceLines
+            .Where(l => l.GoodsReceiptPoLineId.HasValue && referencedLineIds.Contains(l.GoodsReceiptPoLineId.Value) && l.ApInvoice.Status == "POSTED")
+            .GroupBy(l => l.GoodsReceiptPoLineId!.Value)
+            .Select(g => new { GoodsReceiptPoLineId = g.Key, Qty = g.Sum(l => l.Qty) })
+            .ToDictionaryAsync(x => x.GoodsReceiptPoLineId, x => x.Qty, cancellationToken);
+
+        var lineInputs = invoice.Lines.Select(l => new ApInvoiceLineInput(l.ItemId, l.Qty, l.UomId, l.UnitCost, l.GoodsReceiptPoLineId)).ToList();
+        return CreateApInvoiceCommandHandler.ValidateAgainstGoodsReceiptPo(invoice.GoodsReceiptPo!, lineInputs, alreadyInvoiced);
     }
 
     private async Task<Result<Guid>> GetDefaultAccountIdAsync(string code, string label, CancellationToken cancellationToken)

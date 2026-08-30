@@ -2,13 +2,24 @@ using ZARI.Api.Extensions;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.StockLedgers.GetBalances;
 using ZARI.Application.Features.Inventory.StockLedgers.GetLedgerEntries;
-using ZARI.Application.Features.Inventory.StockLedgers.Issue;
-using ZARI.Application.Features.Inventory.StockLedgers.Receive;
-using ZARI.Application.Features.Inventory.StockLedgers.Reverse;
 using ZARI.Domain.Common;
 
 namespace ZARI.Api.Endpoints;
 
+/// <summary>
+/// Read-only on purpose. Receiving/issuing/reversing stock is never a direct user action — every
+/// document (GoodsReceipt, GoodsIssue, StockAdjustment, StockOpname, etc.) posts stock through its
+/// own Approve handler (which already enforces that module's own branch/permission checks) via
+/// in-process <c>ICommandHandler&lt;ReceiveStockCommand,...&gt;</c>/
+/// <c>ICommandHandler&lt;IssueStockLinesCommand,...&gt;</c>/
+/// <c>ICommandHandler&lt;ReverseStockMovementsCommand,...&gt;</c> injection, never over HTTP. These
+/// three commands used to also be mapped as raw <c>POST /api/stock-ledger/receive|issue|reverse</c>
+/// endpoints with no permission check of their own and no GL posting — since nothing legitimate
+/// ever called them (confirmed: no FE call site exists), that was a live authorization bypass
+/// letting any authenticated user silently mutate stock balances/cost layers for any item,
+/// warehouse, or branch with a fabricated reference and no corresponding GL journal. Removed
+/// rather than permission-gated, matching the same fix applied to GlJournalEndpoints.
+/// </summary>
 public static class StockLedgerEndpoints
 {
     public static void MapStockLedgerEndpoints(this IEndpointRouteBuilder app)
@@ -25,21 +36,6 @@ public static class StockLedgerEndpoints
         group.MapGet("/entries", GetLedgerEntries)
             .WithName("ListStockLedgerEntries")
             .WithSummary("List the movement history for one (item, warehouse, batch)");
-
-        group.MapPost("/receive", Receive)
-            .AddEndpointFilter<ValidationFilter<ReceiveStockCommand>>()
-            .WithName("ReceiveStock")
-            .WithSummary("Post a stock-in movement (e.g. a Goods Receipt line)");
-
-        group.MapPost("/issue", Issue)
-            .AddEndpointFilter<ValidationFilter<IssueStockLinesCommand>>()
-            .WithName("IssueStockLines")
-            .WithSummary("Post a batch of stock-out movements (e.g. a Goods Issue's lines)");
-
-        group.MapPost("/reverse", Reverse)
-            .AddEndpointFilter<ValidationFilter<ReverseStockMovementsCommand>>()
-            .WithName("ReverseStockMovements")
-            .WithSummary("Reverse every previously posted movement for a set of (referenceTable, referenceId) lines");
     }
 
     private static async Task<IResult> GetBalances(
@@ -59,32 +55,5 @@ public static class StockLedgerEndpoints
     {
         var result = await handler.HandleAsync(new ListStockLedgerEntriesQuery(itemId, warehouseId, batchNo), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
-    }
-
-    private static async Task<IResult> Receive(
-        ReceiveStockCommand command,
-        ICommandHandler<ReceiveStockCommand, Result<ReceiveStockResponse>> handler,
-        CancellationToken cancellationToken)
-    {
-        var result = await handler.HandleAsync(command, cancellationToken);
-        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
-    }
-
-    private static async Task<IResult> Issue(
-        IssueStockLinesCommand command,
-        ICommandHandler<IssueStockLinesCommand, Result<IssueStockLinesResponse>> handler,
-        CancellationToken cancellationToken)
-    {
-        var result = await handler.HandleAsync(command, cancellationToken);
-        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
-    }
-
-    private static async Task<IResult> Reverse(
-        ReverseStockMovementsCommand command,
-        ICommandHandler<ReverseStockMovementsCommand, Result> handler,
-        CancellationToken cancellationToken)
-    {
-        var result = await handler.HandleAsync(command, cancellationToken);
-        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblemDetails();
     }
 }

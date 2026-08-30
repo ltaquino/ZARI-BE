@@ -5,6 +5,7 @@ using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Purchasing.PurchaseOrders.GetAll;
+using ZARI.Application.Features.Purchasing.PurchaseOrders.RequestCancellation;
 using ZARI.Application.Features.Purchasing.PurchaseOrders.Shared;
 using ZARI.Application.Features.Workflow.ApprovalRequests.Decide;
 using ZARI.Application.Features.Workflow.ApprovalRequests.GetAll;
@@ -46,6 +47,13 @@ public sealed class ApprovePurchaseOrderCancellationCommandHandler(
             .FirstOrDefaultAsync(cancellationToken);
         if (request is null)
             return Result.Failure<PurchaseOrderResponse>(Error.NotFound("ApprovalRequest.NotFound", "No cancellation request found for this purchase order."));
+
+        // Authoritative re-check, before deciding: a GRPO could have been approved against this PO
+        // in the gap between the cancellation being requested and now being decided.
+        var downstreamCheckResult = await RequestPurchaseOrderCancellationCommandHandler.CheckNoPostedReceiptsAsync(
+            dbContext, order.Lines.Select(l => l.Id).ToList(), cancellationToken);
+        if (!downstreamCheckResult.IsSuccess)
+            return Result.Failure<PurchaseOrderResponse>(downstreamCheckResult.Error!);
 
         var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
         if (!decideResult.IsSuccess)

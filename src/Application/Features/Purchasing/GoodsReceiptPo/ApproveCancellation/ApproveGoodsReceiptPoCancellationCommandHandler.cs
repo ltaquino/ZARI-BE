@@ -6,6 +6,7 @@ using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Accounting.GlJournals.GetAll;
 using ZARI.Application.Features.Accounting.GlJournals.Reverse;
 using ZARI.Application.Features.Purchasing.GoodsReceiptPos.GetAll;
+using ZARI.Application.Features.Purchasing.GoodsReceiptPos.RequestCancellation;
 using ZARI.Application.Features.Purchasing.GoodsReceiptPos.Shared;
 using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Features.Inventory.SerialNumbers.ReverseReceive;
@@ -55,6 +56,14 @@ public sealed class ApproveGoodsReceiptPoCancellationCommandHandler(
             .FirstOrDefaultAsync(cancellationToken);
         if (request is null)
             return Result.Failure<GoodsReceiptPoResponse>(Error.NotFound("ApprovalRequest.NotFound", "No cancellation request found for this goods receipt."));
+
+        // Authoritative re-check, before any reversal side-effect: an AP Invoice or Goods Return
+        // could have been approved against this GRPO in the gap between the cancellation being
+        // requested and now being decided.
+        var downstreamCheckResult = await RequestGoodsReceiptPoCancellationCommandHandler.CheckNoDownstreamPostedDocumentsAsync(
+            dbContext, receipt.Lines.Select(l => l.Id).ToList(), cancellationToken);
+        if (!downstreamCheckResult.IsSuccess)
+            return Result.Failure<GoodsReceiptPoResponse>(downstreamCheckResult.Error!);
 
         var lineIds = receipt.Lines.Select(l => l.Id.ToString()).ToList();
         var reverseStockResult = await reverseStockHandler.HandleAsync(new ReverseStockMovementsCommand("GoodsReceiptPoLine", lineIds), cancellationToken);

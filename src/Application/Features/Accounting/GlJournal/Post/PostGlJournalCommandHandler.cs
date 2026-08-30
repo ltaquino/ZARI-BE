@@ -21,6 +21,17 @@ public sealed class PostGlJournalCommandHandler(
 {
     public async Task<Result<GlJournalResponse>> HandleAsync(PostGlJournalCommand command, CancellationToken cancellationToken = default)
     {
+        // Every line must move money in exactly one direction — both sides populated (or both
+        // zero) would still balance at the total level but is never a real accounting entry. This
+        // is the authoritative check for every internal caller now (PostGlJournalValidator only
+        // ever ran against the raw HTTP endpoint, which has been removed — see GlJournalEndpoints).
+        var malformedLine = command.Lines.FirstOrDefault(l => (l.DebitAmount > 0) == (l.CreditAmount > 0));
+        if (malformedLine is not null)
+        {
+            return Result.Failure<GlJournalResponse>(Error.Validation(
+                "GlJournal.MalformedLine", "Every journal line must have exactly one of DebitAmount or CreditAmount greater than zero."));
+        }
+
         var totalDebit = Math.Round(command.Lines.Sum(l => l.DebitAmount), 4);
         var totalCredit = Math.Round(command.Lines.Sum(l => l.CreditAmount), 4);
         if (totalDebit != totalCredit)
