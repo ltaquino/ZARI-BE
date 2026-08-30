@@ -49,14 +49,16 @@ public sealed class ApproveManualJournalEntryCancellationCommandHandler(
         if (request is null)
             return Result.Failure<ManualJournalEntryResponse>(Error.NotFound("ApprovalRequest.NotFound", "No cancellation request found for this manual journal entry."));
 
+        // Decide before any reversal side-effect — see ApproveGoodsReceiptCancellationCommandHandler's
+        // doc comment for why (a failed decide must leave nothing reversed yet, so it stays retryable).
+        var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
+        if (!decideResult.IsSuccess)
+            return Result.Failure<ManualJournalEntryResponse>(decideResult.Error!);
+
         var reverseJournalsResult = await reverseGlJournalsHandler.HandleAsync(
             new ReverseGlJournalsCommand("ManualJournalEntry", entry.Id.ToString(), DateTimeOffset.UtcNow, $"Cancellation of {entry.EntryNo}"), cancellationToken);
         if (!reverseJournalsResult.IsSuccess)
             return Result.Failure<ManualJournalEntryResponse>(reverseJournalsResult.Error!);
-
-        var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
-        if (!decideResult.IsSuccess)
-            return Result.Failure<ManualJournalEntryResponse>(decideResult.Error!);
 
         entry.Status = "CANCELLED";
         entry.CancelledBy = command.ApproverUserId;

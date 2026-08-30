@@ -55,6 +55,12 @@ public sealed class ApproveGoodsIssueCancellationCommandHandler(
         if (request is null)
             return Result.Failure<GoodsIssueResponse>(Error.NotFound("ApprovalRequest.NotFound", "No cancellation request found for this goods issue."));
 
+        // Decide before any reversal side-effect — see ApproveGoodsReceiptCancellationCommandHandler's
+        // doc comment for why (a failed decide must leave nothing reversed yet, so it stays retryable).
+        var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
+        if (!decideResult.IsSuccess)
+            return Result.Failure<GoodsIssueResponse>(decideResult.Error!);
+
         var lineIds = issue.Lines.Select(l => l.Id.ToString()).ToList();
         var reverseStockResult = await reverseStockHandler.HandleAsync(new ReverseStockMovementsCommand("GoodsIssueLine", lineIds), cancellationToken);
         if (!reverseStockResult.IsSuccess)
@@ -73,10 +79,6 @@ public sealed class ApproveGoodsIssueCancellationCommandHandler(
             new ReverseGlJournalsCommand("GoodsIssue", issue.Id.ToString(), DateTimeOffset.UtcNow, $"Cancellation of {issue.GiNo}"), cancellationToken);
         if (!reverseJournalsResult.IsSuccess)
             return Result.Failure<GoodsIssueResponse>(reverseJournalsResult.Error!);
-
-        var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
-        if (!decideResult.IsSuccess)
-            return Result.Failure<GoodsIssueResponse>(decideResult.Error!);
 
         // ReverseStockMovementsCommand runs its own retryable transaction and calls
         // ChangeTracker.Clear() at the start of every attempt — that detaches the `issue` this

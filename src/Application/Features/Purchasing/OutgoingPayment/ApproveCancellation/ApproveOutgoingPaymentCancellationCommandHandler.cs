@@ -54,14 +54,16 @@ public sealed class ApproveOutgoingPaymentCancellationCommandHandler(
         if (request is null)
             return Result.Failure<OutgoingPaymentResponse>(Error.NotFound("ApprovalRequest.NotFound", "No cancellation request found for this outgoing payment."));
 
+        // Decide before any reversal side-effect — see ApproveGoodsReceiptCancellationCommandHandler's
+        // doc comment for why (a failed decide must leave nothing reversed yet, so it stays retryable).
+        var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
+        if (!decideResult.IsSuccess)
+            return Result.Failure<OutgoingPaymentResponse>(decideResult.Error!);
+
         var reverseJournalsResult = await reverseGlJournalsHandler.HandleAsync(
             new ReverseGlJournalsCommand("OutgoingPayment", payment.Id.ToString(), DateTimeOffset.UtcNow, $"Cancellation of {payment.PaymentNo}"), cancellationToken);
         if (!reverseJournalsResult.IsSuccess)
             return Result.Failure<OutgoingPaymentResponse>(reverseJournalsResult.Error!);
-
-        var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
-        if (!decideResult.IsSuccess)
-            return Result.Failure<OutgoingPaymentResponse>(decideResult.Error!);
 
         payment.Status = "CANCELLED";
         payment.CancelledBy = command.ApproverUserId;

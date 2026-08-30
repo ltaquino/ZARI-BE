@@ -56,6 +56,14 @@ public sealed class ApproveGoodsReceiptCancellationCommandHandler(
         if (request is null)
             return Result.Failure<GoodsReceiptResponse>(Error.NotFound("ApprovalRequest.NotFound", "No cancellation request found for this goods receipt."));
 
+        // Decide before any reversal side-effect: DecideApprovalRequestCommand is a one-shot
+        // compare-and-swap (self-approval guard, already-decided race) — deciding first means a
+        // failure here leaves nothing reversed yet, so the request stays cleanly retryable instead
+        // of getting stuck PENDING_CANCELLATION with the reversal already (irreversibly) applied.
+        var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
+        if (!decideResult.IsSuccess)
+            return Result.Failure<GoodsReceiptResponse>(decideResult.Error!);
+
         var lineIds = receipt.Lines.Select(l => l.Id.ToString()).ToList();
         var reverseStockResult = await reverseStockHandler.HandleAsync(new ReverseStockMovementsCommand("GoodsReceiptLine", lineIds), cancellationToken);
         if (!reverseStockResult.IsSuccess)
@@ -75,10 +83,6 @@ public sealed class ApproveGoodsReceiptCancellationCommandHandler(
             new ReverseGlJournalsCommand("GoodsReceipt", receipt.Id.ToString(), DateTimeOffset.UtcNow, $"Cancellation of {receipt.GrNo}"), cancellationToken);
         if (!reverseJournalsResult.IsSuccess)
             return Result.Failure<GoodsReceiptResponse>(reverseJournalsResult.Error!);
-
-        var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
-        if (!decideResult.IsSuccess)
-            return Result.Failure<GoodsReceiptResponse>(decideResult.Error!);
 
         // ReverseStockMovementsCommand runs its own retryable transaction and calls
         // ChangeTracker.Clear() at the start of every attempt — that detaches the `receipt` this

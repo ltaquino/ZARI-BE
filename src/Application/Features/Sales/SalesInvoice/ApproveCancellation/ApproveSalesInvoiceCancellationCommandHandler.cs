@@ -55,14 +55,16 @@ public sealed class ApproveSalesInvoiceCancellationCommandHandler(
         if (request is null)
             return Result.Failure<SalesInvoiceResponse>(Error.NotFound("ApprovalRequest.NotFound", "No cancellation request found for this sales invoice."));
 
+        // Decide before any reversal side-effect — see ApproveGoodsReceiptCancellationCommandHandler's
+        // doc comment for why (a failed decide must leave nothing reversed yet, so it stays retryable).
+        var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
+        if (!decideResult.IsSuccess)
+            return Result.Failure<SalesInvoiceResponse>(decideResult.Error!);
+
         var reverseJournalsResult = await reverseGlJournalsHandler.HandleAsync(
             new ReverseGlJournalsCommand("SalesInvoice", invoice.Id.ToString(), DateTimeOffset.UtcNow, $"Cancellation of {invoice.InvoiceNo}"), cancellationToken);
         if (!reverseJournalsResult.IsSuccess)
             return Result.Failure<SalesInvoiceResponse>(reverseJournalsResult.Error!);
-
-        var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
-        if (!decideResult.IsSuccess)
-            return Result.Failure<SalesInvoiceResponse>(decideResult.Error!);
 
         invoice.Status = "CANCELLED";
         invoice.CancelledBy = command.ApproverUserId;

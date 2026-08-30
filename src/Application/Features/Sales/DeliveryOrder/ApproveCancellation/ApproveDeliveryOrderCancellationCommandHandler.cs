@@ -62,6 +62,12 @@ public sealed class ApproveDeliveryOrderCancellationCommandHandler(
         if (!downstreamCheckResult.IsSuccess)
             return Result.Failure<DeliveryOrderResponse>(downstreamCheckResult.Error!);
 
+        // Decide before any reversal side-effect — see ApproveGoodsReceiptCancellationCommandHandler's
+        // doc comment for why (a failed decide must leave nothing reversed yet, so it stays retryable).
+        var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
+        if (!decideResult.IsSuccess)
+            return Result.Failure<DeliveryOrderResponse>(decideResult.Error!);
+
         var lineIds = order.Lines.Select(l => l.Id.ToString()).ToList();
         var reverseStockResult = await reverseStockHandler.HandleAsync(new ReverseStockMovementsCommand("DeliveryOrderLine", lineIds), cancellationToken);
         if (!reverseStockResult.IsSuccess)
@@ -71,10 +77,6 @@ public sealed class ApproveDeliveryOrderCancellationCommandHandler(
             new ReverseGlJournalsCommand("DeliveryOrder", order.Id.ToString(), DateTimeOffset.UtcNow, $"Cancellation of {order.DoNo}"), cancellationToken);
         if (!reverseJournalsResult.IsSuccess)
             return Result.Failure<DeliveryOrderResponse>(reverseJournalsResult.Error!);
-
-        var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
-        if (!decideResult.IsSuccess)
-            return Result.Failure<DeliveryOrderResponse>(decideResult.Error!);
 
         // ReverseStockMovementsCommand runs its own retryable transaction and calls
         // ChangeTracker.Clear() at the start of every attempt — that detaches the `order` this
