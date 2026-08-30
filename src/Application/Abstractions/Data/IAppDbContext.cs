@@ -82,6 +82,7 @@ public interface IAppDbContext
     DbSet<SalesReturnLine> SalesReturnLines { get; }
     DbSet<DiscountRule> DiscountRules { get; }
     DbSet<StatutoryDiscountType> StatutoryDiscountTypes { get; }
+    DbSet<ZReading> ZReadings { get; }
 
     // Exposed only for the stock-ledger posting handlers, which need an explicit transaction plus
     // raw-SQL "FOR UPDATE" locking (see Application/Features/Inventory/StockLedger/Shared/

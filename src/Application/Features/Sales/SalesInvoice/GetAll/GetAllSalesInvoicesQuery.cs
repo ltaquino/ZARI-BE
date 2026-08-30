@@ -38,6 +38,12 @@ public sealed record SalesInvoiceResponse(
     decimal? DiscountPct,
     string? BirOrSeriesNumber,
     decimal PaidAmount,
+    /// <summary>
+    /// Live-computed from POSTED CustomerPayment lines (SalesInvoicePaymentBalance), NOT the same
+    /// as the PaidAmount stored field above (which Wave 3 left permanently 0 and is never written).
+    /// </summary>
+    decimal AmountPaid,
+    decimal Balance,
     Guid? CostCenterId,
     List<SalesInvoiceLineResponse> Lines,
     string? CancelledBy,

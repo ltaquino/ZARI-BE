@@ -25,6 +25,7 @@ public sealed class GetSalesInvoiceQueryHandler(IAppDbContext dbContext, IPermis
         if (!await permissionService.HasPermissionOnBranchAsync("SALES_INVOICES", FormAction.View, invoice.BranchId, cancellationToken))
             return Result.Failure<SalesInvoiceResponse>(Error.Forbidden("SalesInvoice.Forbidden", "You do not have permission to view sales invoices for this branch."));
 
-        return Result.Success(SalesInvoiceMapper.ToResponse(invoice));
+        var amountPaid = await SalesInvoicePaymentBalance.GetAmountPaidAsync(dbContext, invoice.Id, cancellationToken);
+        return Result.Success(SalesInvoiceMapper.ToResponse(invoice, amountPaid));
     }
 }

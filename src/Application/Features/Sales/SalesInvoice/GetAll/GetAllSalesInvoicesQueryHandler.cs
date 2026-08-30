@@ -22,6 +22,7 @@ public sealed class GetAllSalesInvoicesQueryHandler(IAppDbContext dbContext, IPe
             .OrderByDescending(i => i.InvoiceDate)
             .ToListAsync(cancellationToken);
 
-        return Result.Success(invoices.Select(SalesInvoiceMapper.ToResponse).ToList());
+        var amountsPaid = await SalesInvoicePaymentBalance.GetAmountsPaidAsync(dbContext, invoices.Select(i => i.Id), cancellationToken);
+        return Result.Success(invoices.Select(i => SalesInvoiceMapper.ToResponse(i, amountsPaid.GetValueOrDefault(i.Id))).ToList());
     }
 }

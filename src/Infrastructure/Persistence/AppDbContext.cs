@@ -84,6 +84,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<SalesReturnLine> SalesReturnLines => Set<SalesReturnLine>();
     public DbSet<DiscountRule> DiscountRules => Set<DiscountRule>();
     public DbSet<StatutoryDiscountType> StatutoryDiscountTypes => Set<StatutoryDiscountType>();
+    public DbSet<ZReading> ZReadings => Set<ZReading>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

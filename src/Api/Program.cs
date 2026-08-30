@@ -156,6 +156,9 @@ try
     app.MapSalesOrderEndpoints();
     app.MapDeliveryOrderEndpoints();
     app.MapSalesInvoiceEndpoints();
+    app.MapSalesReturnEndpoints();
+    app.MapCustomerPaymentEndpoints();
+    app.MapPosClosingEndpoints();
     //app.MapGet("/debug-user", (HttpContext ctx) =>
     //{
     //    return new

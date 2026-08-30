@@ -5,7 +5,11 @@ using ZARI.Domain.Entities;
 
 internal static class SalesInvoiceMapper
 {
-    public static SalesInvoiceResponse ToResponse(SalesInvoice invoice) => new(
+    /// <param name="amountPaid">Live-computed via SalesInvoicePaymentBalance — pass 0 when the caller has no payment data at hand (amountPaid/balance are then reported as 0/full-total, never wrong-but-stale).</param>
+    public static SalesInvoiceResponse ToResponse(SalesInvoice invoice, decimal amountPaid = 0)
+    {
+        var invoiceTotal = SalesInvoicePaymentBalance.GetInvoiceTotal(invoice);
+        return new(
         invoice.Id,
         invoice.InvoiceNo,
         invoice.BranchId,
@@ -19,6 +23,8 @@ internal static class SalesInvoiceMapper
         invoice.DiscountPct,
         invoice.BirOrSeriesNumber,
         invoice.PaidAmount,
+        amountPaid,
+        invoiceTotal - amountPaid,
         invoice.CostCenterId,
         invoice.Lines.Select(ToLineResponse).ToList(),
         invoice.CancelledBy,
@@ -26,6 +32,7 @@ internal static class SalesInvoiceMapper
         invoice.CancelReason,
         invoice.CreatedAt,
         invoice.CreatedBy);
+    }
 
     private static SalesInvoiceLineResponse ToLineResponse(SalesInvoiceLine line) => new(
         line.Id,
