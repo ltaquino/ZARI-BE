@@ -26,6 +26,13 @@ public sealed class GetSalesInvoiceQueryHandler(IAppDbContext dbContext, IPermis
             return Result.Failure<SalesInvoiceResponse>(Error.Forbidden("SalesInvoice.Forbidden", "You do not have permission to view sales invoices for this branch."));
 
         var amountPaid = await SalesInvoicePaymentBalance.GetAmountPaidAsync(dbContext, invoice.Id, cancellationToken);
-        return Result.Success(SalesInvoiceMapper.ToResponse(invoice, amountPaid));
+
+        var payments = await dbContext.CustomerPaymentLines
+            .Where(l => l.SalesInvoiceId == invoice.Id && l.CustomerPayment.Status == "POSTED")
+            .OrderBy(l => l.CustomerPayment.PaymentDate)
+            .Select(l => new SalesInvoicePaymentSummary(l.CustomerPaymentId, l.CustomerPayment.PaymentNo, l.CustomerPayment.PaymentDate, l.CustomerPayment.PaymentMethod, l.AmountApplied))
+            .ToListAsync(cancellationToken);
+
+        return Result.Success(SalesInvoiceMapper.ToResponse(invoice, amountPaid, payments));
     }
 }

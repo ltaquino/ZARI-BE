@@ -24,6 +24,13 @@ public sealed record SalesInvoiceLineResponse(
     string? StatutoryIdNumber,
     Guid? DeliveryOrderLineId);
 
+public sealed record SalesInvoicePaymentSummary(
+    Guid CustomerPaymentId,
+    string PaymentNo,
+    DateTimeOffset PaymentDate,
+    string PaymentMethod,
+    decimal AmountApplied);
+
 public sealed record SalesInvoiceResponse(
     Guid Id,
     string InvoiceNo,
@@ -50,4 +57,9 @@ public sealed record SalesInvoiceResponse(
     DateTimeOffset? CancelledAt,
     string? CancelReason,
     DateTimeOffset CreatedAt,
-    string? CreatedBy);
+    string? CreatedBy,
+    int PrintCount,
+    DateTimeOffset? FirstPrintedAt,
+    DateTimeOffset? LastPrintedAt,
+    /// <summary>Populated on the single Get-by-id query only (receipt printing needs it); GetAll leaves it empty to avoid an N+1 fan-out on the list view.</summary>
+    List<SalesInvoicePaymentSummary> Payments);

@@ -44,4 +44,13 @@ public sealed class SalesInvoice : AuditableEntity
     public string? CancelledBy { get; set; }
     public DateTimeOffset? CancelledAt { get; set; }
     public string? CancelReason { get; set; }
+
+    // BIR receipt-printing audit trail: a printed OR/SI must be able to show "REPRINT" on any copy
+    // after the first, since a duplicate original is a known input-tax-fraud vector examiners check
+    // for. Incremented only by RecordSalesInvoicePrintCommand, fired when the receipt print view is
+    // actually triggered — never edited directly, same "system-maintained counter" shape as
+    // Branch.ZCounter.
+    public int PrintCount { get; set; }
+    public DateTimeOffset? FirstPrintedAt { get; set; }
+    public DateTimeOffset? LastPrintedAt { get; set; }
 }

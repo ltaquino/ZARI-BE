@@ -8,6 +8,7 @@ using ZARI.Application.Features.Sales.SalesInvoices.Create;
 using ZARI.Application.Features.Sales.SalesInvoices.Delete;
 using ZARI.Application.Features.Sales.SalesInvoices.Get;
 using ZARI.Application.Features.Sales.SalesInvoices.GetAll;
+using ZARI.Application.Features.Sales.SalesInvoices.RecordPrint;
 using ZARI.Application.Features.Sales.SalesInvoices.Reject;
 using ZARI.Application.Features.Sales.SalesInvoices.RejectCancellation;
 using ZARI.Application.Features.Sales.SalesInvoices.RequestCancellation;
@@ -74,6 +75,10 @@ public static class SalesInvoiceEndpoints
         group.MapPost("/{id:guid}/reject-cancellation", RejectCancellation)
             .WithName("RejectSalesInvoiceCancellation")
             .WithSummary("Reject a cancellation request — the document stands as posted");
+
+        group.MapPost("/{id:guid}/record-print", RecordPrint)
+            .WithName("RecordSalesInvoicePrint")
+            .WithSummary("Record that the BIR receipt for this invoice was printed — increments the audit print counter and reports whether this is a reprint");
     }
 
     private static async Task<IResult> GetAll(
@@ -226,6 +231,16 @@ public static class SalesInvoiceEndpoints
         var result = await handler.HandleAsync(command, cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
+
+    private static async Task<IResult> RecordPrint(
+        Guid id,
+        RecordSalesInvoicePrintRequest request,
+        ICommandHandler<RecordSalesInvoicePrintCommand, Result<RecordSalesInvoicePrintResponse>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new RecordSalesInvoicePrintCommand(id, request.PrintedBy), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
+    }
 }
 
 public sealed record UpdateSalesInvoiceRequest(
@@ -248,3 +263,4 @@ public sealed record DecideSalesInvoiceRequest(string ApproverUserId, string? Co
 public sealed record DecideSalesInvoiceRequiredCommentRequest(string ApproverUserId, string Comments);
 public sealed record CancelSalesInvoiceRequest(string CancelledBy, string Reason);
 public sealed record RequestSalesInvoiceCancellationRequest(string RequestedBy, string Reason);
+public sealed record RecordSalesInvoicePrintRequest(string? PrintedBy);
