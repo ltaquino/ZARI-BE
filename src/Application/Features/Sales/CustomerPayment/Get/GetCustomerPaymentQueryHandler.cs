@@ -17,6 +17,7 @@ public sealed class GetCustomerPaymentQueryHandler(IAppDbContext dbContext, IPer
             .Include(p => p.Customer)
             .Include(p => p.CashAccount)
             .Include(p => p.Lines).ThenInclude(l => l.SalesInvoice)
+            .Include(p => p.Tenders).ThenInclude(t => t.PaymentMethod)
             .FirstOrDefaultAsync(p => p.Id == query.Id, cancellationToken);
 
         if (payment is null)

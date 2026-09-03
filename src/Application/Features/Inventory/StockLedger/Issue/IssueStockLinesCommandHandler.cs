@@ -35,6 +35,24 @@ public sealed class IssueStockLinesCommandHandler(IAppDbContext dbContext)
         if (stockedLines.Count == 0)
             return Result.Success(new IssueStockLinesResponse(new Dictionary<string, decimal>()));
 
+        // Idempotency guard — a retry (e.g. re-approving a document whose GL posting failed after
+        // stock had already moved) must not re-deduct stock for a line that already posted. Each
+        // line's own (ReferenceTable, ReferenceId) uniquely identifies its stock movement, same
+        // matching rule ReceiveStockCommandHandler uses (a reversal shares the same reference as
+        // the original post, so it's excluded here too).
+        var referenceIds = stockedLines.Select(l => l.ReferenceId).ToList();
+        var referenceKeys = stockedLines.Select(l => (l.ReferenceTable, l.ReferenceId)).ToHashSet();
+        var alreadyPostedCosts = (await dbContext.StockLedgers
+                .Where(l => referenceIds.Contains(l.ReferenceId) && !l.IsReversal)
+                .Select(l => new { l.ReferenceTable, l.ReferenceId, l.UnitCost })
+                .ToListAsync(cancellationToken))
+            .Where(r => referenceKeys.Contains((r.ReferenceTable, r.ReferenceId)))
+            .ToDictionary(r => r.ReferenceId, r => r.UnitCost);
+
+        stockedLines = stockedLines.Where(l => !alreadyPostedCosts.ContainsKey(l.ReferenceId)).ToList();
+        if (stockedLines.Count == 0)
+            return Result.Success(new IssueStockLinesResponse(alreadyPostedCosts));
+
         var strategy = dbContext.Database.CreateExecutionStrategy();
         return await strategy.ExecuteAsync(async () =>
         {
@@ -108,7 +126,7 @@ public sealed class IssueStockLinesCommandHandler(IAppDbContext dbContext)
             // --- 3. Apply each line, mutating the locked rows/layers as we go so later lines in
             // the same batch see what earlier lines already consumed — same order-dependent
             // behavior as the FE engine being ported. ---
-            var costsByReferenceId = new Dictionary<string, decimal>();
+            var costsByReferenceId = new Dictionary<string, decimal>(alreadyPostedCosts);
             var uomCodeCache = new Dictionary<Guid, string?>();
 
             foreach (var line in stockedLines)

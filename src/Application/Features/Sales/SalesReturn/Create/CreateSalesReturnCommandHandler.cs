@@ -6,6 +6,7 @@ using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Accounting.GlJournals.GetAll;
 using ZARI.Application.Features.Accounting.GlJournals.Post;
+using ZARI.Application.Features.Inventory.SerialNumbers.ReverseIssue;
 using ZARI.Application.Features.Inventory.StockLedgers.Receive;
 using ZARI.Application.Features.Sales.SalesReturns.GetAll;
 using ZARI.Application.Features.Sales.SalesReturns.Shared;
@@ -28,6 +29,7 @@ public sealed class CreateSalesReturnCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<GetNextDocumentNumberCommand, Result<NextDocumentNumberResponse>> nextDocumentNumberHandler,
     ICommandHandler<ReceiveStockCommand, Result<ReceiveStockResponse>> receiveStockHandler,
+    ICommandHandler<ReverseIssueSerialCommand, Result> reverseIssueSerialHandler,
     ICommandHandler<PostGlJournalCommand, Result<GlJournalResponse>> postGlJournalHandler,
     ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
     IPermissionService permissionService)
@@ -116,7 +118,8 @@ public sealed class CreateSalesReturnCommandHandler(
                 QtyReturned = l.QtyReturned,
                 UomId = l.UomId,
                 UnitPrice = l.UnitPrice,
-                DeliveryOrderLineId = l.DeliveryOrderLineId
+                DeliveryOrderLineId = l.DeliveryOrderLineId,
+                SerialNo = l.SerialNo
             }).ToList()
         };
 
@@ -147,7 +150,8 @@ public sealed class CreateSalesReturnCommandHandler(
                     manualVatTypeByLineId[salesReturn.Lines[i].Id] = vatType;
             }
 
-            var postResult = await SalesReturnPostingService.PostAsync(dbContext, receiveStockHandler, postGlJournalHandler, salesReturn, manualVatTypeByLineId, cancellationToken);
+            var postResult = await SalesReturnPostingService.PostAsync(
+                dbContext, receiveStockHandler, reverseIssueSerialHandler, postGlJournalHandler, salesReturn, manualVatTypeByLineId, cancellationToken);
             if (!postResult.IsSuccess)
                 return Result.Failure<SalesReturnResponse>(postResult.Error!);
 

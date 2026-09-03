@@ -43,7 +43,8 @@ internal static class ApInvoiceMapper
         line.UomId,
         line.Uom.Code,
         line.UnitCost,
-        line.GoodsReceiptPoLineId);
+        line.GoodsReceiptPoLineId,
+        line.VatType);
 
     private static ApInvoiceExpenseLineResponse ToExpenseLineResponse(ApInvoiceExpenseLine line) => new(
         line.Id,
@@ -51,5 +52,6 @@ internal static class ApInvoiceMapper
         line.GlAccount.Code,
         line.GlAccount.Name,
         line.Description,
-        line.Amount);
+        line.Amount,
+        line.VatType);
 }

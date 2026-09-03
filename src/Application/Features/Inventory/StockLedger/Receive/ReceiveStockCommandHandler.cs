@@ -23,6 +23,17 @@ public sealed class ReceiveStockCommandHandler(IAppDbContext dbContext) : IComma
         if (!warehouseExists)
             return Result.Failure<ReceiveStockResponse>(Error.NotFound("Warehouse.NotFound", $"Warehouse with ID '{command.WarehouseId}' was not found."));
 
+        // Idempotency guard — a retry of the same reference (e.g. re-approving a document whose GL
+        // posting failed after stock had already moved) must not double-post the same movement. A
+        // reversal intentionally shares the same reference as the original post, so it's excluded
+        // here — "already posted" means a real, still-standing post exists, not that one ever did.
+        var alreadyPostedCost = await dbContext.StockLedgers
+            .Where(l => l.ReferenceTable == command.ReferenceTable && l.ReferenceId == command.ReferenceId && !l.IsReversal)
+            .Select(l => (decimal?)l.UnitCost)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (alreadyPostedCost.HasValue)
+            return Result.Success(new ReceiveStockResponse(alreadyPostedCost));
+
         var batchNo = StockBalanceLocker.NormalizeBatch(command.BatchNo);
         var uomCode = await dbContext.Uoms.Where(u => u.Id == item.BaseUomId).Select(u => u.Code).FirstOrDefaultAsync(cancellationToken);
 

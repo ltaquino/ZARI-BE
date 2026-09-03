@@ -21,6 +21,7 @@ internal static class CustomerPaymentMapper
         payment.Remarks,
         payment.Lines.Sum(l => l.AmountApplied),
         payment.Lines.Select(ToLineResponse).ToList(),
+        payment.Tenders.Select(ToTenderResponse).ToList(),
         payment.CostCenterId,
         payment.CancelledBy,
         payment.CancelledAt,
@@ -33,4 +34,12 @@ internal static class CustomerPaymentMapper
         line.SalesInvoiceId,
         line.SalesInvoice.InvoiceNo,
         line.AmountApplied);
+
+    private static CustomerPaymentTenderResponse ToTenderResponse(CustomerPaymentTender tender) => new(
+        tender.Id,
+        tender.PaymentMethodId,
+        tender.PaymentMethod.Name,
+        tender.Amount,
+        tender.ReferenceNo,
+        tender.BankOrPartnerName);
 }

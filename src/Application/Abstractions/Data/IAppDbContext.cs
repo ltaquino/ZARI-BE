@@ -83,6 +83,10 @@ public interface IAppDbContext
     DbSet<DiscountRule> DiscountRules { get; }
     DbSet<StatutoryDiscountType> StatutoryDiscountTypes { get; }
     DbSet<ZReading> ZReadings { get; }
+    DbSet<PaymentMethod> PaymentMethods { get; }
+    DbSet<CustomerPaymentTender> CustomerPaymentTenders { get; }
+    DbSet<PosTerminal> PosTerminals { get; }
+    DbSet<PosPromoSlide> PosPromoSlides { get; }
 
     // Exposed only for the stock-ledger posting handlers, which need an explicit transaction plus
     // raw-SQL "FOR UPDATE" locking (see Application/Features/Inventory/StockLedger/Shared/

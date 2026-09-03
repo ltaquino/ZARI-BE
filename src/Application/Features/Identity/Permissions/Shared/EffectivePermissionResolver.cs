@@ -19,7 +19,8 @@ public static class EffectivePermissionResolver
             return new FormPermissionResponse(
                 form.Code, form.Name, form.Module,
                 overrideFlags.CanView, overrideFlags.CanCreate, overrideFlags.CanEdit,
-                overrideFlags.CanApprove, overrideFlags.CanCancel, overrideFlags.CanDelete);
+                overrideFlags.CanApprove, overrideFlags.CanCancel, overrideFlags.CanDelete,
+                IsOverridden: true);
         }
 
         var rolePerms = rolePermissionsForForm as IFormPermissionFlags[] ?? rolePermissionsForForm.ToArray();
@@ -31,6 +32,7 @@ public static class EffectivePermissionResolver
             rolePerms.Any(rp => rp.CanEdit),
             rolePerms.Any(rp => rp.CanApprove),
             rolePerms.Any(rp => rp.CanCancel),
-            rolePerms.Any(rp => rp.CanDelete));
+            rolePerms.Any(rp => rp.CanDelete),
+            IsOverridden: false);
     }
 }

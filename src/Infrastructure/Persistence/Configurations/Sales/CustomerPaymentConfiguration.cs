@@ -46,5 +46,10 @@ public sealed class CustomerPaymentConfiguration : BaseModelConfig, IEntityTypeC
             .WithOne(l => l.CustomerPayment)
             .HasForeignKey(l => l.CustomerPaymentId)
             .OnDelete(DeleteBehavior.Cascade);
+
+        builder.HasMany(p => p.Tenders)
+            .WithOne(t => t.CustomerPayment)
+            .HasForeignKey(t => t.CustomerPaymentId)
+            .OnDelete(DeleteBehavior.Cascade);
     }
 }

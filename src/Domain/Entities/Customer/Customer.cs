@@ -19,6 +19,10 @@ public sealed class Customer : AuditableEntity
     public string Address { get; set; } = default!;
     public string? Notes { get; set; }
 
+    // Free-text cooperative member number — searchable from POS Mode alongside Name. No format
+    // enforced; the business's existing member-card numbering (whatever it is) is entered as-is.
+    public string? MemberNo { get; set; }
+
     // Mirrors Supplier.ApAccountId/PaymentTermsDays (Phase 17) exactly, on the AR side: an override
     // GL account for this customer's receivable (falls back to "1200" Accounts Receivable when
     // null) and a net-days default for Sales Invoice due dates (null = no default, purely manual).

@@ -27,6 +27,7 @@ internal static class SalesInvoiceMapper
         amountPaid,
         invoiceTotal - amountPaid,
         invoice.CostCenterId,
+        invoice.PosTerminalId,
         invoice.Lines.Select(ToLineResponse).ToList(),
         invoice.CancelledBy,
         invoice.CancelledAt,
@@ -56,5 +57,6 @@ internal static class SalesInvoiceMapper
         line.StatutoryDiscountTypeId,
         line.StatutoryDiscountType?.Name,
         line.StatutoryIdNumber,
-        line.DeliveryOrderLineId);
+        line.DeliveryOrderLineId,
+        line.SerialNo);
 }

@@ -16,4 +16,5 @@ public sealed record CreateCustomerCommand(
     string? Notes,
     Guid? ArAccountId,
     int? PaymentTermsDays,
-    decimal? StandingDiscountPct) : ICommand<Result<CustomerResponse>>;
+    decimal? StandingDiscountPct,
+    string? MemberNo = null) : ICommand<Result<CustomerResponse>>;

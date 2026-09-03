@@ -39,7 +39,8 @@ public sealed class CreateCustomerCommandHandler(IAppDbContext dbContext, IPermi
             Notes = command.Notes,
             ArAccountId = command.ArAccountId,
             PaymentTermsDays = command.PaymentTermsDays,
-            StandingDiscountPct = command.StandingDiscountPct
+            StandingDiscountPct = command.StandingDiscountPct,
+            MemberNo = command.MemberNo
         };
 
         dbContext.Customers.Add(customer);
@@ -47,7 +48,7 @@ public sealed class CreateCustomerCommandHandler(IAppDbContext dbContext, IPermi
 
         var response = new CustomerResponse(customer.Id, customer.Name, customer.Type, customer.Email, customer.Phone,
             customer.BranchId, customer.Status, customer.Owner, customer.Address, customer.Notes,
-            customer.ArAccountId, customer.PaymentTermsDays, customer.StandingDiscountPct, customer.CreatedAt);
+            customer.ArAccountId, customer.PaymentTermsDays, customer.StandingDiscountPct, customer.MemberNo, customer.CreatedAt);
         return Result.Success(response);
     }
 }

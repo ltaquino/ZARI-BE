@@ -40,6 +40,7 @@ public sealed class UpdateCustomerCommandHandler(IAppDbContext dbContext, IPermi
         customer.ArAccountId = command.ArAccountId;
         customer.PaymentTermsDays = command.PaymentTermsDays;
         customer.StandingDiscountPct = command.StandingDiscountPct;
+        customer.MemberNo = command.MemberNo;
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

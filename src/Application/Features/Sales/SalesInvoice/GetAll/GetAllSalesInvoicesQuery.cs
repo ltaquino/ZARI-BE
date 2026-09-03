@@ -22,7 +22,8 @@ public sealed record SalesInvoiceLineResponse(
     Guid? StatutoryDiscountTypeId,
     string? StatutoryDiscountTypeName,
     string? StatutoryIdNumber,
-    Guid? DeliveryOrderLineId);
+    Guid? DeliveryOrderLineId,
+    string? SerialNo);
 
 public sealed record SalesInvoicePaymentSummary(
     Guid CustomerPaymentId,
@@ -52,6 +53,7 @@ public sealed record SalesInvoiceResponse(
     decimal AmountPaid,
     decimal Balance,
     Guid? CostCenterId,
+    Guid? PosTerminalId,
     List<SalesInvoiceLineResponse> Lines,
     string? CancelledBy,
     DateTimeOffset? CancelledAt,

@@ -45,6 +45,12 @@ public sealed class SalesInvoiceConfiguration : BaseModelConfig, IEntityTypeConf
             .OnDelete(DeleteBehavior.Restrict)
             .IsRequired(false);
 
+        builder.HasOne(i => i.PosTerminal)
+            .WithMany()
+            .HasForeignKey(i => i.PosTerminalId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
+
         builder.HasMany(i => i.Lines)
             .WithOne(l => l.SalesInvoice)
             .HasForeignKey(l => l.SalesInvoiceId)

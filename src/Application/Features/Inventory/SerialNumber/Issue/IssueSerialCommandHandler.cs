@@ -12,7 +12,21 @@ public sealed class IssueSerialCommandHandler(IAppDbContext dbContext) : IComman
         var existing = await dbContext.SerialNumbers
             .FirstOrDefaultAsync(s => s.ItemId == command.ItemId && s.SerialNo == command.SerialNo, cancellationToken);
 
-        if (existing is null || existing.Status != "IN_STOCK")
+        if (existing is null)
+        {
+            return Result.Failure(Error.Validation(
+                "SerialNumber.NotInStock",
+                $"Serial {command.SerialNo} is not currently in stock and cannot be issued."));
+        }
+
+        // Idempotency guard — a resumed Approve retry (after a later posting step failed on a
+        // prior attempt) calls this again for a serial it already issued; unlike stock ledger
+        // rows, a serial's own Status has no per-attempt history to check, so "already at the
+        // target disposition" is itself the idempotent-no-op signal.
+        if (existing.Status == command.Disposition)
+            return Result.Success();
+
+        if (existing.Status != "IN_STOCK")
         {
             return Result.Failure(Error.Validation(
                 "SerialNumber.NotInStock",

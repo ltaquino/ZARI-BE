@@ -15,7 +15,8 @@ public sealed record ApInvoiceLineResponse(
     Guid UomId,
     string UomCode,
     decimal UnitCost,
-    Guid? GoodsReceiptPoLineId);
+    Guid? GoodsReceiptPoLineId,
+    string VatType);
 
 public sealed record ApInvoiceExpenseLineResponse(
     Guid Id,
@@ -23,7 +24,8 @@ public sealed record ApInvoiceExpenseLineResponse(
     string GlAccountCode,
     string GlAccountName,
     string Description,
-    decimal Amount);
+    decimal Amount,
+    string VatType);
 
 public sealed record ApInvoiceResponse(
     Guid Id,

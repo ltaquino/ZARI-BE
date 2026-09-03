@@ -99,6 +99,9 @@ try
 
     app.ConfigureSwagger(app.Configuration);
     app.UseHttpsRedirection();
+    // Serves uploaded promo-slide images back at /uploads/... — the only file-upload feature in
+    // ZARI today (PosPromoSlideEndpoints.UploadImage saves under wwwroot/uploads/pos-promo-slides/).
+    app.UseStaticFiles();
     app.UseRouting();
     app.UseAuthentication();
     app.UseAuthorization();
@@ -159,6 +162,10 @@ try
     app.MapSalesReturnEndpoints();
     app.MapCustomerPaymentEndpoints();
     app.MapPosClosingEndpoints();
+    app.MapPaymentMethodEndpoints();
+    app.MapPosTerminalEndpoints();
+    app.MapPosPromoSlideEndpoints();
+    app.MapPosSaleEndpoints();
     //app.MapGet("/debug-user", (HttpContext ctx) =>
     //{
     //    return new

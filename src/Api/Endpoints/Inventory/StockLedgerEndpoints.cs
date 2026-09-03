@@ -1,6 +1,7 @@
 using ZARI.Api.Extensions;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.StockLedgers.GetBalances;
+using ZARI.Application.Features.Inventory.StockLedgers.GetInventoryAsOf;
 using ZARI.Application.Features.Inventory.StockLedgers.GetLedgerEntries;
 using ZARI.Domain.Common;
 
@@ -36,6 +37,10 @@ public static class StockLedgerEndpoints
         group.MapGet("/entries", GetLedgerEntries)
             .WithName("ListStockLedgerEntries")
             .WithSummary("List the movement history for one (item, warehouse, batch)");
+
+        group.MapGet("/as-of", GetInventoryAsOf)
+            .WithName("GetInventoryAsOf")
+            .WithSummary("Reconstruct true point-in-time ending inventory balances as of any date — the BIR Annual Inventory List");
     }
 
     private static async Task<IResult> GetBalances(
@@ -54,6 +59,16 @@ public static class StockLedgerEndpoints
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(new ListStockLedgerEntriesQuery(itemId, warehouseId, batchNo), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> GetInventoryAsOf(
+        DateTimeOffset date,
+        string? branchId,
+        IQueryHandler<GetInventoryAsOfQuery, Result<List<InventoryAsOfLineResponse>>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new GetInventoryAsOfQuery(date, branchId), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 }

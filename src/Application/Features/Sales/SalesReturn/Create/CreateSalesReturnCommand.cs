@@ -16,7 +16,12 @@ public sealed record SalesReturnLineInput(
     Guid UomId,
     decimal UnitPrice,
     Guid? DeliveryOrderLineId,
-    string? VatType);
+    string? VatType,
+    // Which physical unit is coming back, for a serialized item — optional/best-effort, see
+    // SalesReturnLine.SerialNo's own doc comment. Unlike VatType this doesn't need re-supplying on
+    // every call: it's persisted directly on SalesReturnLine, so a normal Approve reads it straight
+    // off the loaded entity rather than needing it threaded through again.
+    string? SerialNo = null);
 
 public sealed record CreateSalesReturnCommand(
     string BranchId,

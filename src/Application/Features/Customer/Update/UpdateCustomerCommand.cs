@@ -15,4 +15,5 @@ public sealed record UpdateCustomerCommand(
     string? Notes,
     Guid? ArAccountId,
     int? PaymentTermsDays,
-    decimal? StandingDiscountPct) : ICommand;
+    decimal? StandingDiscountPct,
+    string? MemberNo = null) : ICommand;

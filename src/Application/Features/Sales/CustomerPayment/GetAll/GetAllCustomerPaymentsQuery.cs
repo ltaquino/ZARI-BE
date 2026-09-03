@@ -11,6 +11,14 @@ public sealed record CustomerPaymentLineResponse(
     string SalesInvoiceNo,
     decimal AmountApplied);
 
+public sealed record CustomerPaymentTenderResponse(
+    Guid Id,
+    Guid PaymentMethodId,
+    string PaymentMethodName,
+    decimal Amount,
+    string? ReferenceNo,
+    string? BankOrPartnerName);
+
 public sealed record CustomerPaymentResponse(
     Guid Id,
     string PaymentNo,
@@ -27,6 +35,7 @@ public sealed record CustomerPaymentResponse(
     string? Remarks,
     decimal TotalAmount,
     List<CustomerPaymentLineResponse> Lines,
+    List<CustomerPaymentTenderResponse> Tenders,
     Guid? CostCenterId,
     string? CancelledBy,
     DateTimeOffset? CancelledAt,

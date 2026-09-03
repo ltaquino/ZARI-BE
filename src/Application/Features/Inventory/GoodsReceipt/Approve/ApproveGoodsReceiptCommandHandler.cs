@@ -61,9 +61,23 @@ public sealed class ApproveGoodsReceiptCommandHandler(
         if (request is null)
             return Result.Failure<GoodsReceiptResponse>(Error.NotFound("ApprovalRequest.NotFound", "No approval request found for this goods receipt."));
 
-        var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
-        if (!decideResult.IsSuccess)
-            return Result.Failure<GoodsReceiptResponse>(decideResult.Error!);
+        // Normally the request is still PENDING here and gets decided below. But if a prior
+        // Approve attempt already got as far as deciding (APPROVED) and then failed somewhere in
+        // the posting steps that follow, the receipt is left stuck PENDING_APPROVAL forever —
+        // DecideApprovalRequestCommand's compare-and-swap only ever succeeds once, so re-deciding
+        // isn't possible. Recognize that already-decided state and resume straight into posting
+        // instead of erroring: every step below is now safe to repeat
+        // (ReceiveStockCommand/ReceiveIntoLocationCommand are idempotent per reference).
+        if (request.Status == "PENDING")
+        {
+            var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
+            if (!decideResult.IsSuccess)
+                return Result.Failure<GoodsReceiptResponse>(decideResult.Error!);
+        }
+        else if (request.Status != "APPROVED")
+        {
+            return Result.Failure<GoodsReceiptResponse>(Error.Validation("GoodsReceipt.RequestAlreadyDecided", "This approval request has already been decided and cannot be approved again."));
+        }
 
         foreach (var line in receipt.Lines)
         {

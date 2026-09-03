@@ -32,4 +32,11 @@ public sealed class SalesInvoiceLine : BaseEntity
     // pattern) so the same shipped qty can't be over-invoiced across multiple invoices.
     public Guid? DeliveryOrderLineId { get; set; }
     public DeliveryOrderLine? DeliveryOrderLine { get; set; }
+
+    // Which physical unit this line sold, for a serialized item — only ever populated on a
+    // POS-originated line (DeliveryOrderLineId null): POS is the only Sales flow that actually
+    // moves stock at invoice time (PosStockPostingService), so it's the only one with a real
+    // moment to capture this. A Delivery-linked line has no equivalent field on DeliveryOrderLine
+    // either — Delivery Order doesn't track serials at all, a known, separate, wider gap.
+    public string? SerialNo { get; set; }
 }

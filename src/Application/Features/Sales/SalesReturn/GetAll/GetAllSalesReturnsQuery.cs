@@ -15,7 +15,8 @@ public sealed record SalesReturnLineResponse(
     Guid UomId,
     string UomCode,
     decimal UnitPrice,
-    Guid? DeliveryOrderLineId);
+    Guid? DeliveryOrderLineId,
+    string? SerialNo);
 
 public sealed record SalesReturnResponse(
     Guid Id,

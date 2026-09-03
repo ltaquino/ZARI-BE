@@ -131,13 +131,15 @@ public sealed class CreateApInvoiceCommandHandler(
                 Qty = l.Qty,
                 UomId = l.UomId,
                 UnitCost = l.UnitCost,
-                GoodsReceiptPoLineId = l.GoodsReceiptPoLineId
+                GoodsReceiptPoLineId = l.GoodsReceiptPoLineId,
+                VatType = l.VatType ?? items[l.ItemId].VatType
             }).ToList(),
             ExpenseLines = command.ExpenseLines.Select(l => new ApInvoiceExpenseLine
             {
                 GlAccountId = l.GlAccountId,
                 Description = l.Description,
-                Amount = l.Amount
+                Amount = l.Amount,
+                VatType = l.VatType ?? "VATABLE"
             }).ToList()
         };
 

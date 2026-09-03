@@ -19,6 +19,7 @@ public sealed class CustomerConfiguration : BaseModelConfig, IEntityTypeConfigur
         builder.Property(c => c.Owner).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_150);
         builder.Property(c => c.Address).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
         builder.Property(c => c.Notes).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
+        builder.Property(c => c.MemberNo).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_100);
         builder.Property(c => c.StandingDiscountPct).HasColumnType(DefaultDecimal);
 
         builder.HasOne(c => c.Branch)

@@ -35,7 +35,14 @@ public sealed class CreateSalesInvoiceCommandHandler(
 {
     public async Task<Result<SalesInvoiceResponse>> HandleAsync(CreateSalesInvoiceCommand command, CancellationToken cancellationToken = default)
     {
-        if (!await permissionService.HasPermissionOnBranchAsync("SALES_INVOICES", FormAction.Create, command.BranchId, cancellationToken))
+        // POS_MODE:Create is an alternate, equally-real grant for this one action — a cashier role
+        // can be given POS_MODE without full back-office SALES_INVOICES access (view/edit/approve/
+        // cancel/delete of the Sales Invoice list still requires SALES_INVOICES separately). Both
+        // are genuine permission lookups against the authenticated caller, not a client-suppliable
+        // flag, so this only ever widens who counts as authorized — never who the caller can claim to be.
+        var canCreate = await permissionService.HasPermissionOnBranchAsync("SALES_INVOICES", FormAction.Create, command.BranchId, cancellationToken)
+            || await permissionService.HasPermissionOnBranchAsync("POS_MODE", FormAction.Create, command.BranchId, cancellationToken);
+        if (!canCreate)
             return Result.Failure<SalesInvoiceResponse>(Error.Forbidden("SalesInvoice.Forbidden", "You do not have permission to create sales invoices for this branch."));
 
         var branchExists = await dbContext.Branches.AnyAsync(b => b.Id == command.BranchId, cancellationToken);
@@ -108,7 +115,10 @@ public sealed class CreateSalesInvoiceCommandHandler(
         var exceedsThreshold = DiscountThresholdPolicy.ExceedsThreshold(
             company?.MaxUnapprovedDiscountPct, command.DiscountPct,
             command.Lines.Select(l => l.StatutoryDiscountTypeId.HasValue ? 0 : l.DiscountPct));
-        var quickPost = company is { SalesInvoiceQuickPostEnabled: true } && !exceedsThreshold;
+        var quickPost = (company is { SalesInvoiceQuickPostEnabled: true } || command.ForceQuickPost) && !exceedsThreshold;
+
+        if (command.PosTerminalId.HasValue && !await dbContext.PosTerminals.AnyAsync(t => t.Id == command.PosTerminalId.Value && t.BranchId == command.BranchId, cancellationToken))
+            return Result.Failure<SalesInvoiceResponse>(Error.NotFound("SalesInvoice.PosTerminalNotFound", "The selected POS terminal was not found at this branch."));
 
         var invoice = new SalesInvoice
         {
@@ -122,6 +132,7 @@ public sealed class CreateSalesInvoiceCommandHandler(
             Remarks = command.Remarks,
             DiscountPct = command.DiscountPct,
             CostCenterId = command.CostCenterId,
+            PosTerminalId = command.PosTerminalId,
             CreatedBy = command.CreatedBy,
             Lines = command.Lines.Select(l => new SalesInvoiceLine
             {
@@ -137,7 +148,8 @@ public sealed class CreateSalesInvoiceCommandHandler(
                 VatType = l.StatutoryDiscountTypeId.HasValue ? "VAT_EXEMPT" : l.VatType,
                 StatutoryDiscountTypeId = l.StatutoryDiscountTypeId,
                 StatutoryIdNumber = l.StatutoryIdNumber,
-                DeliveryOrderLineId = l.DeliveryOrderLineId
+                DeliveryOrderLineId = l.DeliveryOrderLineId,
+                SerialNo = l.SerialNo
             }).ToList()
         };
 

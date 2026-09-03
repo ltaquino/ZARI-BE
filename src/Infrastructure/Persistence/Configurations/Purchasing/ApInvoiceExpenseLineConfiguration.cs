@@ -12,6 +12,7 @@ public sealed class ApInvoiceExpenseLineConfiguration : BaseModelConfig, IEntity
 
         builder.Property(l => l.Description).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
         builder.Property(l => l.Amount).HasColumnType(DefaultDecimal);
+        builder.Property(l => l.VatType).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
 
         builder.HasOne(l => l.GlAccount)
             .WithMany()

@@ -28,6 +28,7 @@ public sealed class CancelCustomerPaymentCommandHandler(
             .Include(p => p.Customer)
             .Include(p => p.CashAccount)
             .Include(p => p.Lines).ThenInclude(l => l.SalesInvoice)
+            .Include(p => p.Tenders).ThenInclude(t => t.PaymentMethod)
             .FirstOrDefaultAsync(p => p.Id == command.Id, cancellationToken);
 
         if (payment is null)

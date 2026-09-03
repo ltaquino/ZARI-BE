@@ -85,6 +85,10 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<DiscountRule> DiscountRules => Set<DiscountRule>();
     public DbSet<StatutoryDiscountType> StatutoryDiscountTypes => Set<StatutoryDiscountType>();
     public DbSet<ZReading> ZReadings => Set<ZReading>();
+    public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();
+    public DbSet<CustomerPaymentTender> CustomerPaymentTenders => Set<CustomerPaymentTender>();
+    public DbSet<PosTerminal> PosTerminals => Set<PosTerminal>();
+    public DbSet<PosPromoSlide> PosPromoSlides => Set<PosPromoSlide>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

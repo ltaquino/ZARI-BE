@@ -6,6 +6,7 @@ using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Accounting.GlJournals.GetAll;
 using ZARI.Application.Features.Accounting.GlJournals.Post;
+using ZARI.Application.Features.Inventory.SerialNumbers.ReverseIssue;
 using ZARI.Application.Features.Inventory.StockLedgers.Receive;
 using ZARI.Application.Features.Sales.SalesReturns.Create;
 using ZARI.Application.Features.Sales.SalesReturns.GetAll;
@@ -26,6 +27,7 @@ public sealed class ApproveSalesReturnCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<DecideApprovalRequestCommand, Result<ApprovalRequestResponse>> decideHandler,
     ICommandHandler<ReceiveStockCommand, Result<ReceiveStockResponse>> receiveStockHandler,
+    ICommandHandler<ReverseIssueSerialCommand, Result> reverseIssueSerialHandler,
     ICommandHandler<PostGlJournalCommand, Result<GlJournalResponse>> postGlJournalHandler,
     ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
     IPermissionService permissionService)
@@ -91,7 +93,8 @@ public sealed class ApproveSalesReturnCommandHandler(
         // No manual VAT overrides here — a normal Submit/Approve flow has nothing to pass (see
         // SalesReturnPostingService's own doc comment for why); any line with no DeliveryOrderLineId
         // falls back to the item's own default VatType.
-        var postResult = await SalesReturnPostingService.PostAsync(dbContext, receiveStockHandler, postGlJournalHandler, salesReturn, null, cancellationToken);
+        var postResult = await SalesReturnPostingService.PostAsync(
+            dbContext, receiveStockHandler, reverseIssueSerialHandler, postGlJournalHandler, salesReturn, null, cancellationToken);
         if (!postResult.IsSuccess)
             return Result.Failure<SalesReturnResponse>(postResult.Error!);
 

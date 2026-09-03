@@ -12,6 +12,7 @@ public sealed class ApInvoiceLineConfiguration : BaseModelConfig, IEntityTypeCon
 
         builder.Property(l => l.Qty).HasColumnType(DefaultDecimal);
         builder.Property(l => l.UnitCost).HasColumnType(DefaultDecimal);
+        builder.Property(l => l.VatType).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
 
         builder.HasOne(l => l.Item)
             .WithMany()

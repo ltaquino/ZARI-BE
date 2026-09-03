@@ -19,6 +19,7 @@ public sealed class GetAllCustomerPaymentsQueryHandler(IAppDbContext dbContext, 
             .Include(p => p.Customer)
             .Include(p => p.CashAccount)
             .Include(p => p.Lines).ThenInclude(l => l.SalesInvoice)
+            .Include(p => p.Tenders).ThenInclude(t => t.PaymentMethod)
             .OrderByDescending(p => p.PaymentDate)
             .ToListAsync(cancellationToken);
 

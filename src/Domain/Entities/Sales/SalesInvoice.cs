@@ -39,6 +39,12 @@ public sealed class SalesInvoice : AuditableEntity
     public Guid? CostCenterId { get; set; }
     public CostCenter? CostCenter { get; set; }
 
+    // Which physical till this sale was rung up on, when created via POS Mode — pure traceability,
+    // never used to scope BIR-OR numbering (see PosTerminal's own doc comment). Null for every
+    // invoice created through the regular admin Sales Invoice form.
+    public Guid? PosTerminalId { get; set; }
+    public PosTerminal? PosTerminal { get; set; }
+
     public List<SalesInvoiceLine> Lines { get; set; } = [];
 
     public string? CancelledBy { get; set; }

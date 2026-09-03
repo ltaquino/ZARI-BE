@@ -22,4 +22,11 @@ public sealed class SalesReturnLine : BaseEntity
     // (Phase 18 pattern) so the same shipped qty can't be over-returned across multiple returns.
     public Guid? DeliveryOrderLineId { get; set; }
     public DeliveryOrderLine? DeliveryOrderLine { get; set; }
+
+    // Which physical unit is coming back, for a serialized item — optional/best-effort: only ever
+    // meaningful for a return of a POS-originated sale (the only place a serial was ever recorded
+    // as sold in the first place). SalesReturnPostingService reverses it (SOLD -> IN_STOCK) via
+    // ReverseIssueSerialCommand when present; absent, the return posts exactly as it did before
+    // this field existed (no serial-status effect).
+    public string? SerialNo { get; set; }
 }

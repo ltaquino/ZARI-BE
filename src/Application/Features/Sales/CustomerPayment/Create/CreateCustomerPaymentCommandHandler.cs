@@ -32,7 +32,13 @@ public sealed class CreateCustomerPaymentCommandHandler(
 {
     public async Task<Result<CustomerPaymentResponse>> HandleAsync(CreateCustomerPaymentCommand command, CancellationToken cancellationToken = default)
     {
-        if (!await permissionService.HasPermissionOnBranchAsync("CUSTOMER_PAYMENTS", FormAction.Create, command.BranchId, cancellationToken))
+        // POS_MODE:Create is an alternate, equally-real grant for this one action — same reasoning
+        // as CreateSalesInvoiceCommandHandler's own check: a cashier role can hold POS_MODE without
+        // full back-office CUSTOMER_PAYMENTS access, and both checks are real permission lookups
+        // against the authenticated caller, never a client-suppliable flag.
+        var canCreate = await permissionService.HasPermissionOnBranchAsync("CUSTOMER_PAYMENTS", FormAction.Create, command.BranchId, cancellationToken)
+            || await permissionService.HasPermissionOnBranchAsync("POS_MODE", FormAction.Create, command.BranchId, cancellationToken);
+        if (!canCreate)
             return Result.Failure<CustomerPaymentResponse>(Error.Forbidden("CustomerPayment.Forbidden", "You do not have permission to create customer payments for this branch."));
 
         var branchExists = await dbContext.Branches.AnyAsync(b => b.Id == command.BranchId, cancellationToken);
@@ -43,9 +49,48 @@ public sealed class CreateCustomerPaymentCommandHandler(
         if (customer is null)
             return Result.Failure<CustomerPaymentResponse>(Error.NotFound("Customer.NotFound", $"Customer with ID '{command.CustomerId}' was not found."));
 
-        var cashAccount = await dbContext.GlAccounts.FirstOrDefaultAsync(a => a.Id == command.CashAccountId, cancellationToken);
+        // Resolve the funding side first: either the caller's own Tenders (POS Mode's split-tender
+        // shape — PaymentMethod/CashAccountId are then derived from it) or the original single-
+        // method fields (Wave 4's shape, unchanged). The validator already guarantees one of these
+        // two paths has what it needs.
+        Dictionary<Guid, PaymentMethod>? paymentMethodsById = null;
+        string resolvedPaymentMethod;
+        Guid resolvedCashAccountId;
+
+        if (command.Tenders is { Count: > 0 })
+        {
+            var methodIds = command.Tenders.Select(t => t.PaymentMethodId).Distinct().ToList();
+            paymentMethodsById = await dbContext.PaymentMethods.Where(m => methodIds.Contains(m.Id)).ToDictionaryAsync(m => m.Id, cancellationToken);
+            if (paymentMethodsById.Count != methodIds.Count)
+                return Result.Failure<CustomerPaymentResponse>(Error.NotFound("CustomerPayment.PaymentMethodNotFound", "One or more payment methods on this payment were not found."));
+
+            var tenderTotal = command.Tenders.Sum(t => t.Amount);
+            var allocatedTotal = command.Lines.Sum(l => l.AmountApplied);
+            if (Math.Round(tenderTotal, 4) != Math.Round(allocatedTotal, 4))
+                return Result.Failure<CustomerPaymentResponse>(Error.Validation("CustomerPayment.TenderMismatch", $"Total tendered ({tenderTotal}) must equal the total amount applied to invoices ({allocatedTotal})."));
+
+            foreach (var tender in command.Tenders)
+            {
+                var method = paymentMethodsById[tender.PaymentMethodId];
+                if (method.RequiresReferenceNo && string.IsNullOrWhiteSpace(tender.ReferenceNo))
+                    return Result.Failure<CustomerPaymentResponse>(Error.Validation("CustomerPayment.ReferenceNoRequired", $"'{method.ReferenceNoLabel ?? "Reference number"}' is required for {method.Name}."));
+                if (method.RequiresBankOrPartnerName && string.IsNullOrWhiteSpace(tender.BankOrPartnerName))
+                    return Result.Failure<CustomerPaymentResponse>(Error.Validation("CustomerPayment.BankOrPartnerNameRequired", $"Bank/partner name is required for {method.Name}."));
+            }
+
+            var distinctMethodNames = command.Tenders.Select(t => paymentMethodsById[t.PaymentMethodId].Name).Distinct().ToList();
+            resolvedPaymentMethod = command.PaymentMethod ?? (distinctMethodNames.Count == 1 ? distinctMethodNames[0] : "MIXED");
+            resolvedCashAccountId = command.CashAccountId ?? paymentMethodsById[command.Tenders[0].PaymentMethodId].GlAccountId;
+        }
+        else
+        {
+            resolvedPaymentMethod = command.PaymentMethod!;
+            resolvedCashAccountId = command.CashAccountId!.Value;
+        }
+
+        var cashAccount = await dbContext.GlAccounts.FirstOrDefaultAsync(a => a.Id == resolvedCashAccountId, cancellationToken);
         if (cashAccount is null)
-            return Result.Failure<CustomerPaymentResponse>(Error.NotFound("GlAccount.NotFound", $"GL account with ID '{command.CashAccountId}' was not found."));
+            return Result.Failure<CustomerPaymentResponse>(Error.NotFound("GlAccount.NotFound", $"GL account with ID '{resolvedCashAccountId}' was not found."));
 
         var invoiceIds = command.Lines.Select(l => l.SalesInvoiceId).ToList();
         if (invoiceIds.Distinct().Count() != invoiceIds.Count)
@@ -86,15 +131,15 @@ public sealed class CreateCustomerPaymentCommandHandler(
             return Result.Failure<CustomerPaymentResponse>(numberResult.Error!);
 
         var company = await dbContext.Companies.FirstOrDefaultAsync(cancellationToken);
-        var quickPost = company is { CustomerPaymentQuickPostEnabled: true };
+        var quickPost = company is { CustomerPaymentQuickPostEnabled: true } || command.ForceQuickPost;
 
         var payment = new CustomerPayment
         {
             PaymentNo = numberResult.Value!.DocumentNumber,
             BranchId = command.BranchId,
             CustomerId = command.CustomerId,
-            PaymentMethod = command.PaymentMethod,
-            CashAccountId = command.CashAccountId,
+            PaymentMethod = resolvedPaymentMethod,
+            CashAccountId = resolvedCashAccountId,
             PaymentDate = command.PaymentDate,
             ReferenceNo = command.ReferenceNo,
             Status = "DRAFT",
@@ -105,6 +150,13 @@ public sealed class CreateCustomerPaymentCommandHandler(
             {
                 SalesInvoiceId = l.SalesInvoiceId,
                 AmountApplied = l.AmountApplied
+            }).ToList(),
+            Tenders = (command.Tenders ?? []).Select(t => new CustomerPaymentTender
+            {
+                PaymentMethodId = t.PaymentMethodId,
+                Amount = t.Amount,
+                ReferenceNo = t.ReferenceNo,
+                BankOrPartnerName = t.BankOrPartnerName
             }).ToList()
         };
 
@@ -115,6 +167,9 @@ public sealed class CreateCustomerPaymentCommandHandler(
         payment.CashAccount = cashAccount;
         foreach (var line in payment.Lines)
             line.SalesInvoice = invoices[line.SalesInvoiceId];
+        if (paymentMethodsById is not null)
+            foreach (var tender in payment.Tenders)
+                tender.PaymentMethod = paymentMethodsById[tender.PaymentMethodId];
 
         if (quickPost)
         {

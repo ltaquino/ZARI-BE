@@ -15,4 +15,8 @@ public sealed class ApInvoiceExpenseLine : BaseEntity
     public GlAccount GlAccount { get; set; } = default!;
     public string Description { get; set; } = default!;
     public decimal Amount { get; set; }
+
+    // Classification-only, for the Purchase Book report — see ApInvoiceLine.VatType's own comment.
+    // No Item to default from here, so the caller picks it explicitly (defaults to VATABLE).
+    public string VatType { get; set; } = "VATABLE";
 }

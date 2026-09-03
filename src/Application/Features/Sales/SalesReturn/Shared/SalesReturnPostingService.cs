@@ -5,6 +5,7 @@ using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Accounting.GlJournals.GetAll;
 using ZARI.Application.Features.Accounting.GlJournals.Post;
+using ZARI.Application.Features.Inventory.SerialNumbers.ReverseIssue;
 using ZARI.Application.Features.Inventory.StockLedgers.Receive;
 using ZARI.Application.Features.Sales.SalesInvoices.Shared;
 using ZARI.Domain.Common;
@@ -23,6 +24,10 @@ using ZARI.Domain.Entities;
 /// Extracted here (rather than living inside ApproveSalesReturnCommandHandler) so both a quick-post
 /// Create and a normal Approve run the exact same posting — same "Create-time-quick-post-vs-
 /// Approve-time shared-method" pattern DeliveryPostingService/SalesInvoicePostingService established.
+///
+/// Also reverses a serialized item's SOLD status back to IN_STOCK (ReverseIssueSerialCommand) when
+/// the line carries a SerialNo — best-effort, since only a POS-originated line ever had one
+/// recorded as sold in the first place; see SalesReturnLine.SerialNo's own doc comment.
 /// </summary>
 internal static class SalesReturnPostingService
 {
@@ -39,6 +44,7 @@ internal static class SalesReturnPostingService
     public static async Task<Result> PostAsync(
         IAppDbContext dbContext,
         ICommandHandler<ReceiveStockCommand, Result<ReceiveStockResponse>> receiveStockHandler,
+        ICommandHandler<ReverseIssueSerialCommand, Result> reverseIssueSerialHandler,
         ICommandHandler<PostGlJournalCommand, Result<GlJournalResponse>> postGlJournalHandler,
         SalesReturn salesReturn,
         IReadOnlyDictionary<Guid, string>? manualVatTypeByLineId,
@@ -55,6 +61,17 @@ internal static class SalesReturnPostingService
                 cancellationToken);
             if (!receiveResult.IsSuccess)
                 return Result.Failure(receiveResult.Error!);
+
+            // Best-effort: only a POS-originated line ever had a serial recorded as sold in the
+            // first place (a Delivery-linked line has nothing to reverse — Delivery Order doesn't
+            // track serials at all, a separate known gap). Absent SerialNo, this is a total no-op,
+            // identical to this return's behavior before SerialNo existed.
+            if (line.Item.IsSerialized && !string.IsNullOrWhiteSpace(line.SerialNo))
+            {
+                var reverseSerialResult = await reverseIssueSerialHandler.HandleAsync(new ReverseIssueSerialCommand(line.ItemId, line.SerialNo), cancellationToken);
+                if (!reverseSerialResult.IsSuccess)
+                    return Result.Failure(reverseSerialResult.Error!);
+            }
         }
 
         return await PostReversalJournalAsync(dbContext, postGlJournalHandler, salesReturn, unitCostByLineId, vatTypeByLineId, cancellationToken);

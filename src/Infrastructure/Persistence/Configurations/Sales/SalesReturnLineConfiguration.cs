@@ -12,6 +12,7 @@ public sealed class SalesReturnLineConfiguration : BaseModelConfig, IEntityTypeC
 
         builder.Property(l => l.QtyReturned).HasColumnType(DefaultDecimal);
         builder.Property(l => l.UnitPrice).HasColumnType(DefaultDecimal);
+        builder.Property(l => l.SerialNo).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
 
         builder.HasOne(l => l.Item)
             .WithMany()

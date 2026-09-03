@@ -50,7 +50,12 @@ internal static class CustomerPaymentPostingService
         return Result.Success(newInvoiceStatuses);
     }
 
-    /// <summary>One balanced journal: Dr the selected cash/bank GL account, Cr Customer.ArAccountId ?? "1200" Accounts Receivable, both for the payment's total.</summary>
+    /// <summary>
+    /// One balanced journal: Cr Customer.ArAccountId ?? "1200" Accounts Receivable for the payment's
+    /// total. The debit side either splits per split-tender line (POS Mode — Dr each tender's own
+    /// PaymentMethod.GlAccountId, grouped/summed by account) when Tenders is non-empty, or falls
+    /// back to the original single Dr CashAccountId line (Wave 4's own behavior) otherwise.
+    /// </summary>
     public static async Task<Result> PostPaymentJournalAsync(
         IAppDbContext dbContext,
         ICommandHandler<PostGlJournalCommand, Result<GlJournalResponse>> postGlJournalHandler,
@@ -67,11 +72,21 @@ internal static class CustomerPaymentPostingService
         if (!arAccountResult.IsSuccess)
             return Result.Failure(arAccountResult.Error!);
 
-        var lines = new List<PostGlJournalLineInput>
+        var lines = new List<PostGlJournalLineInput>();
+        if (payment.Tenders.Count > 0)
         {
-            new(payment.CashAccountId, payment.CostCenterId, total, 0, null),
-            new(arAccountResult.Value, payment.CostCenterId, 0, total, null)
-        };
+            var debitsByAccount = new Dictionary<Guid, decimal>();
+            foreach (var tender in payment.Tenders)
+                debitsByAccount[tender.PaymentMethod.GlAccountId] = debitsByAccount.GetValueOrDefault(tender.PaymentMethod.GlAccountId) + tender.Amount;
+
+            lines.AddRange(debitsByAccount.Select(kv => new PostGlJournalLineInput(kv.Key, payment.CostCenterId, kv.Value, 0, null)));
+        }
+        else
+        {
+            lines.Add(new PostGlJournalLineInput(payment.CashAccountId, payment.CostCenterId, total, 0, null));
+        }
+
+        lines.Add(new PostGlJournalLineInput(arAccountResult.Value, payment.CostCenterId, 0, total, null));
 
         var description = $"Customer Payment {payment.PaymentNo} — {payment.Customer.Name}";
         var postResult = await postGlJournalHandler.HandleAsync(

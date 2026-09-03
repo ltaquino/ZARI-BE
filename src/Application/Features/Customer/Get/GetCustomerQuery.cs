@@ -19,4 +19,5 @@ public sealed record CustomerResponse(
     Guid? ArAccountId,
     int? PaymentTermsDays,
     decimal? StandingDiscountPct,
+    string? MemberNo,
     DateTimeOffset CreatedAt);

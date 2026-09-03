@@ -124,7 +124,8 @@ public sealed class UpdateApInvoiceCommandHandler(
                 Qty = line.Qty,
                 UomId = line.UomId,
                 UnitCost = line.UnitCost,
-                GoodsReceiptPoLineId = line.GoodsReceiptPoLineId
+                GoodsReceiptPoLineId = line.GoodsReceiptPoLineId,
+                VatType = line.VatType ?? items[line.ItemId].VatType
             });
         }
 
@@ -135,7 +136,8 @@ public sealed class UpdateApInvoiceCommandHandler(
             {
                 GlAccountId = line.GlAccountId,
                 Description = line.Description,
-                Amount = line.Amount
+                Amount = line.Amount,
+                VatType = line.VatType ?? "VATABLE"
             });
         }
 

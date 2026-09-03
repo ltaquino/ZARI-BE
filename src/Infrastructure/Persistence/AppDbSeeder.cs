@@ -38,6 +38,8 @@ public static class AppDbSeeder
         await SeedSuppliersAsync(context, logger);
         await SeedPurchaseOrdersAsync(context, logger);
         await SeedStatutoryDiscountTypesAsync(context, logger);
+        await SeedPaymentMethodsAsync(context, logger);
+        await SeedWalkInCustomersAsync(context, logger);
         await SeedFormsAsync(context, logger);
         await SeedRolePermissionsAsync(context, roleManager, logger);
     }
@@ -288,6 +290,11 @@ public static class AppDbSeeder
         (string Code, string Name, string AccountType, string NormalBalance)[] accounts =
         [
             ("1000", "Cash on Hand", "Asset", "Debit"),
+            // Clearing accounts a POS split-tender payment debits for non-cash tenders — cleared out
+            // separately as the actual bank settlement/GC redemption happens, same "holds the value
+            // until settled elsewhere" shape as "2100" GRNI on the Purchasing side.
+            ("1010", "Card Clearing", "Asset", "Debit"),
+            ("1020", "Gift Check Clearing", "Asset", "Debit"),
             ("1200", "Accounts Receivable", "Asset", "Debit"),
             ("1400", "Inventory Asset", "Asset", "Debit"),
             ("1450", "Inventory In-Transit", "Asset", "Debit"),
@@ -564,6 +571,74 @@ public static class AppDbSeeder
     }
 
     /// <summary>
+    /// Starter payment-method catalog for POS Mode's split-tender payment modal — Cash/Card/Gift
+    /// Check are just these 3 seeded rows, not hardcoded special cases (see PaymentMethod's own doc
+    /// comment); the business can add more via the admin screen without a code change. Looked up by
+    /// GL account Code, not a literal Id, same defensive pattern SeedBankAccountsAsync already uses.
+    /// </summary>
+    private static async Task SeedPaymentMethodsAsync(AppDbContext context, ILogger logger)
+    {
+        (string Code, string Name, string GlAccountCode, bool RequiresReferenceNo, string? ReferenceNoLabel, bool RequiresBankOrPartnerName, int DisplayOrder)[] methods =
+        [
+            ("CASH", "Cash", "1000", false, null, false, 1),
+            ("CARD", "Card", "1010", true, "Card Number", true, 2),
+            ("GIFT_CHECK", "Gift Check", "1020", true, "GC Number", true, 3),
+        ];
+
+        var existingCodes = await context.PaymentMethods.Select(m => m.Code).ToListAsync();
+        var missing = methods.Where(m => !existingCodes.Contains(m.Code)).ToList();
+        if (missing.Count == 0)
+            return;
+
+        var glAccountsByCode = await context.GlAccounts.ToDictionaryAsync(a => a.Code, a => a.Id);
+
+        context.PaymentMethods.AddRange(missing.Select(m => new PaymentMethod
+        {
+            Code = m.Code,
+            Name = m.Name,
+            GlAccountId = glAccountsByCode[m.GlAccountCode],
+            RequiresReferenceNo = m.RequiresReferenceNo,
+            ReferenceNoLabel = m.ReferenceNoLabel,
+            RequiresBankOrPartnerName = m.RequiresBankOrPartnerName,
+            DisplayOrder = m.DisplayOrder,
+            Status = "active"
+        }));
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded {Count} payment methods", missing.Count);
+    }
+
+    /// <summary>
+    /// One "Walk-in Customer" per branch — POS Mode's default selection when the cashier doesn't
+    /// set a specific member. Customer.CustomerId stays required on SalesInvoice (unchanged), so a
+    /// real seeded row is simpler than making that FK nullable just for this one flow.
+    /// </summary>
+    private static async Task SeedWalkInCustomersAsync(AppDbContext context, ILogger logger)
+    {
+        const string walkInName = "Walk-in Customer";
+        var branches = await context.Branches.ToListAsync();
+        var existingBranchIds = await context.Customers.Where(c => c.Name == walkInName).Select(c => c.BranchId).ToListAsync();
+        var missingBranches = branches.Where(b => !existingBranchIds.Contains(b.Id)).ToList();
+        if (missingBranches.Count == 0)
+            return;
+
+        context.Customers.AddRange(missingBranches.Select(b => new Customer
+        {
+            Name = walkInName,
+            Type = "individual",
+            Email = "walkin@zari.local",
+            Phone = "N/A",
+            BranchId = b.Id,
+            Status = "active",
+            Owner = "System",
+            Address = "Walk-in"
+        }));
+
+        await context.SaveChangesAsync();
+        logger.LogInformation("Seeded {Count} walk-in customers", missingBranches.Count);
+    }
+
+    /// <summary>
     /// One row per admin/transactional page the app actually has today — the catalog Role
     /// templates and per-user overrides grant Form-level action flags against.
     /// </summary>
@@ -628,6 +703,10 @@ public static class AppDbSeeder
             ("POS_CLOSING", "Daily POS Closing", "Sales"),
             ("DISCOUNT_RULES", "Discount Rules", "Sales"),
             ("STATUTORY_DISCOUNT_TYPES", "Statutory Discount Types", "Sales"),
+            ("POS_MODE", "POS Mode", "Sales"),
+            ("POS_TERMINALS", "POS Terminals", "Sales"),
+            ("PAYMENT_METHODS", "Payment Methods", "Sales"),
+            ("POS_PROMO_SLIDES", "POS Promo Slides", "Sales"),
         ];
 
         var existingCodes = await context.Forms.Select(f => f.Code).ToListAsync();
@@ -697,13 +776,14 @@ public static class AppDbSeeder
             "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS", "APPROVAL_REQUESTS", "PURCHASE_ORDERS",
             "PURCHASE_REQUESTS", "GOODS_RECEIPT_PO", "GOODS_RETURNS", "AP_INVOICES", "OUTGOING_PAYMENTS",
             "MANUAL_JOURNAL_ENTRIES",
-            "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING"
+            "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING", "POS_MODE"
         ];
         string[] managerMasterDataForms =
         [
             "UOMS", "ITEM_CATEGORIES", "WAREHOUSES", "STORAGE_LOCATIONS", "ITEMS",
             "ADJUSTMENT_REASONS", "ITEM_BRANCH_SETTINGS", "STOCK_RESERVATIONS", "SERIAL_NUMBERS",
-            "PURCHASE_RETURN_REASONS", "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES"
+            "PURCHASE_RETURN_REASONS", "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES",
+            "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES"
         ];
         string[] managerViewOnlyForms =
         [
@@ -726,14 +806,15 @@ public static class AppDbSeeder
             "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS", "PURCHASE_ORDERS",
             "PURCHASE_REQUESTS", "GOODS_RECEIPT_PO", "GOODS_RETURNS", "AP_INVOICES", "OUTGOING_PAYMENTS",
             "MANUAL_JOURNAL_ENTRIES",
-            "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING"
+            "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING", "POS_MODE"
         ];
         string[] staffViewOnlyForms =
         [
             "DASHBOARD", "CUSTOMERS", "UOMS", "ITEM_CATEGORIES", "WAREHOUSES", "STORAGE_LOCATIONS",
             "ITEMS", "ADJUSTMENT_REASONS", "ITEM_BRANCH_SETTINGS", "STOCK_RESERVATIONS",
             "SERIAL_NUMBERS", "APPROVAL_REQUESTS", "NOTIFICATIONS", "SUPPLIERS", "PURCHASE_RETURN_REASONS",
-            "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES"
+            "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES",
+            "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES"
         ];
 
         foreach (var formCode in staffTransactionalForms)

@@ -15,7 +15,10 @@ public sealed record SalesInvoiceLineInput(
     string VatType,
     Guid? StatutoryDiscountTypeId,
     string? StatutoryIdNumber,
-    Guid? DeliveryOrderLineId);
+    Guid? DeliveryOrderLineId,
+    // Which physical unit this line sells, for a serialized item — only ever meaningful (and only
+    // ever enforced as required) on a POS checkout; see SalesInvoiceLine.SerialNo's own doc comment.
+    string? SerialNo = null);
 
 public sealed record CreateSalesInvoiceCommand(
     string BranchId,
@@ -27,4 +30,10 @@ public sealed record CreateSalesInvoiceCommand(
     decimal? DiscountPct,
     Guid? CostCenterId,
     string? CreatedBy,
-    List<SalesInvoiceLineInput> Lines) : ICommand<Result<SalesInvoiceResponse>>;
+    List<SalesInvoiceLineInput> Lines,
+    // POS Mode's own checkout call (CreatePosSaleCommand) sets these — everyone else leaves them
+    // at their defaults. ForceQuickPost attempts immediate posting regardless of
+    // Company.SalesInvoiceQuickPostEnabled (a checkout counter can't wait for a setting toggle),
+    // but the MaxUnapprovedDiscountPct threshold check below still applies unchanged either way.
+    bool ForceQuickPost = false,
+    Guid? PosTerminalId = null) : ICommand<Result<SalesInvoiceResponse>>;

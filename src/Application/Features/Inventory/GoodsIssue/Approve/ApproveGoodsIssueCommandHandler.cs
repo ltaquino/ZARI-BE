@@ -57,6 +57,25 @@ public sealed class ApproveGoodsIssueCommandHandler(
         if (request is null)
             return Result.Failure<GoodsIssueResponse>(Error.NotFound("ApprovalRequest.NotFound", "No approval request found for this goods issue."));
 
+        // Decide BEFORE the stock mutation — DecideApprovalRequestCommand is the atomic, one-shot
+        // compare-and-swap point of no return; issuing stock first (the old order here) meant a
+        // losing race on a concurrent double-decide left stock already, irreversibly deducted with
+        // the request never actually approved. Matches ApproveGoodsReceiptCommandHandler's own
+        // (already-correct) order and the same decide-before-mutate convention used system-wide.
+        // Resumable the same way: if a prior attempt already decided (APPROVED) and then failed
+        // somewhere below, skip re-deciding (it can't succeed twice) and resume straight into
+        // posting — safe to repeat now that IssueStockLinesCommand is idempotent per reference.
+        if (request.Status == "PENDING")
+        {
+            var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
+            if (!decideResult.IsSuccess)
+                return Result.Failure<GoodsIssueResponse>(decideResult.Error!);
+        }
+        else if (request.Status != "APPROVED")
+        {
+            return Result.Failure<GoodsIssueResponse>(Error.Validation("GoodsIssue.RequestAlreadyDecided", "This approval request has already been decided and cannot be approved again."));
+        }
+
         var issueLines = issue.Lines.Select(line => new IssueStockLineItem(
             line.ItemId, issue.BranchId, issue.WarehouseId, line.BatchNo, line.QtyIssued,
             "GoodsIssueLine", line.Id.ToString(), issue.GiDate, null)).ToList();
@@ -64,10 +83,6 @@ public sealed class ApproveGoodsIssueCommandHandler(
         var issueStockResult = await issueStockLinesHandler.HandleAsync(new IssueStockLinesCommand(issueLines), cancellationToken);
         if (!issueStockResult.IsSuccess)
             return Result.Failure<GoodsIssueResponse>(issueStockResult.Error!);
-
-        var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
-        if (!decideResult.IsSuccess)
-            return Result.Failure<GoodsIssueResponse>(decideResult.Error!);
 
         var costsByReferenceId = issueStockResult.Value!.CostsByReferenceId;
         foreach (var line in issue.Lines)

@@ -31,6 +31,12 @@ public sealed class CustomerPayment : AuditableEntity
     public string? Remarks { get; set; }
     public List<CustomerPaymentLine> Lines { get; set; } = [];
 
+    // Split-tender funding lines (POS Mode) — see CustomerPaymentTender's own doc comment. Empty
+    // for every payment created through the original (Wave 4) single-method flow; PaymentMethod/
+    // CashAccountId above stay populated either way (auto-derived from Tenders when the caller only
+    // supplied those), so every existing reader of this entity keeps working unchanged.
+    public List<CustomerPaymentTender> Tenders { get; set; } = [];
+
     public Guid? CostCenterId { get; set; }
     public CostCenter? CostCenter { get; set; }
 

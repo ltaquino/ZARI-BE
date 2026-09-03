@@ -65,6 +65,26 @@ public sealed class ApproveStockAdjustmentCommandHandler(
         var increaseLines = adjustment.Lines.Where(l => l.VarianceQty > 0.0001m).ToList();
         var decreaseLines = adjustment.Lines.Where(l => l.VarianceQty < -0.0001m).ToList();
 
+        // Decide BEFORE the stock mutations — DecideApprovalRequestCommand is the atomic, one-shot
+        // compare-and-swap point of no return; mutating stock first (the old order here) meant a
+        // losing race on a concurrent double-decide left stock already, irreversibly moved with
+        // the request never actually approved. Matches ApproveGoodsReceiptCommandHandler's own
+        // (already-correct) order and the same decide-before-mutate convention used system-wide.
+        // Resumable the same way: if a prior attempt already decided (APPROVED) and then failed
+        // somewhere below, skip re-deciding (it can't succeed twice) and resume straight into
+        // posting — safe to repeat now that ReceiveStockCommand/IssueStockLinesCommand are
+        // idempotent per reference.
+        if (request.Status == "PENDING")
+        {
+            var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
+            if (!decideResult.IsSuccess)
+                return Result.Failure<StockAdjustmentResponse>(decideResult.Error!);
+        }
+        else if (request.Status != "APPROVED")
+        {
+            return Result.Failure<StockAdjustmentResponse>(Error.Validation("StockAdjustment.RequestAlreadyDecided", "This approval request has already been decided and cannot be approved again."));
+        }
+
         foreach (var line in increaseLines)
         {
             var receiveResult = await receiveStockHandler.HandleAsync(
@@ -82,10 +102,6 @@ public sealed class ApproveStockAdjustmentCommandHandler(
         var issueStockResult = await issueStockLinesHandler.HandleAsync(new IssueStockLinesCommand(decreaseItems), cancellationToken);
         if (!issueStockResult.IsSuccess)
             return Result.Failure<StockAdjustmentResponse>(issueStockResult.Error!);
-
-        var decideResult = await decideHandler.HandleAsync(new DecideApprovalRequestCommand(request.Id, command.ApproverUserId, "Approve", command.Comments), cancellationToken);
-        if (!decideResult.IsSuccess)
-            return Result.Failure<StockAdjustmentResponse>(decideResult.Error!);
 
         var costsByReferenceId = issueStockResult.Value!.CostsByReferenceId;
         foreach (var line in decreaseLines)

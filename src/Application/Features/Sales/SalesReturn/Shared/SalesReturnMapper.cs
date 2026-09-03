@@ -34,5 +34,6 @@ internal static class SalesReturnMapper
         line.UomId,
         line.Uom.Code,
         line.UnitPrice,
-        line.DeliveryOrderLineId);
+        line.DeliveryOrderLineId,
+        line.SerialNo);
 }

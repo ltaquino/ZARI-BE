@@ -16,6 +16,7 @@ public sealed class SalesInvoiceLineConfiguration : BaseModelConfig, IEntityType
         builder.Property(l => l.DiscountSourceType).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
         builder.Property(l => l.VatType).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
         builder.Property(l => l.StatutoryIdNumber).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_150);
+        builder.Property(l => l.SerialNo).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
 
         builder.HasOne(l => l.Item)
             .WithMany()
