@@ -1,3 +1,4 @@
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
 using Microsoft.EntityFrameworkCore.Infrastructure;
@@ -7,6 +8,10 @@ namespace ZARI.Application.Abstractions.Data;
 
 public interface IAppDbContext
 {
+    // Exposed so read handlers can bulk-query the ASP.NET Identity user/role join table (e.g. to
+    // avoid an N+1 of UserManager.GetRolesAsync(user) calls) without depending on UserManager/RoleManager.
+    DbSet<IdentityUserRole<string>> UserRoles { get; }
+
     DbSet<TodoItem> Todos { get; }
     DbSet<Uom> Uoms { get; }
     DbSet<ItemCategory> ItemCategories { get; }

@@ -14,7 +14,7 @@ public sealed class GetAllUomsQueryHandler(IAppDbContext dbContext, IPermissionS
         if (!await permissionService.HasPermissionAsync("UOMS", FormAction.View, cancellationToken))
             return Result.Failure<List<UomResponse>>(Error.Forbidden("Uom.Forbidden", "You do not have permission to view UOMs."));
 
-        var items = await dbContext.Uoms
+        var items = await dbContext.Uoms.AsNoTracking()
             .OrderBy(u => u.Code)
             .Select(u => new UomResponse(u.Id, u.Code, u.Name, u.CreatedAt))
             .ToListAsync(cancellationToken);

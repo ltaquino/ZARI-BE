@@ -14,7 +14,7 @@ public sealed class GetAllGoodsReturnsQueryHandler(IAppDbContext dbContext, IPer
         if (!await permissionService.HasPermissionAsync("GOODS_RETURNS", FormAction.View, cancellationToken))
             return Result.Failure<List<GoodsReturnResponse>>(Error.Forbidden("GoodsReturn.Forbidden", "You do not have permission to view goods returns."));
 
-        var returns = await dbContext.GoodsReturns
+        var returns = await dbContext.GoodsReturns.AsNoTracking()
             .Include(r => r.Supplier)
             .Include(r => r.Lines).ThenInclude(l => l.Item)
             .Include(r => r.Lines).ThenInclude(l => l.Uom)

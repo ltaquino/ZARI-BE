@@ -14,7 +14,7 @@ public sealed class GetAllExchangeRatesQueryHandler(IAppDbContext dbContext, IPe
         if (!await permissionService.HasPermissionAsync("EXCHANGE_RATES", FormAction.View, cancellationToken))
             return Result.Failure<List<ExchangeRateResponse>>(Error.Forbidden("ExchangeRate.Forbidden", "You do not have permission to view exchange rates."));
 
-        var items = await dbContext.ExchangeRates
+        var items = await dbContext.ExchangeRates.AsNoTracking()
             .OrderByDescending(e => e.RateDate)
             .Select(e => new ExchangeRateResponse(e.Id, e.CurrencyId, e.RateDate, e.RateToBase, e.CreatedAt))
             .ToListAsync(cancellationToken);

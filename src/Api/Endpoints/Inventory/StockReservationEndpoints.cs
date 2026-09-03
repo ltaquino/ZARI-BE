@@ -2,6 +2,7 @@ using ZARI.Api.Extensions;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.StockReservations.Create;
 using ZARI.Application.Features.Inventory.StockReservations.GetAll;
+using ZARI.Application.Features.Inventory.StockReservations.GetAllPaged;
 using ZARI.Application.Features.Inventory.StockReservations.Release;
 using ZARI.Domain.Common;
 
@@ -20,6 +21,10 @@ public static class StockReservationEndpoints
             .WithName("GetAllStockReservations")
             .WithSummary("Get all stock reservations");
 
+        group.MapGet("/paged", GetAllPaged)
+            .WithName("GetAllStockReservationsPaged")
+            .WithSummary("Get a page of stock reservations, optionally filtered by search text");
+
         group.MapPost("/", Create)
             .AddEndpointFilter<ValidationFilter<CreateStockReservationCommand>>()
             .WithName("CreateStockReservation")
@@ -35,6 +40,17 @@ public static class StockReservationEndpoints
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(new GetAllStockReservationsQuery(), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> GetAllPaged(
+        int? page,
+        int? pageSize,
+        string? search,
+        IQueryHandler<GetAllStockReservationsPagedQuery, Result<PagedResult<StockReservationResponse>>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new GetAllStockReservationsPagedQuery(page ?? 1, pageSize ?? 20, search), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 

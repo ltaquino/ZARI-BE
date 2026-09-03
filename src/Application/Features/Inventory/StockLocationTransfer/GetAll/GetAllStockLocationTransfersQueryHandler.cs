@@ -15,7 +15,7 @@ public sealed class GetAllStockLocationTransfersQueryHandler(IAppDbContext dbCon
         if (!await permissionService.HasPermissionAsync("STOCK_LOCATION_TRANSFERS", FormAction.View, cancellationToken))
             return Result.Failure<List<StockLocationTransferResponse>>(Error.Forbidden("StockLocationTransfer.Forbidden", "You do not have permission to view bin transfers."));
 
-        var transfers = await dbContext.StockLocationTransfers
+        var transfers = await dbContext.StockLocationTransfers.AsNoTracking()
             .Include(t => t.Lines).ThenInclude(l => l.Item)
             .Include(t => t.Lines).ThenInclude(l => l.FromLocation)
             .Include(t => t.Lines).ThenInclude(l => l.ToLocation)

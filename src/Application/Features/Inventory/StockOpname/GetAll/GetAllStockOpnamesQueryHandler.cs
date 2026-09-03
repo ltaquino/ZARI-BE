@@ -14,7 +14,7 @@ public sealed class GetAllStockOpnamesQueryHandler(IAppDbContext dbContext, IPer
         if (!await permissionService.HasPermissionAsync("STOCK_OPNAMES", FormAction.View, cancellationToken))
             return Result.Failure<List<StockOpnameResponse>>(Error.Forbidden("StockOpname.Forbidden", "You do not have permission to view stock opnames."));
 
-        var opnames = await dbContext.StockOpnames
+        var opnames = await dbContext.StockOpnames.AsNoTracking()
             .Include(o => o.Lines).ThenInclude(l => l.Item).ThenInclude(i => i.BaseUom)
             .OrderByDescending(o => o.CountDate)
             .ToListAsync(cancellationToken);

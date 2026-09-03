@@ -23,6 +23,8 @@ public sealed class GoodsReceiptConfiguration : BaseModelConfig, IEntityTypeConf
         builder.Property(r => r.CancelReason).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
 
         builder.HasIndex(r => r.GrNo).IsUnique();
+        builder.HasIndex(r => new { r.BranchId, r.GrDate });
+        builder.HasIndex(r => r.Status);
 
         // approveGoodsReceipt/approveGoodsReceiptCancellation look up the pending approval request
         // for this document by (EntityType, EntityId) — see ApprovalRequestConfiguration's matching

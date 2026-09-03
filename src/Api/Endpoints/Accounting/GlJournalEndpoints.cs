@@ -1,6 +1,7 @@
 using ZARI.Api.Extensions;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Accounting.GlJournals.GetAll;
+using ZARI.Application.Features.Accounting.GlJournals.GetAllPaged;
 using ZARI.Domain.Common;
 
 namespace ZARI.Api.Endpoints;
@@ -29,6 +30,10 @@ public static class GlJournalEndpoints
         group.MapGet("/", GetAll)
             .WithName("GetAllGlJournals")
             .WithSummary("Get all GL journals");
+
+        group.MapGet("/paged", GetAllPaged)
+            .WithName("GetAllGlJournalsPaged")
+            .WithSummary("Get a page of GL journals, optionally filtered by search text");
     }
 
     private static async Task<IResult> GetAll(
@@ -36,6 +41,17 @@ public static class GlJournalEndpoints
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(new GetAllGlJournalsQuery(), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> GetAllPaged(
+        int? page,
+        int? pageSize,
+        string? search,
+        IQueryHandler<GetAllGlJournalsPagedQuery, Result<PagedResult<GlJournalResponse>>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new GetAllGlJournalsPagedQuery(page ?? 1, pageSize ?? 20, search), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 }

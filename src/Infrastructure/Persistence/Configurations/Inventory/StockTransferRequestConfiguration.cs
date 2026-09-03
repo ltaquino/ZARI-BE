@@ -21,6 +21,8 @@ public sealed class StockTransferRequestConfiguration : BaseModelConfig, IEntity
         builder.Property(r => r.CancelReason).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
 
         builder.HasIndex(r => r.RequestNo).IsUnique();
+        builder.HasIndex(r => new { r.SourceBranchId, r.RequestDate });
+        builder.HasIndex(r => r.Status);
 
         // approveStockTransferRequest/rejectStockTransferRequest look up the pending approval
         // request for this document by (EntityType, EntityId) — see ApprovalRequestConfiguration's

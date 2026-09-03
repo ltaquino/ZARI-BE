@@ -14,7 +14,7 @@ public sealed class GetAllItemBranchSettingsQueryHandler(IAppDbContext dbContext
         if (!await permissionService.HasPermissionAsync("ITEM_BRANCH_SETTINGS", FormAction.View, cancellationToken))
             return Result.Failure<List<ItemBranchSettingResponse>>(Error.Forbidden("ItemBranchSetting.Forbidden", "You do not have permission to view item branch settings."));
 
-        var items = await dbContext.ItemBranchSettings
+        var items = await dbContext.ItemBranchSettings.AsNoTracking()
             .OrderBy(s => s.BranchId).ThenBy(s => s.ItemId)
             .Select(s => new ItemBranchSettingResponse(s.Id, s.ItemId, s.BranchId, s.DefaultWarehouseId, s.ReorderPoint, s.MinStock, s.MaxStock,
                 s.SellingPrice, s.MarkupPct, s.Status, s.CreatedAt))

@@ -14,7 +14,7 @@ public sealed class GetAllDocumentSequencesQueryHandler(IAppDbContext dbContext,
         if (!await permissionService.HasPermissionAsync("DOCUMENT_SEQUENCES", FormAction.View, cancellationToken))
             return Result.Failure<List<DocumentSequenceResponse>>(Error.Forbidden("DocumentSequence.Forbidden", "You do not have permission to view document sequences."));
 
-        var sequences = await dbContext.DocumentSequences
+        var sequences = await dbContext.DocumentSequences.AsNoTracking()
             .OrderBy(s => s.DocType)
             .ThenBy(s => s.BranchId)
             .Select(s => new DocumentSequenceResponse(s.Id, s.BranchId, s.DocType, s.Prefix, s.NextNumber, s.PaddingLength, s.CreatedAt))

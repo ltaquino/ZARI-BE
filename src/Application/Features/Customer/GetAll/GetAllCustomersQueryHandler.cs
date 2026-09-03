@@ -14,7 +14,7 @@ public sealed class GetAllCustomersQueryHandler(IAppDbContext dbContext, IPermis
         if (!await permissionService.HasPermissionAsync("CUSTOMERS", FormAction.View, cancellationToken))
             return Result.Failure<List<CustomerResponse>>(Error.Forbidden("Customer.Forbidden", "You do not have permission to view customers."));
 
-        var customers = await dbContext.Customers
+        var customers = await dbContext.Customers.AsNoTracking()
             .OrderByDescending(c => c.CreatedAt)
             .Select(c => new CustomerResponse(c.Id, c.Name, c.Type, c.Email, c.Phone, c.BranchId, c.Status, c.Owner, c.Address, c.Notes,
                 c.ArAccountId, c.PaymentTermsDays, c.StandingDiscountPct, c.MemberNo, c.CreatedAt))

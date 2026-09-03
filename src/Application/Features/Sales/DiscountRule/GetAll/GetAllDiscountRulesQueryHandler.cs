@@ -14,7 +14,7 @@ public sealed class GetAllDiscountRulesQueryHandler(IAppDbContext dbContext, IPe
         if (!await permissionService.HasPermissionAsync("DISCOUNT_RULES", FormAction.View, cancellationToken))
             return Result.Failure<List<DiscountRuleResponse>>(Error.Forbidden("DiscountRule.Forbidden", "You do not have permission to view discount rules."));
 
-        var items = await dbContext.DiscountRules
+        var items = await dbContext.DiscountRules.AsNoTracking()
             .OrderBy(r => r.Code)
             .Select(r => new DiscountRuleResponse(r.Id, r.Code, r.Name, r.Scope, r.ItemId, r.ItemCategoryId, r.DiscountType, r.DiscountValue,
                 r.MinQty, r.StartDate, r.EndDate, r.BranchId, r.Priority, r.Status, r.CreatedAt))

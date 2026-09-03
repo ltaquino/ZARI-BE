@@ -14,7 +14,7 @@ public sealed class GetAllStockTransferRequestsQueryHandler(IAppDbContext dbCont
         if (!await permissionService.HasPermissionAsync("STOCK_TRANSFER_REQUESTS", FormAction.View, cancellationToken))
             return Result.Failure<List<StockTransferRequestResponse>>(Error.Forbidden("StockTransferRequest.Forbidden", "You do not have permission to view stock transfer requests."));
 
-        var requests = await dbContext.StockTransferRequests
+        var requests = await dbContext.StockTransferRequests.AsNoTracking()
             .Include(r => r.Lines).ThenInclude(l => l.Item)
             .Include(r => r.Lines).ThenInclude(l => l.Uom)
             .OrderByDescending(r => r.RequestDate)

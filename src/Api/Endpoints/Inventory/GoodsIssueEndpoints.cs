@@ -8,6 +8,7 @@ using ZARI.Application.Features.Inventory.GoodsIssues.Create;
 using ZARI.Application.Features.Inventory.GoodsIssues.Delete;
 using ZARI.Application.Features.Inventory.GoodsIssues.Get;
 using ZARI.Application.Features.Inventory.GoodsIssues.GetAll;
+using ZARI.Application.Features.Inventory.GoodsIssues.GetAllPaged;
 using ZARI.Application.Features.Inventory.GoodsIssues.MarkDelivered;
 using ZARI.Application.Features.Inventory.GoodsIssues.MarkInTransit;
 using ZARI.Application.Features.Inventory.GoodsIssues.Reject;
@@ -31,6 +32,10 @@ public static class GoodsIssueEndpoints
         group.MapGet("/", GetAll)
             .WithName("GetAllGoodsIssues")
             .WithSummary("Get all goods issues");
+
+        group.MapGet("/paged", GetAllPaged)
+            .WithName("GetAllGoodsIssuesPaged")
+            .WithSummary("Get a page of goods issues, optionally filtered by search text");
 
         group.MapGet("/{id:guid}", GetById)
             .WithName("GetGoodsIssueById")
@@ -91,6 +96,17 @@ public static class GoodsIssueEndpoints
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(new GetAllGoodsIssuesQuery(), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> GetAllPaged(
+        int? page,
+        int? pageSize,
+        string? search,
+        IQueryHandler<GetAllGoodsIssuesPagedQuery, Result<PagedResult<GoodsIssueResponse>>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new GetAllGoodsIssuesPagedQuery(page ?? 1, pageSize ?? 20, search), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 

@@ -14,7 +14,7 @@ public sealed class GetAllStockAdjustmentsQueryHandler(IAppDbContext dbContext, 
         if (!await permissionService.HasPermissionAsync("STOCK_ADJUSTMENTS", FormAction.View, cancellationToken))
             return Result.Failure<List<StockAdjustmentResponse>>(Error.Forbidden("StockAdjustment.Forbidden", "You do not have permission to view stock adjustments."));
 
-        var adjustments = await dbContext.StockAdjustments
+        var adjustments = await dbContext.StockAdjustments.AsNoTracking()
             .Include(a => a.Lines).ThenInclude(l => l.Item).ThenInclude(i => i.BaseUom)
             .OrderByDescending(a => a.AdjustmentDate)
             .ToListAsync(cancellationToken);

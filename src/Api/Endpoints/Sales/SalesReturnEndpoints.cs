@@ -8,6 +8,7 @@ using ZARI.Application.Features.Sales.SalesReturns.Create;
 using ZARI.Application.Features.Sales.SalesReturns.Delete;
 using ZARI.Application.Features.Sales.SalesReturns.Get;
 using ZARI.Application.Features.Sales.SalesReturns.GetAll;
+using ZARI.Application.Features.Sales.SalesReturns.GetAllPaged;
 using ZARI.Application.Features.Sales.SalesReturns.Reject;
 using ZARI.Application.Features.Sales.SalesReturns.RejectCancellation;
 using ZARI.Application.Features.Sales.SalesReturns.RequestCancellation;
@@ -29,6 +30,10 @@ public static class SalesReturnEndpoints
         group.MapGet("/", GetAll)
             .WithName("GetAllSalesReturns")
             .WithSummary("Get all sales returns");
+
+        group.MapGet("/paged", GetAllPaged)
+            .WithName("GetAllSalesReturnsPaged")
+            .WithSummary("Get a page of sales returns, optionally filtered by search text");
 
         group.MapGet("/{id:guid}", GetById)
             .WithName("GetSalesReturnById")
@@ -81,6 +86,17 @@ public static class SalesReturnEndpoints
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(new GetAllSalesReturnsQuery(), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> GetAllPaged(
+        int? page,
+        int? pageSize,
+        string? search,
+        IQueryHandler<GetAllSalesReturnsPagedQuery, Result<PagedResult<SalesReturnResponse>>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new GetAllSalesReturnsPagedQuery(page ?? 1, pageSize ?? 20, search), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 

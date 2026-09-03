@@ -14,7 +14,7 @@ public sealed class GetAllAdjustmentReasonsQueryHandler(IAppDbContext dbContext,
         if (!await permissionService.HasPermissionAsync("ADJUSTMENT_REASONS", FormAction.View, cancellationToken))
             return Result.Failure<List<AdjustmentReasonResponse>>(Error.Forbidden("AdjustmentReason.Forbidden", "You do not have permission to view adjustment reasons."));
 
-        var items = await dbContext.AdjustmentReasons
+        var items = await dbContext.AdjustmentReasons.AsNoTracking()
             .OrderBy(r => r.Code)
             .Select(r => new AdjustmentReasonResponse(r.Id, r.Code, r.Description, r.GlAccountId, r.Status, r.CreatedAt))
             .ToListAsync(cancellationToken);

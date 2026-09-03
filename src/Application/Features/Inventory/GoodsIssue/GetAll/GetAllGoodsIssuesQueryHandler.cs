@@ -14,7 +14,7 @@ public sealed class GetAllGoodsIssuesQueryHandler(IAppDbContext dbContext, IPerm
         if (!await permissionService.HasPermissionAsync("GOODS_ISSUES", FormAction.View, cancellationToken))
             return Result.Failure<List<GoodsIssueResponse>>(Error.Forbidden("GoodsIssue.Forbidden", "You do not have permission to view goods issues."));
 
-        var issues = await dbContext.GoodsIssues
+        var issues = await dbContext.GoodsIssues.AsNoTracking()
             .Include(i => i.Lines).ThenInclude(l => l.Item)
             .Include(i => i.Lines).ThenInclude(l => l.Uom)
             .OrderByDescending(i => i.GiDate)

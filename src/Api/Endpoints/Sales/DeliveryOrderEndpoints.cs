@@ -8,6 +8,7 @@ using ZARI.Application.Features.Sales.DeliveryOrders.Create;
 using ZARI.Application.Features.Sales.DeliveryOrders.Delete;
 using ZARI.Application.Features.Sales.DeliveryOrders.Get;
 using ZARI.Application.Features.Sales.DeliveryOrders.GetAll;
+using ZARI.Application.Features.Sales.DeliveryOrders.GetAllPaged;
 using ZARI.Application.Features.Sales.DeliveryOrders.Reject;
 using ZARI.Application.Features.Sales.DeliveryOrders.RejectCancellation;
 using ZARI.Application.Features.Sales.DeliveryOrders.RequestCancellation;
@@ -29,6 +30,10 @@ public static class DeliveryOrderEndpoints
         group.MapGet("/", GetAll)
             .WithName("GetAllDeliveryOrders")
             .WithSummary("Get all deliveries");
+
+        group.MapGet("/paged", GetAllPaged)
+            .WithName("GetAllDeliveryOrdersPaged")
+            .WithSummary("Get a page of deliveries, optionally filtered by search text");
 
         group.MapGet("/{id:guid}", GetById)
             .WithName("GetDeliveryOrderById")
@@ -81,6 +86,17 @@ public static class DeliveryOrderEndpoints
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(new GetAllDeliveryOrdersQuery(), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> GetAllPaged(
+        int? page,
+        int? pageSize,
+        string? search,
+        IQueryHandler<GetAllDeliveryOrdersPagedQuery, Result<PagedResult<DeliveryOrderResponse>>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new GetAllDeliveryOrdersPagedQuery(page ?? 1, pageSize ?? 20, search), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 

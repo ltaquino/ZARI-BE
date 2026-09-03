@@ -14,7 +14,7 @@ public sealed class GetAllPurchaseOrdersQueryHandler(IAppDbContext dbContext, IP
         if (!await permissionService.HasPermissionAsync("PURCHASE_ORDERS", FormAction.View, cancellationToken))
             return Result.Failure<List<PurchaseOrderResponse>>(Error.Forbidden("PurchaseOrder.Forbidden", "You do not have permission to view purchase orders."));
 
-        var orders = await dbContext.PurchaseOrders
+        var orders = await dbContext.PurchaseOrders.AsNoTracking()
             .Include(p => p.Supplier)
             .Include(p => p.Lines).ThenInclude(l => l.Item)
             .Include(p => p.Lines).ThenInclude(l => l.Uom)

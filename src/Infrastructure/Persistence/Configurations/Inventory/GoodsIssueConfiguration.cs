@@ -24,6 +24,8 @@ public sealed class GoodsIssueConfiguration : BaseModelConfig, IEntityTypeConfig
         builder.Property(i => i.CancelReason).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
 
         builder.HasIndex(i => i.GiNo).IsUnique();
+        builder.HasIndex(i => new { i.BranchId, i.GiDate });
+        builder.HasIndex(i => i.Status);
 
         // approveGoodsIssue/approveGoodsIssueCancellation look up the pending approval request for
         // this document by (EntityType, EntityId) — see ApprovalRequestConfiguration's matching

@@ -14,7 +14,7 @@ public sealed class GetAllWarehousesQueryHandler(IAppDbContext dbContext, IPermi
         if (!await permissionService.HasPermissionAsync("WAREHOUSES", FormAction.View, cancellationToken))
             return Result.Failure<List<WarehouseResponse>>(Error.Forbidden("Warehouse.Forbidden", "You do not have permission to view warehouses."));
 
-        var items = await dbContext.Warehouses
+        var items = await dbContext.Warehouses.AsNoTracking()
             .OrderBy(w => w.Code)
             .Select(w => new WarehouseResponse(w.Id, w.BranchId, w.Code, w.Name, w.WarehouseType, w.Status, w.CreatedAt))
             .ToListAsync(cancellationToken);

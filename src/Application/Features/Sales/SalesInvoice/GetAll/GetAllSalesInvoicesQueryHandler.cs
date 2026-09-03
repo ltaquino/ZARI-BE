@@ -14,7 +14,7 @@ public sealed class GetAllSalesInvoicesQueryHandler(IAppDbContext dbContext, IPe
         if (!await permissionService.HasPermissionAsync("SALES_INVOICES", FormAction.View, cancellationToken))
             return Result.Failure<List<SalesInvoiceResponse>>(Error.Forbidden("SalesInvoice.Forbidden", "You do not have permission to view sales invoices."));
 
-        var invoices = await dbContext.SalesInvoices
+        var invoices = await dbContext.SalesInvoices.AsNoTracking()
             .Include(i => i.Customer)
             .Include(i => i.Lines).ThenInclude(l => l.Item)
             .Include(i => i.Lines).ThenInclude(l => l.Uom)

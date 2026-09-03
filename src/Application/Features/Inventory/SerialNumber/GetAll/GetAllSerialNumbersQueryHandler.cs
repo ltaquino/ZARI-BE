@@ -13,7 +13,7 @@ public sealed class GetAllSerialNumbersQueryHandler(IAppDbContext dbContext, IPe
         if (!await permissionService.HasPermissionAsync("SERIAL_NUMBERS", FormAction.View, cancellationToken))
             return Result.Failure<List<SerialNumberResponse>>(Error.Forbidden("SerialNumber.Forbidden", "You do not have permission to view serial numbers."));
 
-        var items = await dbContext.SerialNumbers
+        var items = await dbContext.SerialNumbers.AsNoTracking()
             .OrderBy(s => s.SerialNo)
             .Select(s => new SerialNumberResponse(s.Id, s.ItemId, s.SerialNo, s.WarehouseId, s.Status, s.CreatedAt))
             .ToListAsync(cancellationToken);

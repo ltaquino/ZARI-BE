@@ -14,7 +14,7 @@ public sealed class GetAllPosPromoSlidesQueryHandler(IAppDbContext dbContext, IP
         if (!await permissionService.HasPermissionAsync("POS_PROMO_SLIDES", FormAction.View, cancellationToken))
             return Result.Failure<List<PosPromoSlideResponse>>(Error.Forbidden("PosPromoSlide.Forbidden", "You do not have permission to view promo slides."));
 
-        var items = await dbContext.PosPromoSlides
+        var items = await dbContext.PosPromoSlides.AsNoTracking()
             .OrderBy(s => s.DisplayOrder).ThenBy(s => s.Title)
             .Select(s => new PosPromoSlideResponse(s.Id, s.Title, s.Subtitle, s.ImageUrl, s.DisplayOrder, s.Status, s.CreatedAt))
             .ToListAsync(cancellationToken);

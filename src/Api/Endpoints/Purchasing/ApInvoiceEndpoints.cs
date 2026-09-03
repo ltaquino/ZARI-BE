@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using ZARI.Api.Extensions;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Purchasing.ApInvoices.ApproveCancellation;
@@ -8,6 +8,7 @@ using ZARI.Application.Features.Purchasing.ApInvoices.Create;
 using ZARI.Application.Features.Purchasing.ApInvoices.Delete;
 using ZARI.Application.Features.Purchasing.ApInvoices.Get;
 using ZARI.Application.Features.Purchasing.ApInvoices.GetAll;
+using ZARI.Application.Features.Purchasing.ApInvoices.GetAllPaged;
 using ZARI.Application.Features.Purchasing.ApInvoices.Reject;
 using ZARI.Application.Features.Purchasing.ApInvoices.RejectCancellation;
 using ZARI.Application.Features.Purchasing.ApInvoices.RequestCancellation;
@@ -29,6 +30,10 @@ public static class ApInvoiceEndpoints
         group.MapGet("/", GetAll)
             .WithName("GetAllApInvoices")
             .WithSummary("Get all AP invoices");
+
+        group.MapGet("/paged", GetAllPaged)
+            .WithName("GetAllApInvoicesPaged")
+            .WithSummary("Get a page of AP invoices, optionally filtered by search text");
 
         group.MapGet("/{id:guid}", GetById)
             .WithName("GetApInvoiceById")
@@ -81,6 +86,17 @@ public static class ApInvoiceEndpoints
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(new GetAllApInvoicesQuery(), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> GetAllPaged(
+        int? page,
+        int? pageSize,
+        string? search,
+        IQueryHandler<GetAllApInvoicesPagedQuery, Result<PagedResult<ApInvoiceResponse>>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new GetAllApInvoicesPagedQuery(page ?? 1, pageSize ?? 20, search), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 

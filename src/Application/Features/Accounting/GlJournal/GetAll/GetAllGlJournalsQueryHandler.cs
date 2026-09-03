@@ -14,7 +14,7 @@ public sealed class GetAllGlJournalsQueryHandler(IAppDbContext dbContext, IPermi
         if (!await permissionService.HasPermissionAsync("GL_JOURNALS", FormAction.View, cancellationToken))
             return Result.Failure<List<GlJournalResponse>>(Error.Forbidden("GlJournal.Forbidden", "You do not have permission to view GL journals."));
 
-        var journals = await dbContext.GlJournals
+        var journals = await dbContext.GlJournals.AsNoTracking()
             .Include(j => j.Lines)
             .OrderByDescending(j => j.JournalDate)
             .ToListAsync(cancellationToken);

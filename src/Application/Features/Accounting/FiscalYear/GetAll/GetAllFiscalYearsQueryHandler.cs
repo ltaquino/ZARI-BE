@@ -14,7 +14,7 @@ public sealed class GetAllFiscalYearsQueryHandler(IAppDbContext dbContext, IPerm
         if (!await permissionService.HasPermissionAsync("FISCAL_YEARS", FormAction.View, cancellationToken))
             return Result.Failure<List<FiscalYearResponse>>(Error.Forbidden("FiscalYear.Forbidden", "You do not have permission to view fiscal years."));
 
-        var items = await dbContext.FiscalYears
+        var items = await dbContext.FiscalYears.AsNoTracking()
             .OrderByDescending(f => f.StartDate)
             .Select(f => new FiscalYearResponse(f.Id, f.YearName, f.StartDate, f.EndDate, f.Status, f.CreatedAt))
             .ToListAsync(cancellationToken);

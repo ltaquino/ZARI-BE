@@ -14,7 +14,7 @@ public sealed class GetAllGlAccountsQueryHandler(IAppDbContext dbContext, IPermi
         if (!await permissionService.HasPermissionAsync("GL_ACCOUNTS", FormAction.View, cancellationToken))
             return Result.Failure<List<GlAccountResponse>>(Error.Forbidden("GlAccount.Forbidden", "You do not have permission to view GL accounts."));
 
-        var items = await dbContext.GlAccounts
+        var items = await dbContext.GlAccounts.AsNoTracking()
             .OrderBy(a => a.Code)
             .Select(a => new GlAccountResponse(a.Id, a.Code, a.Name, a.AccountType, a.NormalBalance, a.ParentAccountId, a.Status, a.CreatedAt))
             .ToListAsync(cancellationToken);

@@ -1,4 +1,4 @@
-﻿using ZARI.Domain.Entities;
+using ZARI.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -24,6 +24,8 @@ public sealed class ApInvoiceConfiguration : BaseModelConfig, IEntityTypeConfigu
         // Double-billing protection: the same vendor invoice number can't be entered twice for the
         // same supplier.
         builder.HasIndex(i => new { i.SupplierId, i.SupplierInvoiceNo }).IsUnique();
+        builder.HasIndex(i => new { i.BranchId, i.InvoiceDate });
+        builder.HasIndex(i => i.Status);
 
         builder.HasOne(i => i.Branch)
             .WithMany()

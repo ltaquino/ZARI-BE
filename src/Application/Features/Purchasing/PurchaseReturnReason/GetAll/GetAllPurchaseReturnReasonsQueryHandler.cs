@@ -14,7 +14,7 @@ public sealed class GetAllPurchaseReturnReasonsQueryHandler(IAppDbContext dbCont
         if (!await permissionService.HasPermissionAsync("PURCHASE_RETURN_REASONS", FormAction.View, cancellationToken))
             return Result.Failure<List<PurchaseReturnReasonResponse>>(Error.Forbidden("PurchaseReturnReason.Forbidden", "You do not have permission to view purchase return reasons."));
 
-        var items = await dbContext.PurchaseReturnReasons
+        var items = await dbContext.PurchaseReturnReasons.AsNoTracking()
             .OrderBy(r => r.Code)
             .Select(r => new PurchaseReturnReasonResponse(r.Id, r.Code, r.Description, r.Status, r.CreatedAt))
             .ToListAsync(cancellationToken);

@@ -8,6 +8,7 @@ using ZARI.Application.Features.Accounting.ManualJournalEntries.Create;
 using ZARI.Application.Features.Accounting.ManualJournalEntries.Delete;
 using ZARI.Application.Features.Accounting.ManualJournalEntries.Get;
 using ZARI.Application.Features.Accounting.ManualJournalEntries.GetAll;
+using ZARI.Application.Features.Accounting.ManualJournalEntries.GetAllPaged;
 using ZARI.Application.Features.Accounting.ManualJournalEntries.Reject;
 using ZARI.Application.Features.Accounting.ManualJournalEntries.RejectCancellation;
 using ZARI.Application.Features.Accounting.ManualJournalEntries.RequestCancellation;
@@ -29,6 +30,10 @@ public static class ManualJournalEntryEndpoints
         group.MapGet("/", GetAll)
             .WithName("GetAllManualJournalEntries")
             .WithSummary("Get all manual journal entries");
+
+        group.MapGet("/paged", GetAllPaged)
+            .WithName("GetAllManualJournalEntriesPaged")
+            .WithSummary("Get a page of manual journal entries, optionally filtered by search text");
 
         group.MapGet("/{id:guid}", GetById)
             .WithName("GetManualJournalEntryById")
@@ -81,6 +86,17 @@ public static class ManualJournalEntryEndpoints
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(new GetAllManualJournalEntriesQuery(), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> GetAllPaged(
+        int? page,
+        int? pageSize,
+        string? search,
+        IQueryHandler<GetAllManualJournalEntriesPagedQuery, Result<PagedResult<ManualJournalEntryResponse>>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new GetAllManualJournalEntriesPagedQuery(page ?? 1, pageSize ?? 20, search), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 

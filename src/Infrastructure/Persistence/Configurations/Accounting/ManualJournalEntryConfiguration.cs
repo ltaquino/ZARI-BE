@@ -18,6 +18,8 @@ public sealed class ManualJournalEntryConfiguration : BaseModelConfig, IEntityTy
         builder.Property(e => e.CancelReason).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
 
         builder.HasIndex(e => e.EntryNo).IsUnique();
+        builder.HasIndex(e => new { e.BranchId, e.EntryDate });
+        builder.HasIndex(e => e.Status);
 
         builder.HasOne(e => e.Branch)
             .WithMany()

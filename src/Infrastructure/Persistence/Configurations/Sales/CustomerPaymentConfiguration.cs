@@ -20,6 +20,8 @@ public sealed class CustomerPaymentConfiguration : BaseModelConfig, IEntityTypeC
         builder.Property(p => p.CancelReason).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
 
         builder.HasIndex(p => p.PaymentNo).IsUnique();
+        builder.HasIndex(p => new { p.BranchId, p.PaymentDate });
+        builder.HasIndex(p => p.Status);
 
         builder.HasOne(p => p.Branch)
             .WithMany()

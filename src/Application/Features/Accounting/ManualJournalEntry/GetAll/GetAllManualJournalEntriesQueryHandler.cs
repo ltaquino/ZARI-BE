@@ -14,7 +14,7 @@ public sealed class GetAllManualJournalEntriesQueryHandler(IAppDbContext dbConte
         if (!await permissionService.HasPermissionAsync("MANUAL_JOURNAL_ENTRIES", FormAction.View, cancellationToken))
             return Result.Failure<List<ManualJournalEntryResponse>>(Error.Forbidden("ManualJournalEntry.Forbidden", "You do not have permission to view manual journal entries."));
 
-        var entries = await dbContext.ManualJournalEntries
+        var entries = await dbContext.ManualJournalEntries.AsNoTracking()
             .Include(e => e.Lines).ThenInclude(l => l.GlAccount)
             .Include(e => e.Lines).ThenInclude(l => l.CostCenter)
             .OrderByDescending(e => e.EntryDate)

@@ -14,7 +14,7 @@ public sealed class GetAllBankAccountsQueryHandler(IAppDbContext dbContext, IPer
         if (!await permissionService.HasPermissionAsync("BANK_ACCOUNTS", FormAction.View, cancellationToken))
             return Result.Failure<List<BankAccountResponse>>(Error.Forbidden("BankAccount.Forbidden", "You do not have permission to view bank accounts."));
 
-        var items = await dbContext.BankAccounts
+        var items = await dbContext.BankAccounts.AsNoTracking()
             .OrderBy(b => b.AccountName)
             .Select(b => new BankAccountResponse(b.Id, b.BranchId, b.AccountName, b.AccountNumber, b.BankName, b.GlAccountId, b.CurrencyId, b.CreatedAt))
             .ToListAsync(cancellationToken);

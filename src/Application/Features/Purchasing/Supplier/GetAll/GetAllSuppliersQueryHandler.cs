@@ -14,7 +14,7 @@ public sealed class GetAllSuppliersQueryHandler(IAppDbContext dbContext, IPermis
         if (!await permissionService.HasPermissionAsync("SUPPLIERS", FormAction.View, cancellationToken))
             return Result.Failure<List<SupplierResponse>>(Error.Forbidden("Supplier.Forbidden", "You do not have permission to view suppliers."));
 
-        var items = await dbContext.Suppliers
+        var items = await dbContext.Suppliers.AsNoTracking()
             .OrderBy(s => s.Name)
             .Select(s => new SupplierResponse(s.Id, s.Code, s.Name, s.TaxId, s.PaymentTermsDays, s.CurrencyId, s.ApAccountId,
                 s.Address, s.ContactPerson, s.ContactNumber, s.Email, s.Status, s.CreatedAt))

@@ -14,7 +14,7 @@ public sealed class GetAllStatutoryDiscountTypesQueryHandler(IAppDbContext dbCon
         if (!await permissionService.HasPermissionAsync("STATUTORY_DISCOUNT_TYPES", FormAction.View, cancellationToken))
             return Result.Failure<List<StatutoryDiscountTypeResponse>>(Error.Forbidden("StatutoryDiscountType.Forbidden", "You do not have permission to view statutory discount types."));
 
-        var items = await dbContext.StatutoryDiscountTypes
+        var items = await dbContext.StatutoryDiscountTypes.AsNoTracking()
             .OrderBy(t => t.Code)
             .Select(t => new StatutoryDiscountTypeResponse(t.Id, t.Code, t.Name, t.DiscountPct, t.IsVatExempt, t.RequiredIdLabel, t.Status, t.CreatedAt))
             .ToListAsync(cancellationToken);

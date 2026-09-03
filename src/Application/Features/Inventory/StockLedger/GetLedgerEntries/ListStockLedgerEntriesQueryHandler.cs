@@ -12,7 +12,7 @@ public sealed class ListStockLedgerEntriesQueryHandler(IAppDbContext dbContext) 
     {
         var normalizedBatch = string.IsNullOrWhiteSpace(query.BatchNo) ? null : query.BatchNo.Trim();
 
-        var rows = await dbContext.StockLedgers
+        var rows = await dbContext.StockLedgers.AsNoTracking()
             .Where(l => l.ItemId == query.ItemId && l.WarehouseId == query.WarehouseId
                 && (normalizedBatch == null ? l.BatchNo == null : l.BatchNo == normalizedBatch))
             .OrderBy(l => l.PostedAt)

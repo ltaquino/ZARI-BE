@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using ZARI.Api.Extensions;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Purchasing.PurchaseOrders.ApproveCancellation;
@@ -8,6 +8,7 @@ using ZARI.Application.Features.Purchasing.PurchaseOrders.Create;
 using ZARI.Application.Features.Purchasing.PurchaseOrders.Delete;
 using ZARI.Application.Features.Purchasing.PurchaseOrders.Get;
 using ZARI.Application.Features.Purchasing.PurchaseOrders.GetAll;
+using ZARI.Application.Features.Purchasing.PurchaseOrders.GetAllPaged;
 using ZARI.Application.Features.Purchasing.PurchaseOrders.Reject;
 using ZARI.Application.Features.Purchasing.PurchaseOrders.RejectCancellation;
 using ZARI.Application.Features.Purchasing.PurchaseOrders.RequestCancellation;
@@ -29,6 +30,10 @@ public static class PurchaseOrderEndpoints
         group.MapGet("/", GetAll)
             .WithName("GetAllPurchaseOrders")
             .WithSummary("Get all purchase orders");
+
+        group.MapGet("/paged", GetAllPaged)
+            .WithName("GetAllPurchaseOrdersPaged")
+            .WithSummary("Get a page of purchase orders, optionally filtered by search text");
 
         group.MapGet("/{id:guid}", GetById)
             .WithName("GetPurchaseOrderById")
@@ -81,6 +86,17 @@ public static class PurchaseOrderEndpoints
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(new GetAllPurchaseOrdersQuery(), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> GetAllPaged(
+        int? page,
+        int? pageSize,
+        string? search,
+        IQueryHandler<GetAllPurchaseOrdersPagedQuery, Result<PagedResult<PurchaseOrderResponse>>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new GetAllPurchaseOrdersPagedQuery(page ?? 1, pageSize ?? 20, search), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 

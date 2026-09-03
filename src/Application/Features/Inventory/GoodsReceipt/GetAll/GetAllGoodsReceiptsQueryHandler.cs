@@ -14,7 +14,7 @@ public sealed class GetAllGoodsReceiptsQueryHandler(IAppDbContext dbContext, IPe
         if (!await permissionService.HasPermissionAsync("GOODS_RECEIPTS", FormAction.View, cancellationToken))
             return Result.Failure<List<GoodsReceiptResponse>>(Error.Forbidden("GoodsReceipt.Forbidden", "You do not have permission to view goods receipts."));
 
-        var receipts = await dbContext.GoodsReceipts
+        var receipts = await dbContext.GoodsReceipts.AsNoTracking()
             .Include(r => r.Lines).ThenInclude(l => l.Item)
             .Include(r => r.Lines).ThenInclude(l => l.Uom)
             .OrderByDescending(r => r.GrDate)

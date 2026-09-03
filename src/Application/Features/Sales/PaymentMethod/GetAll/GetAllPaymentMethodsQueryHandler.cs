@@ -14,7 +14,7 @@ public sealed class GetAllPaymentMethodsQueryHandler(IAppDbContext dbContext, IP
         if (!await permissionService.HasPermissionAsync("PAYMENT_METHODS", FormAction.View, cancellationToken))
             return Result.Failure<List<PaymentMethodResponse>>(Error.Forbidden("PaymentMethod.Forbidden", "You do not have permission to view payment methods."));
 
-        var items = await dbContext.PaymentMethods
+        var items = await dbContext.PaymentMethods.AsNoTracking()
             .Include(m => m.GlAccount)
             .OrderBy(m => m.DisplayOrder).ThenBy(m => m.Code)
             .Select(m => new PaymentMethodResponse(m.Id, m.Code, m.Name, m.GlAccountId, m.GlAccount.Code, m.GlAccount.Name, m.RequiresReferenceNo, m.ReferenceNoLabel, m.RequiresBankOrPartnerName, m.DisplayOrder, m.Status, m.CreatedAt))

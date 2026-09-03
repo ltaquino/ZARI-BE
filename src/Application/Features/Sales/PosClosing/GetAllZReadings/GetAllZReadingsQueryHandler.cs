@@ -15,7 +15,7 @@ public sealed class GetAllZReadingsQueryHandler(IAppDbContext dbContext, IPermis
         if (!await permissionService.HasPermissionOnBranchAsync("POS_CLOSING", FormAction.View, query.BranchId, cancellationToken))
             return Result.Failure<List<ZReadingResponse>>(Error.Forbidden("PosClosing.Forbidden", "You do not have permission to view POS closing for this branch."));
 
-        var readings = await dbContext.ZReadings
+        var readings = await dbContext.ZReadings.AsNoTracking()
             .Where(z => z.BranchId == query.BranchId)
             .OrderByDescending(z => z.ZCounterValue)
             .ToListAsync(cancellationToken);

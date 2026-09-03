@@ -14,7 +14,7 @@ public sealed class GetAllApprovalRequestsQueryHandler(IAppDbContext dbContext, 
         if (!await permissionService.HasPermissionAsync("APPROVAL_REQUESTS", FormAction.View, cancellationToken))
             return Result.Failure<List<ApprovalRequestResponse>>(Error.Forbidden("ApprovalRequest.Forbidden", "You do not have permission to view approval requests."));
 
-        var requests = await dbContext.ApprovalRequests
+        var requests = await dbContext.ApprovalRequests.AsNoTracking()
             .Include(r => r.Actions)
             .OrderByDescending(r => r.RequestedAt)
             .ToListAsync(cancellationToken);

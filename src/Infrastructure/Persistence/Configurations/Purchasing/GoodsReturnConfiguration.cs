@@ -19,6 +19,8 @@ public sealed class GoodsReturnConfiguration : BaseModelConfig, IEntityTypeConfi
         builder.Property(r => r.CancelReason).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
 
         builder.HasIndex(r => r.ReturnNo).IsUnique();
+        builder.HasIndex(r => new { r.BranchId, r.ReturnDate });
+        builder.HasIndex(r => r.Status);
 
         builder.HasOne(r => r.Branch)
             .WithMany()

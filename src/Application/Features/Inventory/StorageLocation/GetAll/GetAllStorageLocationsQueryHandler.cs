@@ -14,7 +14,7 @@ public sealed class GetAllStorageLocationsQueryHandler(IAppDbContext dbContext, 
         if (!await permissionService.HasPermissionAsync("STORAGE_LOCATIONS", FormAction.View, cancellationToken))
             return Result.Failure<List<StorageLocationResponse>>(Error.Forbidden("StorageLocation.Forbidden", "You do not have permission to view storage locations."));
 
-        var items = await dbContext.StorageLocations
+        var items = await dbContext.StorageLocations.AsNoTracking()
             .OrderBy(l => l.WarehouseId).ThenBy(l => l.Zone).ThenBy(l => l.Aisle).ThenBy(l => l.Rack).ThenBy(l => l.BinCode)
             .Select(l => new StorageLocationResponse(l.Id, l.WarehouseId, l.Zone, l.Aisle, l.Rack, l.BinCode, l.CreatedAt))
             .ToListAsync(cancellationToken);

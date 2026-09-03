@@ -273,14 +273,16 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("CostCenterId");
 
                     b.HasIndex("GoodsReceiptPoId");
 
                     b.HasIndex("InvoiceNo")
                         .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BranchId", "InvoiceDate");
 
                     b.HasIndex("SupplierId", "SupplierInvoiceNo")
                         .IsUnique();
@@ -1057,8 +1059,6 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("CashAccountId");
 
                     b.HasIndex("CostCenterId");
@@ -1067,6 +1067,10 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("PaymentNo")
                         .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BranchId", "PaymentDate");
 
                     b.ToTable("CustomerPayments");
                 });
@@ -1192,8 +1196,6 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("CostCenterId");
 
                     b.HasIndex("CustomerId");
@@ -1203,7 +1205,11 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("SalesOrderId");
 
+                    b.HasIndex("Status");
+
                     b.HasIndex("WarehouseId");
+
+                    b.HasIndex("BranchId", "DeliveryDate");
 
                     b.ToTable("DeliveryOrders");
                 });
@@ -1589,9 +1595,11 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("ReversalOfJournalId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BranchId", "JournalDate");
 
                     b.HasIndex("SourceReferenceTable", "SourceReferenceId");
 
@@ -1721,8 +1729,6 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("CostCenterId");
 
                     b.HasIndex("DestBranchId");
@@ -1732,7 +1738,11 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.HasIndex("GiNo")
                         .IsUnique();
 
+                    b.HasIndex("Status");
+
                     b.HasIndex("WarehouseId");
+
+                    b.HasIndex("BranchId", "GiDate");
 
                     b.ToTable("GoodsIssues");
                 });
@@ -1857,14 +1867,16 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("CostCenterId");
 
                     b.HasIndex("GrNo")
                         .IsUnique();
 
+                    b.HasIndex("Status");
+
                     b.HasIndex("WarehouseId");
+
+                    b.HasIndex("BranchId", "GrDate");
 
                     b.ToTable("GoodsReceipts");
                 });
@@ -1983,8 +1995,6 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("CostCenterId");
 
                     b.HasIndex("GrpoNo")
@@ -1992,9 +2002,13 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("PurchaseOrderId");
 
+                    b.HasIndex("Status");
+
                     b.HasIndex("SupplierId");
 
                     b.HasIndex("WarehouseId");
+
+                    b.HasIndex("BranchId", "ReceiptDate");
 
                     b.ToTable("GoodsReceiptPos");
                 });
@@ -2119,8 +2133,6 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("CostCenterId");
 
                     b.HasIndex("GoodsReceiptPoId");
@@ -2128,9 +2140,13 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.HasIndex("ReturnNo")
                         .IsUnique();
 
+                    b.HasIndex("Status");
+
                     b.HasIndex("SupplierId");
 
                     b.HasIndex("WarehouseId");
+
+                    b.HasIndex("BranchId", "ReturnDate");
 
                     b.ToTable("GoodsReturns");
                 });
@@ -2279,6 +2295,10 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("Code")
                         .IsUnique();
+
+                    b.HasIndex("Name");
+
+                    b.HasIndex("Status");
 
                     b.ToTable("Items");
                 });
@@ -2439,10 +2459,12 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("EntryNo")
                         .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BranchId", "EntryDate");
 
                     b.ToTable("ManualJournalEntries");
                 });
@@ -2637,14 +2659,16 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasIndex("BankAccountId");
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("CostCenterId");
 
                     b.HasIndex("PaymentNo")
                         .IsUnique();
 
+                    b.HasIndex("Status");
+
                     b.HasIndex("SupplierId");
+
+                    b.HasIndex("BranchId", "PaymentDate");
 
                     b.ToTable("OutgoingPayments");
                 });
@@ -2899,14 +2923,16 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("PoNo")
                         .IsUnique();
 
                     b.HasIndex("PurchaseRequestId");
 
+                    b.HasIndex("Status");
+
                     b.HasIndex("SupplierId");
+
+                    b.HasIndex("BranchId", "OrderDate");
 
                     b.ToTable("PurchaseOrders");
                 });
@@ -3001,10 +3027,12 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("RequestNo")
                         .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BranchId", "RequestDate");
 
                     b.ToTable("PurchaseRequests");
                 });
@@ -3205,8 +3233,6 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.HasIndex("BirOrSeriesNumber")
                         .IsUnique();
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("CostCenterId");
 
                     b.HasIndex("CustomerId");
@@ -3217,6 +3243,10 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .IsUnique();
 
                     b.HasIndex("PosTerminalId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BranchId", "InvoiceDate");
 
                     b.ToTable("SalesInvoices");
                 });
@@ -3348,12 +3378,14 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("CustomerId");
 
                     b.HasIndex("SoNo")
                         .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BranchId", "OrderDate");
 
                     b.ToTable("SalesOrders");
                 });
@@ -3465,8 +3497,6 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("CostCenterId");
 
                     b.HasIndex("CustomerId");
@@ -3476,7 +3506,11 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.HasIndex("ReturnNo")
                         .IsUnique();
 
+                    b.HasIndex("Status");
+
                     b.HasIndex("WarehouseId");
+
+                    b.HasIndex("BranchId", "ReturnDate");
 
                     b.ToTable("SalesReturns");
                 });
@@ -3684,11 +3718,13 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.HasIndex("AdjustmentNo")
                         .IsUnique();
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("CostCenterId");
 
+                    b.HasIndex("Status");
+
                     b.HasIndex("WarehouseId");
+
+                    b.HasIndex("BranchId", "AdjustmentDate");
 
                     b.ToTable("StockAdjustments");
                 });
@@ -4003,12 +4039,14 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
+                    b.HasIndex("Status");
 
                     b.HasIndex("TransferNo")
                         .IsUnique();
 
                     b.HasIndex("WarehouseId");
+
+                    b.HasIndex("BranchId", "TransferDate");
 
                     b.ToTable("StockLocationTransfers");
                 });
@@ -4118,14 +4156,16 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("CostCenterId");
 
                     b.HasIndex("OpnameNo")
                         .IsUnique();
 
+                    b.HasIndex("Status");
+
                     b.HasIndex("WarehouseId");
+
+                    b.HasIndex("BranchId", "CountDate");
 
                     b.ToTable("StockOpnames");
                 });
@@ -4227,11 +4267,13 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId");
-
                     b.HasIndex("ItemId");
 
+                    b.HasIndex("Status");
+
                     b.HasIndex("WarehouseId");
+
+                    b.HasIndex("BranchId", "ReservedDate");
 
                     b.ToTable("StockReservations");
                 });
@@ -4318,9 +4360,11 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.HasIndex("RequestNo")
                         .IsUnique();
 
-                    b.HasIndex("SourceBranchId");
-
                     b.HasIndex("SourceWarehouseId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("SourceBranchId", "RequestDate");
 
                     b.ToTable("StockTransferRequests");
                 });

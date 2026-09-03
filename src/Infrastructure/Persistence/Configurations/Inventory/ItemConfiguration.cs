@@ -41,6 +41,8 @@ public sealed class ItemConfiguration : BaseModelConfig, IEntityTypeConfiguratio
         builder.Property(i => i.VatType).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT).HasDefaultValue("VATABLE");
 
         builder.HasIndex(i => i.Code).IsUnique();
+        builder.HasIndex(i => i.Name);
+        builder.HasIndex(i => i.Status);
 
         builder.HasOne(i => i.Category)
             .WithMany()

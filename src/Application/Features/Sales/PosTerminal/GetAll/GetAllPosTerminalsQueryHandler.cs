@@ -11,7 +11,7 @@ public sealed class GetAllPosTerminalsQueryHandler(IAppDbContext dbContext, IPer
 {
     public async Task<Result<List<PosTerminalResponse>>> HandleAsync(GetAllPosTerminalsQuery query, CancellationToken cancellationToken = default)
     {
-        var candidates = await dbContext.PosTerminals
+        var candidates = await dbContext.PosTerminals.AsNoTracking()
             .Where(t => query.BranchId == null || t.BranchId == query.BranchId)
             .OrderBy(t => t.BranchId).ThenBy(t => t.Code)
             .ToListAsync(cancellationToken);

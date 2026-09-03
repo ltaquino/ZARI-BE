@@ -8,6 +8,7 @@ using ZARI.Application.Features.Inventory.StockAdjustments.Create;
 using ZARI.Application.Features.Inventory.StockAdjustments.Delete;
 using ZARI.Application.Features.Inventory.StockAdjustments.Get;
 using ZARI.Application.Features.Inventory.StockAdjustments.GetAll;
+using ZARI.Application.Features.Inventory.StockAdjustments.GetAllPaged;
 using ZARI.Application.Features.Inventory.StockAdjustments.Reject;
 using ZARI.Application.Features.Inventory.StockAdjustments.RejectCancellation;
 using ZARI.Application.Features.Inventory.StockAdjustments.RequestCancellation;
@@ -29,6 +30,10 @@ public static class StockAdjustmentEndpoints
         group.MapGet("/", GetAll)
             .WithName("GetAllStockAdjustments")
             .WithSummary("Get all stock adjustments");
+
+        group.MapGet("/paged", GetAllPaged)
+            .WithName("GetAllStockAdjustmentsPaged")
+            .WithSummary("Get a page of stock adjustments, optionally filtered by search text");
 
         group.MapGet("/{id:guid}", GetById)
             .WithName("GetStockAdjustmentById")
@@ -81,6 +86,17 @@ public static class StockAdjustmentEndpoints
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(new GetAllStockAdjustmentsQuery(), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> GetAllPaged(
+        int? page,
+        int? pageSize,
+        string? search,
+        IQueryHandler<GetAllStockAdjustmentsPagedQuery, Result<PagedResult<StockAdjustmentResponse>>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new GetAllStockAdjustmentsPagedQuery(page ?? 1, pageSize ?? 20, search), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 

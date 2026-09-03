@@ -19,6 +19,8 @@ public sealed class GoodsReceiptPoConfiguration : BaseModelConfig, IEntityTypeCo
         builder.Property(r => r.CancelReason).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
 
         builder.HasIndex(r => r.GrpoNo).IsUnique();
+        builder.HasIndex(r => new { r.BranchId, r.ReceiptDate });
+        builder.HasIndex(r => r.Status);
 
         builder.HasOne(r => r.Branch)
             .WithMany()

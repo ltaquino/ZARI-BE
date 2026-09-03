@@ -14,7 +14,7 @@ public sealed class GetAllApInvoicesQueryHandler(IAppDbContext dbContext, IPermi
         if (!await permissionService.HasPermissionAsync("AP_INVOICES", FormAction.View, cancellationToken))
             return Result.Failure<List<ApInvoiceResponse>>(Error.Forbidden("ApInvoice.Forbidden", "You do not have permission to view AP invoices."));
 
-        var invoices = await dbContext.ApInvoices
+        var invoices = await dbContext.ApInvoices.AsNoTracking()
             .Include(i => i.Supplier)
             .Include(i => i.GoodsReceiptPo)
             .Include(i => i.Lines).ThenInclude(l => l.Item)

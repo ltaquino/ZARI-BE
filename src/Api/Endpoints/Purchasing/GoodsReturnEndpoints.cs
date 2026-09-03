@@ -1,4 +1,4 @@
-﻿using FluentValidation;
+using FluentValidation;
 using ZARI.Api.Extensions;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Purchasing.GoodsReturns.ApproveCancellation;
@@ -8,6 +8,7 @@ using ZARI.Application.Features.Purchasing.GoodsReturns.Create;
 using ZARI.Application.Features.Purchasing.GoodsReturns.Delete;
 using ZARI.Application.Features.Purchasing.GoodsReturns.Get;
 using ZARI.Application.Features.Purchasing.GoodsReturns.GetAll;
+using ZARI.Application.Features.Purchasing.GoodsReturns.GetAllPaged;
 using ZARI.Application.Features.Purchasing.GoodsReturns.Reject;
 using ZARI.Application.Features.Purchasing.GoodsReturns.RejectCancellation;
 using ZARI.Application.Features.Purchasing.GoodsReturns.RequestCancellation;
@@ -29,6 +30,10 @@ public static class GoodsReturnEndpoints
         group.MapGet("/", GetAll)
             .WithName("GetAllGoodsReturns")
             .WithSummary("Get all goods returns");
+
+        group.MapGet("/paged", GetAllPaged)
+            .WithName("GetAllGoodsReturnsPaged")
+            .WithSummary("Get a page of goods returns, optionally filtered by search text");
 
         group.MapGet("/{id:guid}", GetById)
             .WithName("GetGoodsReturnById")
@@ -81,6 +86,17 @@ public static class GoodsReturnEndpoints
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(new GetAllGoodsReturnsQuery(), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> GetAllPaged(
+        int? page,
+        int? pageSize,
+        string? search,
+        IQueryHandler<GetAllGoodsReturnsPagedQuery, Result<PagedResult<GoodsReturnResponse>>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new GetAllGoodsReturnsPagedQuery(page ?? 1, pageSize ?? 20, search), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 

@@ -14,7 +14,7 @@ public sealed class GetAllItemCategoriesQueryHandler(IAppDbContext dbContext, IP
         if (!await permissionService.HasPermissionAsync("ITEM_CATEGORIES", FormAction.View, cancellationToken))
             return Result.Failure<List<ItemCategoryResponse>>(Error.Forbidden("ItemCategory.Forbidden", "You do not have permission to view item categories."));
 
-        var items = await dbContext.ItemCategories
+        var items = await dbContext.ItemCategories.AsNoTracking()
             .OrderBy(c => c.Code)
             .Select(c => new ItemCategoryResponse(c.Id, c.Code, c.Name, c.ParentCategoryId, c.CreatedAt))
             .ToListAsync(cancellationToken);

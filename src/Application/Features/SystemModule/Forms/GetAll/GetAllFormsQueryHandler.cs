@@ -9,7 +9,7 @@ public sealed class GetAllFormsQueryHandler(IAppDbContext dbContext) : IQueryHan
 {
     public async Task<Result<List<FormResponse>>> HandleAsync(GetAllFormsQuery query, CancellationToken cancellationToken = default)
     {
-        var forms = await dbContext.Forms
+        var forms = await dbContext.Forms.AsNoTracking()
             .OrderBy(f => f.Module).ThenBy(f => f.Name)
             .Select(f => new FormResponse(f.Code, f.Name, f.Module))
             .ToListAsync(cancellationToken);

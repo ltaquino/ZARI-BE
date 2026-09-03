@@ -8,6 +8,7 @@ using ZARI.Application.Features.Inventory.StockTransferRequests.Decline;
 using ZARI.Application.Features.Inventory.StockTransferRequests.Delete;
 using ZARI.Application.Features.Inventory.StockTransferRequests.Get;
 using ZARI.Application.Features.Inventory.StockTransferRequests.GetAll;
+using ZARI.Application.Features.Inventory.StockTransferRequests.GetAllPaged;
 using ZARI.Application.Features.Inventory.StockTransferRequests.Reject;
 using ZARI.Application.Features.Inventory.StockTransferRequests.Submit;
 using ZARI.Application.Features.Inventory.StockTransferRequests.Update;
@@ -27,6 +28,10 @@ public static class StockTransferRequestEndpoints
         group.MapGet("/", GetAll)
             .WithName("GetAllStockTransferRequests")
             .WithSummary("Get all stock transfer requests");
+
+        group.MapGet("/paged", GetAllPaged)
+            .WithName("GetAllStockTransferRequestsPaged")
+            .WithSummary("Get a page of stock transfer requests, optionally filtered by search text");
 
         group.MapGet("/{id:guid}", GetById)
             .WithName("GetStockTransferRequestById")
@@ -71,6 +76,17 @@ public static class StockTransferRequestEndpoints
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(new GetAllStockTransferRequestsQuery(), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> GetAllPaged(
+        int? page,
+        int? pageSize,
+        string? search,
+        IQueryHandler<GetAllStockTransferRequestsPagedQuery, Result<PagedResult<StockTransferRequestResponse>>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new GetAllStockTransferRequestsPagedQuery(page ?? 1, pageSize ?? 20, search), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 

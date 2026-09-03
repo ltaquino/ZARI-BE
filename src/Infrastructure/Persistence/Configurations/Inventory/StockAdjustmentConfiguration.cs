@@ -19,6 +19,8 @@ public sealed class StockAdjustmentConfiguration : BaseModelConfig, IEntityTypeC
         builder.Property(a => a.CancelReason).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
 
         builder.HasIndex(a => a.AdjustmentNo).IsUnique();
+        builder.HasIndex(a => new { a.BranchId, a.AdjustmentDate });
+        builder.HasIndex(a => a.Status);
 
         // approveStockAdjustment/approveStockAdjustmentCancellation look up the pending approval
         // request for this document by (EntityType, EntityId) — see ApprovalRequestConfiguration's

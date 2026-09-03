@@ -13,7 +13,7 @@ public sealed class GetAllStockReservationsQueryHandler(IAppDbContext dbContext,
         if (!await permissionService.HasPermissionAsync("STOCK_RESERVATIONS", FormAction.View, cancellationToken))
             return Result.Failure<List<StockReservationResponse>>(Error.Forbidden("StockReservation.Forbidden", "You do not have permission to view stock reservations."));
 
-        var items = await dbContext.StockReservations
+        var items = await dbContext.StockReservations.AsNoTracking()
             .OrderByDescending(r => r.ReservedDate)
             .Select(r => new StockReservationResponse(
                 r.Id, r.ItemId, r.BranchId, r.WarehouseId, r.QtyReserved, r.ReservedDate, r.ExpiryDate,

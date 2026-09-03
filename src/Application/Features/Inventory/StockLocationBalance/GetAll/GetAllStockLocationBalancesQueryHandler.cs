@@ -9,7 +9,7 @@ public sealed class GetAllStockLocationBalancesQueryHandler(IAppDbContext dbCont
 {
     public async Task<Result<List<StockLocationBalanceResponse>>> HandleAsync(GetAllStockLocationBalancesQuery query, CancellationToken cancellationToken = default)
     {
-        var items = await dbContext.StockLocationBalances
+        var items = await dbContext.StockLocationBalances.AsNoTracking()
             .Where(b => b.QtyOnHand > 0.0001m)
             .Select(b => new StockLocationBalanceResponse(b.Id, b.ItemId, b.WarehouseId, b.LocationId, b.BatchNo, b.QtyOnHand, b.LastMovementDate))
             .ToListAsync(cancellationToken);

@@ -14,7 +14,7 @@ public sealed class GetAllBranchesQueryHandler(IAppDbContext dbContext, IPermiss
         if (!await permissionService.HasPermissionAsync("BRANCHES", FormAction.View, cancellationToken))
             return Result.Failure<List<BranchResponse>>(Error.Forbidden("Branch.Forbidden", "You do not have permission to view branches."));
 
-        var branches = await dbContext.Branches
+        var branches = await dbContext.Branches.AsNoTracking()
             .OrderBy(b => b.Name)
             .Select(b => new BranchResponse(
                 b.Id, b.Name, b.Code, b.City, b.Address, b.Phone, b.Status, b.IsHeadOffice,

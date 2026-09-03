@@ -14,7 +14,7 @@ public sealed class GetAllItemsQueryHandler(IAppDbContext dbContext, IPermission
         if (!await permissionService.HasPermissionAsync("ITEMS", FormAction.View, cancellationToken))
             return Result.Failure<List<ItemResponse>>(Error.Forbidden("Item.Forbidden", "You do not have permission to view items."));
 
-        var items = await dbContext.Items
+        var items = await dbContext.Items.AsNoTracking()
             .OrderBy(i => i.Code)
             .Select(i => new ItemResponse(
                 i.Id, i.Code, i.Name, i.Description, i.CategoryId, i.BaseUomId, i.ItemType, i.CostingMethod,

@@ -19,6 +19,8 @@ public sealed class StockLocationTransferConfiguration : BaseModelConfig, IEntit
         builder.Property(t => t.CancelReason).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
 
         builder.HasIndex(t => t.TransferNo).IsUnique();
+        builder.HasIndex(t => new { t.BranchId, t.TransferDate });
+        builder.HasIndex(t => t.Status);
 
         builder.HasOne(t => t.Warehouse)
             .WithMany()

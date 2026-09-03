@@ -14,7 +14,7 @@ public sealed class GetAllCurrenciesQueryHandler(IAppDbContext dbContext, IPermi
         if (!await permissionService.HasPermissionAsync("CURRENCIES", FormAction.View, cancellationToken))
             return Result.Failure<List<CurrencyResponse>>(Error.Forbidden("Currency.Forbidden", "You do not have permission to view currencies."));
 
-        var items = await dbContext.Currencies
+        var items = await dbContext.Currencies.AsNoTracking()
             .OrderBy(c => c.Code)
             .Select(c => new CurrencyResponse(c.Id, c.Code, c.Name, c.Status, c.CreatedAt))
             .ToListAsync(cancellationToken);

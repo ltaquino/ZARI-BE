@@ -15,7 +15,7 @@ public sealed class GetAllCustomerPaymentsQueryHandler(IAppDbContext dbContext, 
         if (!await permissionService.HasPermissionAsync("CUSTOMER_PAYMENTS", FormAction.View, cancellationToken))
             return Result.Failure<List<CustomerPaymentResponse>>(Error.Forbidden("CustomerPayment.Forbidden", "You do not have permission to view customer payments."));
 
-        var payments = await dbContext.CustomerPayments
+        var payments = await dbContext.CustomerPayments.AsNoTracking()
             .Include(p => p.Customer)
             .Include(p => p.CashAccount)
             .Include(p => p.Lines).ThenInclude(l => l.SalesInvoice)

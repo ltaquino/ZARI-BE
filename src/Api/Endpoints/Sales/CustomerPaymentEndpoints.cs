@@ -8,6 +8,7 @@ using ZARI.Application.Features.Sales.CustomerPayments.Create;
 using ZARI.Application.Features.Sales.CustomerPayments.Delete;
 using ZARI.Application.Features.Sales.CustomerPayments.Get;
 using ZARI.Application.Features.Sales.CustomerPayments.GetAll;
+using ZARI.Application.Features.Sales.CustomerPayments.GetAllPaged;
 using ZARI.Application.Features.Sales.CustomerPayments.Reject;
 using ZARI.Application.Features.Sales.CustomerPayments.RejectCancellation;
 using ZARI.Application.Features.Sales.CustomerPayments.RequestCancellation;
@@ -29,6 +30,10 @@ public static class CustomerPaymentEndpoints
         group.MapGet("/", GetAll)
             .WithName("GetAllCustomerPayments")
             .WithSummary("Get all customer payments");
+
+        group.MapGet("/paged", GetAllPaged)
+            .WithName("GetAllCustomerPaymentsPaged")
+            .WithSummary("Get a page of customer payments, optionally filtered by search text");
 
         group.MapGet("/{id:guid}", GetById)
             .WithName("GetCustomerPaymentById")
@@ -81,6 +86,17 @@ public static class CustomerPaymentEndpoints
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(new GetAllCustomerPaymentsQuery(), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> GetAllPaged(
+        int? page,
+        int? pageSize,
+        string? search,
+        IQueryHandler<GetAllCustomerPaymentsPagedQuery, Result<PagedResult<CustomerPaymentResponse>>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new GetAllCustomerPaymentsPagedQuery(page ?? 1, pageSize ?? 20, search), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 

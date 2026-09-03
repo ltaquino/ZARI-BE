@@ -18,6 +18,8 @@ public sealed class DeliveryOrderConfiguration : BaseModelConfig, IEntityTypeCon
         builder.Property(d => d.CancelReason).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
 
         builder.HasIndex(d => d.DoNo).IsUnique();
+        builder.HasIndex(d => new { d.BranchId, d.DeliveryDate });
+        builder.HasIndex(d => d.Status);
 
         builder.HasOne(d => d.Branch)
             .WithMany()

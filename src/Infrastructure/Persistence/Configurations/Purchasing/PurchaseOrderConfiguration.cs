@@ -1,4 +1,4 @@
-﻿using ZARI.Domain.Entities;
+using ZARI.Domain.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -18,6 +18,8 @@ public sealed class PurchaseOrderConfiguration : BaseModelConfig, IEntityTypeCon
         builder.Property(p => p.CancelReason).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
 
         builder.HasIndex(p => p.PoNo).IsUnique();
+        builder.HasIndex(p => new { p.BranchId, p.OrderDate });
+        builder.HasIndex(p => p.Status);
 
         builder.HasOne(p => p.Branch)
             .WithMany()

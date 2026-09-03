@@ -6,6 +6,7 @@ using ZARI.Application.Features.Inventory.StockLocationTransfers.Create;
 using ZARI.Application.Features.Inventory.StockLocationTransfers.Delete;
 using ZARI.Application.Features.Inventory.StockLocationTransfers.Get;
 using ZARI.Application.Features.Inventory.StockLocationTransfers.GetAll;
+using ZARI.Application.Features.Inventory.StockLocationTransfers.GetAllPaged;
 using ZARI.Application.Features.Inventory.StockLocationTransfers.Post;
 using ZARI.Application.Features.Inventory.StockLocationTransfers.Update;
 using ZARI.Domain.Common;
@@ -24,6 +25,10 @@ public static class StockLocationTransferEndpoints
         group.MapGet("/", GetAll)
             .WithName("GetAllStockLocationTransfers")
             .WithSummary("Get all bin transfers");
+
+        group.MapGet("/paged", GetAllPaged)
+            .WithName("GetAllStockLocationTransfersPaged")
+            .WithSummary("Get a page of bin transfers, optionally filtered by search text");
 
         group.MapGet("/{id:guid}", GetById)
             .WithName("GetStockLocationTransferById")
@@ -56,6 +61,17 @@ public static class StockLocationTransferEndpoints
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(new GetAllStockLocationTransfersQuery(), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> GetAllPaged(
+        int? page,
+        int? pageSize,
+        string? search,
+        IQueryHandler<GetAllStockLocationTransfersPagedQuery, Result<PagedResult<StockLocationTransferResponse>>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new GetAllStockLocationTransfersPagedQuery(page ?? 1, pageSize ?? 20, search), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 

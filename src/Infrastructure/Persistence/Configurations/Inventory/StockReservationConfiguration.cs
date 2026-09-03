@@ -24,6 +24,9 @@ public sealed class StockReservationConfiguration : BaseModelConfig, IEntityType
 
         builder.Property(r => r.ReleasedBy).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_150);
 
+        builder.HasIndex(r => new { r.BranchId, r.ReservedDate });
+        builder.HasIndex(r => r.Status);
+
         builder.HasOne(r => r.Item)
             .WithMany()
             .HasForeignKey(r => r.ItemId)

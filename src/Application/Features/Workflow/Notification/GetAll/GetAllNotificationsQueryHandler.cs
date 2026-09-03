@@ -14,7 +14,7 @@ public sealed class GetAllNotificationsQueryHandler(IAppDbContext dbContext, IPe
         if (!await permissionService.HasPermissionAsync("NOTIFICATIONS", FormAction.View, cancellationToken))
             return Result.Failure<List<NotificationResponse>>(Error.Forbidden("Notification.Forbidden", "You do not have permission to view notifications."));
 
-        var notifications = await dbContext.Notifications
+        var notifications = await dbContext.Notifications.AsNoTracking()
             .Include(n => n.Reads)
             .OrderByDescending(n => n.CreatedAt)
             .ToListAsync(cancellationToken);

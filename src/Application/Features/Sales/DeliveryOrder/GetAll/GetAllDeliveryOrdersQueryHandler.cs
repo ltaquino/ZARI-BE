@@ -14,7 +14,7 @@ public sealed class GetAllDeliveryOrdersQueryHandler(IAppDbContext dbContext, IP
         if (!await permissionService.HasPermissionAsync("DELIVERIES", FormAction.View, cancellationToken))
             return Result.Failure<List<DeliveryOrderResponse>>(Error.Forbidden("DeliveryOrder.Forbidden", "You do not have permission to view deliveries."));
 
-        var orders = await dbContext.DeliveryOrders
+        var orders = await dbContext.DeliveryOrders.AsNoTracking()
             .Include(d => d.Customer)
             .Include(d => d.Lines).ThenInclude(l => l.Item)
             .Include(d => d.Lines).ThenInclude(l => l.Uom)

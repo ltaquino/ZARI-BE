@@ -9,7 +9,7 @@ public sealed class ListStockBalancesQueryHandler(IAppDbContext dbContext) : IQu
 {
     public async Task<Result<List<StockBalanceResponse>>> HandleAsync(ListStockBalancesQuery query, CancellationToken cancellationToken = default)
     {
-        var balances = await dbContext.StockBalances
+        var balances = await dbContext.StockBalances.AsNoTracking()
             .OrderByDescending(b => b.LastMovementDate)
             .Select(b => new StockBalanceResponse(b.Id, b.ItemId, b.BranchId, b.WarehouseId, b.BatchNo, b.QtyOnHand, b.AvgUnitCost, b.TotalValue, b.LastMovementDate))
             .ToListAsync(cancellationToken);

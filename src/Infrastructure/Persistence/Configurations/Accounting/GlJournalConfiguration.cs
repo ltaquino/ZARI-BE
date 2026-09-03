@@ -39,6 +39,8 @@ public sealed class GlJournalConfiguration : BaseModelConfig, IEntityTypeConfigu
         // The lookup pattern reverseJournalsFor(sourceReferenceTable, sourceReferenceId) runs on
         // every document cancellation-approval — this index is what keeps that a point lookup.
         builder.HasIndex(j => new { j.SourceReferenceTable, j.SourceReferenceId });
+        builder.HasIndex(j => new { j.BranchId, j.JournalDate });
+        builder.HasIndex(j => j.Status);
 
         builder.HasOne(j => j.ReversalOfJournal)
             .WithMany()

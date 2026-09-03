@@ -15,7 +15,7 @@ public sealed class GetAllOutgoingPaymentsQueryHandler(IAppDbContext dbContext, 
         if (!await permissionService.HasPermissionAsync("OUTGOING_PAYMENTS", FormAction.View, cancellationToken))
             return Result.Failure<List<OutgoingPaymentResponse>>(Error.Forbidden("OutgoingPayment.Forbidden", "You do not have permission to view outgoing payments."));
 
-        var payments = await dbContext.OutgoingPayments
+        var payments = await dbContext.OutgoingPayments.AsNoTracking()
             .Include(p => p.Supplier)
             .Include(p => p.BankAccount)
             .Include(p => p.Lines).ThenInclude(l => l.ApInvoice)
