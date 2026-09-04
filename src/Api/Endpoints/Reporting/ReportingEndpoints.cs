@@ -5,6 +5,7 @@ using ZARI.Api.Extensions;
 using ZARI.Api.Reporting;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Reporting.Datasets.Get;
+using ZARI.Application.Features.Reporting.Datasets.Values;
 using ZARI.Application.Features.Reporting.ReportTemplates.Create;
 using ZARI.Application.Features.Reporting.ReportTemplates.Delete;
 using ZARI.Application.Features.Reporting.ReportTemplates.Get;
@@ -28,6 +29,10 @@ public static class ReportingEndpoints
         group.MapGet("/datasets", GetDatasets)
             .WithName("GetReportDatasets")
             .WithSummary("Catalog of datasets the current user may build report templates against");
+
+        group.MapGet("/datasets/{datasetKey}/fields/{fieldKey}/values", GetFieldValues)
+            .WithName("GetReportFieldValues")
+            .WithSummary("Distinct known values for one dataset field, for a searchable filter-value dropdown");
 
         group.MapGet("/templates", GetAllTemplates)
             .WithName("GetAllReportTemplates")
@@ -84,6 +89,17 @@ public static class ReportingEndpoints
         CancellationToken cancellationToken)
     {
         var result = await handler.HandleAsync(new GetReportDatasetsQuery(), cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> GetFieldValues(
+        string datasetKey,
+        string fieldKey,
+        string? search,
+        IQueryHandler<GetReportFieldValuesQuery, Result<List<string>>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new GetReportFieldValuesQuery(datasetKey, fieldKey, search), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 
