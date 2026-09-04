@@ -4,6 +4,7 @@ using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Reporting.Datasets;
+using ZARI.Application.Features.Reporting.ReportTemplates.Shared;
 using ZARI.Domain.Common;
 
 /// <summary>
@@ -19,6 +20,7 @@ using ZARI.Domain.Common;
 public sealed class GetReportFieldValuesQueryHandler(
     IAppDbContext dbContext,
     IPermissionService permissionService,
+    ICurrentUser currentUser,
     IEnumerable<IReportDataset> datasets) : IQueryHandler<GetReportFieldValuesQuery, Result<List<string>>>
 {
     // Cheap enough for "give the user a reasonable set of real values to pick from," not meant to
@@ -48,6 +50,12 @@ public sealed class GetReportFieldValuesQueryHandler(
         List<ReportFilterValue> filters = string.IsNullOrWhiteSpace(query.Search)
             ? []
             : [new ReportFilterValue(query.FieldKey, ReportFilterOperator.Contains, query.Search)];
+
+        // Same always-on branch access enforcement as RunReportTemplateQueryHandler — a filter's
+        // suggested values must never leak values that only exist in a branch the user isn't
+        // assigned to.
+        var branchScopeFilters = await ReportBranchScope.BuildAsync(dbContext, currentUser, dataset, cancellationToken);
+        filters = [.. filters, .. branchScopeFilters];
 
         var request = new ReportDatasetRunRequest(
             ColumnKeys: [query.FieldKey],

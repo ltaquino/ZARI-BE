@@ -80,9 +80,13 @@ public sealed class RunReportTemplateQueryHandler(
             ? orderedColumns.Select(c => c.FieldKey).Union(groupByFieldKeys).ToList()
             : orderedColumns.Select(c => c.FieldKey).ToList();
 
+        // Always-on branch access enforcement — never something the template itself configures or
+        // that a user can see/remove, same as any other server-side authorization check.
+        var branchScopeFilters = await ReportBranchScope.BuildAsync(dbContext, currentUser, dataset, cancellationToken);
+
         var request = new ReportDatasetRunRequest(
             ColumnKeys: columnKeys,
-            Filters: effectiveFilters,
+            Filters: [.. effectiveFilters, .. branchScopeFilters],
             SortFieldKey: sort?.FieldKey,
             SortDescending: sort?.Descending ?? false,
             RowCap: isGrouped ? GroupedRowCap : RowCap);
