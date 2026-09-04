@@ -6,6 +6,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Logging;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
+using QuestPDF.Infrastructure;
 using Scalar.AspNetCore;
 using Serilog;
 using ZARI.Api.Endpoints;
@@ -23,6 +24,10 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     var builder = WebApplication.CreateBuilder(args);
+
+    // Report PDF export (Trial Balance, BIR books, etc.) — Community license: free under
+    // $1M USD annual gross revenue per company, confirmed acceptable for this deployment.
+    QuestPDF.Settings.License = LicenseType.Community;
 
     IdentityModelEventSource.ShowPII = true;
 
@@ -166,6 +171,10 @@ try
     app.MapPosTerminalEndpoints();
     app.MapPosPromoSlideEndpoints();
     app.MapPosSaleEndpoints();
+    app.MapAccountingReportsEndpoints();
+    app.MapPurchasingReportsEndpoints();
+    app.MapSalesReportsEndpoints();
+    app.MapInventoryReportsEndpoints();
     //app.MapGet("/debug-user", (HttpContext ctx) =>
     //{
     //    return new

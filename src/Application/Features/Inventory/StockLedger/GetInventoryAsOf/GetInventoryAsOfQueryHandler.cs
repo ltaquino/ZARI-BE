@@ -28,8 +28,10 @@ public sealed class GetInventoryAsOfQueryHandler(IAppDbContext dbContext) : IQue
 
         var warehouseNames = await dbContext.Warehouses.ToDictionaryAsync(w => w.Id, w => w.Name, cancellationToken);
 
-        // Zero/negative-balance rows are included here — same convention TrialBalanceReportPage
-        // uses (return everything, let the FE's own "show zero balances" toggle decide what's hidden).
+        // Negative-balance rows are still included here — same convention TrialBalanceReportPage
+        // uses (return everything, let the caller's own "show zero balances" toggle decide what's
+        // hidden). Zero-balance rows are dropped unless IncludeZero is set — this used to be a
+        // client-side post-filter (rows.filter(r => r.qtyOnHand !== 0)), now applied server-side.
         var response = candidates
             .GroupBy(l => (l.ItemId, l.WarehouseId, l.BatchNo))
             .Select(g => g.Last())
@@ -39,6 +41,7 @@ public sealed class GetInventoryAsOfQueryHandler(IAppDbContext dbContext) : IQue
                 l.RunningBalanceQty,
                 l.RunningBalanceQty != 0 ? Math.Round(l.RunningBalanceValue / l.RunningBalanceQty, 4) : 0,
                 l.RunningBalanceValue))
+            .Where(l => query.IncludeZero || l.QtyOnHand != 0)
             .OrderBy(l => l.ItemCode)
             .ToList();
 

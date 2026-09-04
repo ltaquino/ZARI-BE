@@ -1,4 +1,6 @@
+using QuestPDF.Fluent;
 using ZARI.Api.Extensions;
+using ZARI.Api.Reporting;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Inventory.StockLedgers.GetBalances;
 using ZARI.Application.Features.Inventory.StockLedgers.GetInventoryAsOf;
@@ -38,9 +40,17 @@ public static class StockLedgerEndpoints
             .WithName("ListStockLedgerEntries")
             .WithSummary("List the movement history for one (item, warehouse, batch)");
 
+        group.MapGet("/entries/pdf", GetLedgerEntriesPdf)
+            .WithName("ListStockLedgerEntriesPdf")
+            .WithSummary("The Stock Card for one (item, warehouse, batch), as a PDF");
+
         group.MapGet("/as-of", GetInventoryAsOf)
             .WithName("GetInventoryAsOf")
             .WithSummary("Reconstruct true point-in-time ending inventory balances as of any date — the BIR Annual Inventory List");
+
+        group.MapGet("/as-of/pdf", GetInventoryAsOfPdf)
+            .WithName("GetInventoryAsOfPdf")
+            .WithSummary("The BIR Annual Inventory List, as a PDF");
     }
 
     private static async Task<IResult> GetBalances(
@@ -65,10 +75,39 @@ public static class StockLedgerEndpoints
     private static async Task<IResult> GetInventoryAsOf(
         DateTimeOffset date,
         string? branchId,
+        bool? includeZero,
         IQueryHandler<GetInventoryAsOfQuery, Result<List<InventoryAsOfLineResponse>>> handler,
         CancellationToken cancellationToken)
     {
-        var result = await handler.HandleAsync(new GetInventoryAsOfQuery(date, branchId), cancellationToken);
+        var result = await handler.HandleAsync(new GetInventoryAsOfQuery(date, branchId, includeZero ?? false), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> GetLedgerEntriesPdf(
+        Guid itemId,
+        Guid warehouseId,
+        string? batchNo,
+        IQueryHandler<ListStockLedgerEntriesQuery, Result<List<StockLedgerEntryResponse>>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new ListStockLedgerEntriesQuery(itemId, warehouseId, batchNo), cancellationToken);
+        if (!result.IsSuccess) return result.ToProblemDetails();
+
+        var bytes = new StockCardDocument(result.Value!).GeneratePdf();
+        return Results.File(bytes, "application/pdf", "stock-card.pdf");
+    }
+
+    private static async Task<IResult> GetInventoryAsOfPdf(
+        DateTimeOffset date,
+        string? branchId,
+        bool? includeZero,
+        IQueryHandler<GetInventoryAsOfQuery, Result<List<InventoryAsOfLineResponse>>> handler,
+        CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(new GetInventoryAsOfQuery(date, branchId, includeZero ?? false), cancellationToken);
+        if (!result.IsSuccess) return result.ToProblemDetails();
+
+        var bytes = new AnnualInventoryListDocument(result.Value!, date).GeneratePdf();
+        return Results.File(bytes, "application/pdf", "annual-inventory-list.pdf");
     }
 }
