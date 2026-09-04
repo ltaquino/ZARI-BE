@@ -707,6 +707,8 @@ public static class AppDbSeeder
             ("POS_TERMINALS", "POS Terminals", "Sales"),
             ("PAYMENT_METHODS", "Payment Methods", "Sales"),
             ("POS_PROMO_SLIDES", "POS Promo Slides", "Sales"),
+
+            ("REPORT_DESIGNER", "Report Designer", "Reporting"),
         ];
 
         var existingCodes = await context.Forms.Select(f => f.Code).ToListAsync();
@@ -783,7 +785,7 @@ public static class AppDbSeeder
             "UOMS", "ITEM_CATEGORIES", "WAREHOUSES", "STORAGE_LOCATIONS", "ITEMS",
             "ADJUSTMENT_REASONS", "ITEM_BRANCH_SETTINGS", "STOCK_RESERVATIONS", "SERIAL_NUMBERS",
             "PURCHASE_RETURN_REASONS", "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES",
-            "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES"
+            "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES", "REPORT_DESIGNER"
         ];
         string[] managerViewOnlyForms =
         [
@@ -814,7 +816,7 @@ public static class AppDbSeeder
             "ITEMS", "ADJUSTMENT_REASONS", "ITEM_BRANCH_SETTINGS", "STOCK_RESERVATIONS",
             "SERIAL_NUMBERS", "APPROVAL_REQUESTS", "NOTIFICATIONS", "SUPPLIERS", "PURCHASE_RETURN_REASONS",
             "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES",
-            "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES"
+            "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES", "REPORT_DESIGNER"
         ];
 
         foreach (var formCode in staffTransactionalForms)

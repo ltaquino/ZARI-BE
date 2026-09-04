@@ -89,6 +89,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<CustomerPaymentTender> CustomerPaymentTenders => Set<CustomerPaymentTender>();
     public DbSet<PosTerminal> PosTerminals => Set<PosTerminal>();
     public DbSet<PosPromoSlide> PosPromoSlides => Set<PosPromoSlide>();
+    public DbSet<ReportTemplate> ReportTemplates => Set<ReportTemplate>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -175,6 +175,7 @@ try
     app.MapPurchasingReportsEndpoints();
     app.MapSalesReportsEndpoints();
     app.MapInventoryReportsEndpoints();
+    app.MapReportingEndpoints();
     //app.MapGet("/debug-user", (HttpContext ctx) =>
     //{
     //    return new
