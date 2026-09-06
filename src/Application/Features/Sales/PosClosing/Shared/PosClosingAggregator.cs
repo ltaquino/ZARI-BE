@@ -48,8 +48,24 @@ internal static class PosClosingAggregator
 
         var floorOrNumber = lastZReading?.LastOrNumber;
 
+        // Any invoice that has actually been issued a BIR OR number counts, regardless of how far
+        // along its payment is — POSTED (nothing paid), PARTIALLY_PAID, PAID (SalesInvoicePaymentBalance's
+        // documented lifecycle) and PENDING_CANCELLATION (still a live, un-reversed sale until an
+        // ApproveSalesInvoiceCancellation actually flips it to CANCELLED) are all still-valid sales.
+        // Only CANCELLED is excluded, even though it keeps its OR number (ApproveSalesInvoiceCancellation
+        // never clears it) — a cancelled sale must never re-appear.
+        //
+        // The original version of this filter checked Status == "POSTED" only, which silently
+        // dropped every invoice the instant it became PARTIALLY_PAID/PAID — i.e. almost every real
+        // POS sale, since checkout pays the invoice off in full immediately. Worse than just
+        // under-reporting the current period: because the cutoff floor is the highest OR number
+        // ever included in a past Z-Reading, once a later invoice's higher OR number closes past a
+        // wrongly-excluded one, that sale's figures are gone from every X/Z-Reading forever, past
+        // and future alike.
         var candidates = await dbContext.SalesInvoices
-            .Where(i => i.BranchId == branchId && i.Status == "POSTED" && i.BirOrSeriesNumber != null)
+            .Where(i => i.BranchId == branchId
+                && (i.Status == "POSTED" || i.Status == "PARTIALLY_PAID" || i.Status == "PAID" || i.Status == "PENDING_CANCELLATION")
+                && i.BirOrSeriesNumber != null)
             .Include(i => i.Lines).ThenInclude(l => l.StatutoryDiscountType)
             .ToListAsync(cancellationToken);
 
