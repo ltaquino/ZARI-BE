@@ -30,6 +30,9 @@ public sealed class CreateItemCommandHandler(IAppDbContext dbContext, IPermissio
                 return Result.Failure<ItemResponse>(Error.NotFound("ItemCategory.NotFound", $"Item category with ID '{command.CategoryId}' was not found."));
         }
 
+        if (command.IsTileDisplay && !command.IsSold)
+            return Result.Failure<ItemResponse>(Error.Validation("Item.TileDisplayRequiresSold", "Tile Display can only be enabled for an item that is also marked Sold."));
+
         var item = new Item
         {
             Code = command.Code,
@@ -44,6 +47,7 @@ public sealed class CreateItemCommandHandler(IAppDbContext dbContext, IPermissio
             IsSold = command.IsSold,
             IsPurchased = command.IsPurchased,
             IsStocked = command.IsStocked,
+            IsTileDisplay = command.IsTileDisplay,
             SalesAccountId = command.SalesAccountId,
             PurchaseAccountId = command.PurchaseAccountId,
             InventoryAccountId = command.InventoryAccountId,
@@ -57,7 +61,7 @@ public sealed class CreateItemCommandHandler(IAppDbContext dbContext, IPermissio
 
         var response = new ItemResponse(
             item.Id, item.Code, item.Name, item.Description, item.CategoryId, item.BaseUomId, item.ItemType, item.CostingMethod,
-            item.IsSerialized, item.IsBatchTracked, item.IsSold, item.IsPurchased, item.IsStocked,
+            item.IsSerialized, item.IsBatchTracked, item.IsSold, item.IsPurchased, item.IsStocked, item.IsTileDisplay,
             item.SalesAccountId, item.PurchaseAccountId, item.InventoryAccountId, item.CogsAccountId,
             item.VatType, item.Status, item.CreatedAt);
 

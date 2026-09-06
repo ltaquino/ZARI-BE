@@ -17,6 +17,7 @@ public sealed record CreateItemCommand(
     bool IsSold,
     bool IsPurchased,
     bool IsStocked,
+    bool IsTileDisplay,
     string? SalesAccountId,
     string? PurchaseAccountId,
     string? InventoryAccountId,

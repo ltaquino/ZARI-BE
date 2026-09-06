@@ -78,7 +78,7 @@ public static class ItemEndpoints
     {
         var command = new UpdateItemCommand(
             id, request.Code, request.Name, request.Description, request.CategoryId, request.BaseUomId, request.ItemType, request.CostingMethod,
-            request.IsSerialized, request.IsBatchTracked, request.IsSold, request.IsPurchased, request.IsStocked,
+            request.IsSerialized, request.IsBatchTracked, request.IsSold, request.IsPurchased, request.IsStocked, request.IsTileDisplay,
             request.SalesAccountId, request.PurchaseAccountId, request.InventoryAccountId, request.CogsAccountId, request.VatType, request.Status);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
@@ -109,6 +109,7 @@ public sealed record UpdateItemRequest(
     bool IsSold,
     bool IsPurchased,
     bool IsStocked,
+    bool IsTileDisplay,
     string? SalesAccountId,
     string? PurchaseAccountId,
     string? InventoryAccountId,

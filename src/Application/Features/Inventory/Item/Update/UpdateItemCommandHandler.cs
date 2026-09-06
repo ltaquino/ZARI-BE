@@ -32,6 +32,9 @@ public sealed class UpdateItemCommandHandler(IAppDbContext dbContext, IPermissio
                 return Result.Failure(Error.NotFound("ItemCategory.NotFound", $"Item category with ID '{command.CategoryId}' was not found."));
         }
 
+        if (command.IsTileDisplay && !command.IsSold)
+            return Result.Failure(Error.Validation("Item.TileDisplayRequiresSold", "Tile Display can only be enabled for an item that is also marked Sold."));
+
         item.Code = command.Code;
         item.Name = command.Name;
         item.Description = command.Description;
@@ -44,6 +47,7 @@ public sealed class UpdateItemCommandHandler(IAppDbContext dbContext, IPermissio
         item.IsSold = command.IsSold;
         item.IsPurchased = command.IsPurchased;
         item.IsStocked = command.IsStocked;
+        item.IsTileDisplay = command.IsTileDisplay;
         item.SalesAccountId = command.SalesAccountId;
         item.PurchaseAccountId = command.PurchaseAccountId;
         item.InventoryAccountId = command.InventoryAccountId;

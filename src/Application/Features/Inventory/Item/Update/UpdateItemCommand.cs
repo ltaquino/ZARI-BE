@@ -16,6 +16,7 @@ public sealed record UpdateItemCommand(
     bool IsSold,
     bool IsPurchased,
     bool IsStocked,
+    bool IsTileDisplay,
     string? SalesAccountId,
     string? PurchaseAccountId,
     string? InventoryAccountId,

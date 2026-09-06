@@ -19,6 +19,12 @@ public sealed class Item : AuditableEntity
     public bool IsPurchased { get; set; }
     public bool IsStocked { get; set; }
 
+    // Tags this item to appear as a tappable tile on the POS Mode "Menu" grid (cafe/restaurant-style
+    // ordering) instead of only being reachable by scanning/typing its code — always a sub-flag of
+    // IsSold, enforced in Create/UpdateItemCommandHandler (there's nothing to tile-display if the
+    // item isn't sellable in the first place).
+    public bool IsTileDisplay { get; set; }
+
     // GL account references — the Accounting module isn't a backend entity yet,
     // so these stay plain strings (not Guid/FK) until it exists.
     public string? SalesAccountId { get; set; }
