@@ -83,6 +83,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<SalesReturn> SalesReturns => Set<SalesReturn>();
     public DbSet<SalesReturnLine> SalesReturnLines => Set<SalesReturnLine>();
     public DbSet<DiscountRule> DiscountRules => Set<DiscountRule>();
+    public DbSet<DiscountRuleItem> DiscountRuleItems => Set<DiscountRuleItem>();
     public DbSet<StatutoryDiscountType> StatutoryDiscountTypes => Set<StatutoryDiscountType>();
     public DbSet<ZReading> ZReadings => Set<ZReading>();
     public DbSet<PaymentMethod> PaymentMethods => Set<PaymentMethod>();

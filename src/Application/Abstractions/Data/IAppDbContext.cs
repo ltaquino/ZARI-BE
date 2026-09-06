@@ -86,6 +86,7 @@ public interface IAppDbContext
     DbSet<SalesReturn> SalesReturns { get; }
     DbSet<SalesReturnLine> SalesReturnLines { get; }
     DbSet<DiscountRule> DiscountRules { get; }
+    DbSet<DiscountRuleItem> DiscountRuleItems { get; }
     DbSet<StatutoryDiscountType> StatutoryDiscountTypes { get; }
     DbSet<ZReading> ZReadings { get; }
     DbSet<PaymentMethod> PaymentMethods { get; }

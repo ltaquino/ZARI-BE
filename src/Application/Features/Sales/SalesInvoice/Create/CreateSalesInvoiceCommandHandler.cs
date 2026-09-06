@@ -102,6 +102,20 @@ public sealed class CreateSalesInvoiceCommandHandler(
         if (command.CostCenterId.HasValue && !await dbContext.CostCenters.AnyAsync(c => c.Id == command.CostCenterId.Value, cancellationToken))
             return Result.Failure<SalesInvoiceResponse>(Error.NotFound("CostCenter.NotFound", $"Cost center with ID '{command.CostCenterId}' was not found."));
 
+        // A discretionary discount can only land on a SKU an active DiscountRule actually covers —
+        // statutory-discount lines are a separate mechanism and never reach here with a DiscountPct.
+        var activeDiscountRules = await DiscountEligibility.GetActiveRulesAsync(dbContext, command.BranchId, cancellationToken);
+        var discountAsOfDate = DateOnly.FromDateTime(command.InvoiceDate.Date);
+        var discountIneligibleCodes = command.Lines
+            .Where(l => !l.StatutoryDiscountTypeId.HasValue && l.DiscountPct > 0
+                && !DiscountEligibility.IsEligible(activeDiscountRules, l.ItemId, items[l.ItemId].CategoryId, discountAsOfDate, l.Qty))
+            .Select(l => items[l.ItemId].Code)
+            .Distinct()
+            .ToList();
+        if (discountIneligibleCodes.Count > 0)
+            return Result.Failure<SalesInvoiceResponse>(Error.Validation("SalesInvoice.DiscountNotAllowedForItem",
+                $"A discount can't be applied to these items — no active discount rule covers them: {string.Join(", ", discountIneligibleCodes)}."));
+
         var numberResult = await nextDocumentNumberHandler.HandleAsync(new GetNextDocumentNumberCommand(command.BranchId, "SINV"), cancellationToken);
         if (!numberResult.IsSuccess)
             return Result.Failure<SalesInvoiceResponse>(numberResult.Error!);

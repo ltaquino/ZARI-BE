@@ -76,7 +76,7 @@ public static class DiscountRuleEndpoints
         ICommandHandler<UpdateDiscountRuleCommand, Result> handler,
         CancellationToken cancellationToken)
     {
-        var command = new UpdateDiscountRuleCommand(id, request.Code, request.Name, request.Scope, request.ItemId, request.ItemCategoryId,
+        var command = new UpdateDiscountRuleCommand(id, request.Code, request.Name, request.Scope, request.ItemIds, request.ItemCategoryId,
             request.DiscountType, request.DiscountValue, request.MinQty, request.StartDate, request.EndDate, request.BranchId, request.Priority, request.Status);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
@@ -98,7 +98,7 @@ public sealed record UpdateDiscountRuleRequest(
     string Code,
     string Name,
     string Scope,
-    Guid? ItemId,
+    List<Guid> ItemIds,
     Guid? ItemCategoryId,
     string DiscountType,
     decimal DiscountValue,

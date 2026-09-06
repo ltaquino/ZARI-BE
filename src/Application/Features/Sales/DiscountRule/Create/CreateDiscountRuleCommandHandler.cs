@@ -19,11 +19,12 @@ public sealed class CreateDiscountRuleCommandHandler(IAppDbContext dbContext, IP
         if (codeExists)
             return Result.Failure<DiscountRuleResponse>(Error.Conflict("DiscountRule.DuplicateCode", $"A discount rule with code '{command.Code}' already exists."));
 
-        if (command.ItemId is not null)
+        var itemIds = (command.ItemIds ?? []).Distinct().ToList();
+        if (itemIds.Count > 0)
         {
-            var itemExists = await dbContext.Items.AnyAsync(i => i.Id == command.ItemId, cancellationToken);
-            if (!itemExists)
-                return Result.Failure<DiscountRuleResponse>(Error.NotFound("Item.NotFound", $"Item with ID '{command.ItemId}' was not found."));
+            var foundCount = await dbContext.Items.CountAsync(i => itemIds.Contains(i.Id), cancellationToken);
+            if (foundCount != itemIds.Count)
+                return Result.Failure<DiscountRuleResponse>(Error.NotFound("Item.NotFound", "One or more items on this discount rule were not found."));
         }
 
         if (command.ItemCategoryId is not null)
@@ -45,7 +46,7 @@ public sealed class CreateDiscountRuleCommandHandler(IAppDbContext dbContext, IP
             Code = command.Code,
             Name = command.Name,
             Scope = command.Scope,
-            ItemId = command.ItemId,
+            Items = itemIds.Select(id => new DiscountRuleItem { ItemId = id }).ToList(),
             ItemCategoryId = command.ItemCategoryId,
             DiscountType = command.DiscountType,
             DiscountValue = command.DiscountValue,
@@ -60,7 +61,7 @@ public sealed class CreateDiscountRuleCommandHandler(IAppDbContext dbContext, IP
         dbContext.DiscountRules.Add(rule);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var response = new DiscountRuleResponse(rule.Id, rule.Code, rule.Name, rule.Scope, rule.ItemId, rule.ItemCategoryId, rule.DiscountType, rule.DiscountValue,
+        var response = new DiscountRuleResponse(rule.Id, rule.Code, rule.Name, rule.Scope, rule.Items.Select(i => i.ItemId).ToList(), rule.ItemCategoryId, rule.DiscountType, rule.DiscountValue,
             rule.MinQty, rule.StartDate, rule.EndDate, rule.BranchId, rule.Priority, rule.Status, rule.CreatedAt);
         return Result.Success(response);
     }

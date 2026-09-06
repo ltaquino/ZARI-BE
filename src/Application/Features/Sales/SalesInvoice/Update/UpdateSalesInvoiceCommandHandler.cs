@@ -7,6 +7,7 @@ using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Sales.SalesInvoices.Create;
 using ZARI.Application.Features.Sales.SalesInvoices.GetAll;
 using ZARI.Application.Features.Sales.SalesInvoices.Shared;
+using ZARI.Application.Features.Sales.Shared;
 using ZARI.Application.Features.Workflow.Notifications.Create;
 using ZARI.Application.Features.Workflow.Notifications.GetAll;
 using ZARI.Domain.Common;
@@ -91,6 +92,20 @@ public sealed class UpdateSalesInvoiceCommandHandler(
 
         if (command.CostCenterId.HasValue && !await dbContext.CostCenters.AnyAsync(c => c.Id == command.CostCenterId.Value, cancellationToken))
             return Result.Failure<SalesInvoiceResponse>(Error.NotFound("CostCenter.NotFound", $"Cost center with ID '{command.CostCenterId}' was not found."));
+
+        // Same SKU-eligibility gate as CreateSalesInvoiceCommandHandler — a still-DRAFT invoice can
+        // have its lines' discounts edited right up until it's posted, so this needs its own check.
+        var activeDiscountRules = await DiscountEligibility.GetActiveRulesAsync(dbContext, command.BranchId, cancellationToken);
+        var discountAsOfDate = DateOnly.FromDateTime(command.InvoiceDate.Date);
+        var discountIneligibleCodes = command.Lines
+            .Where(l => !l.StatutoryDiscountTypeId.HasValue && l.DiscountPct > 0
+                && !DiscountEligibility.IsEligible(activeDiscountRules, l.ItemId, items[l.ItemId].CategoryId, discountAsOfDate, l.Qty))
+            .Select(l => items[l.ItemId].Code)
+            .Distinct()
+            .ToList();
+        if (discountIneligibleCodes.Count > 0)
+            return Result.Failure<SalesInvoiceResponse>(Error.Validation("SalesInvoice.DiscountNotAllowedForItem",
+                $"A discount can't be applied to these items — no active discount rule covers them: {string.Join(", ", discountIneligibleCodes)}."));
 
         invoice.BranchId = command.BranchId;
         invoice.CustomerId = command.CustomerId;

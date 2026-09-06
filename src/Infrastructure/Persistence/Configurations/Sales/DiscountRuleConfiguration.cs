@@ -21,11 +21,10 @@ public sealed class DiscountRuleConfiguration : BaseModelConfig, IEntityTypeConf
 
         builder.HasIndex(r => r.Code).IsUnique();
 
-        builder.HasOne(r => r.Item)
-            .WithMany()
-            .HasForeignKey(r => r.ItemId)
-            .OnDelete(DeleteBehavior.Restrict)
-            .IsRequired(false);
+        builder.HasMany(r => r.Items)
+            .WithOne(i => i.DiscountRule)
+            .HasForeignKey(i => i.DiscountRuleId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(r => r.ItemCategory)
             .WithMany()

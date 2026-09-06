@@ -16,7 +16,7 @@ public sealed class GetAllDiscountRulesQueryHandler(IAppDbContext dbContext, IPe
 
         var items = await dbContext.DiscountRules.AsNoTracking()
             .OrderBy(r => r.Code)
-            .Select(r => new DiscountRuleResponse(r.Id, r.Code, r.Name, r.Scope, r.ItemId, r.ItemCategoryId, r.DiscountType, r.DiscountValue,
+            .Select(r => new DiscountRuleResponse(r.Id, r.Code, r.Name, r.Scope, r.Items.Select(i => i.ItemId).ToList(), r.ItemCategoryId, r.DiscountType, r.DiscountValue,
                 r.MinQty, r.StartDate, r.EndDate, r.BranchId, r.Priority, r.Status, r.CreatedAt))
             .ToListAsync(cancellationToken);
 

@@ -5,12 +5,13 @@ using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
+using ZARI.Domain.Entities;
 
 public sealed class UpdateDiscountRuleCommandHandler(IAppDbContext dbContext, IPermissionService permissionService) : ICommandHandler<UpdateDiscountRuleCommand>
 {
     public async Task<Result> HandleAsync(UpdateDiscountRuleCommand command, CancellationToken cancellationToken = default)
     {
-        var rule = await dbContext.DiscountRules.FindAsync([command.Id], cancellationToken);
+        var rule = await dbContext.DiscountRules.Include(r => r.Items).FirstOrDefaultAsync(r => r.Id == command.Id, cancellationToken);
         if (rule is null)
             return Result.Failure(Error.NotFound("DiscountRule.NotFound", $"Discount rule with ID '{command.Id}' was not found."));
 
@@ -22,11 +23,12 @@ public sealed class UpdateDiscountRuleCommandHandler(IAppDbContext dbContext, IP
         if (duplicateCode)
             return Result.Failure(Error.Conflict("DiscountRule.DuplicateCode", $"A discount rule with code '{command.Code}' already exists."));
 
-        if (command.ItemId is not null)
+        var itemIds = (command.ItemIds ?? []).Distinct().ToList();
+        if (itemIds.Count > 0)
         {
-            var itemExists = await dbContext.Items.AnyAsync(i => i.Id == command.ItemId, cancellationToken);
-            if (!itemExists)
-                return Result.Failure(Error.NotFound("Item.NotFound", $"Item with ID '{command.ItemId}' was not found."));
+            var foundCount = await dbContext.Items.CountAsync(i => itemIds.Contains(i.Id), cancellationToken);
+            if (foundCount != itemIds.Count)
+                return Result.Failure(Error.NotFound("Item.NotFound", "One or more items on this discount rule were not found."));
         }
 
         if (command.ItemCategoryId is not null)
@@ -46,7 +48,9 @@ public sealed class UpdateDiscountRuleCommandHandler(IAppDbContext dbContext, IP
         rule.Code = command.Code;
         rule.Name = command.Name;
         rule.Scope = command.Scope;
-        rule.ItemId = command.ItemId;
+        rule.Items.Clear();
+        foreach (var itemId in itemIds)
+            rule.Items.Add(new DiscountRuleItem { ItemId = itemId });
         rule.ItemCategoryId = command.ItemCategoryId;
         rule.DiscountType = command.DiscountType;
         rule.DiscountValue = command.DiscountValue;

@@ -22,8 +22,8 @@ public sealed class CreateDiscountRuleValidator : AbstractValidator<CreateDiscou
             .Must(s => ValidScopes.Contains(s))
             .WithMessage($"Scope must be one of: {string.Join(", ", ValidScopes)}.");
 
-        RuleFor(x => x.ItemId).NotEmpty().When(x => x.Scope == "ITEM")
-            .WithMessage("ItemId is required when Scope is 'ITEM'.");
+        RuleFor(x => x.ItemIds).Must(ids => ids is { Count: > 0 }).When(x => x.Scope == "ITEM")
+            .WithMessage("At least one item is required when Scope is 'ITEM'.");
         RuleFor(x => x.ItemCategoryId).NotEmpty().When(x => x.Scope == "CATEGORY")
             .WithMessage("ItemCategoryId is required when Scope is 'CATEGORY'.");
 

@@ -8,7 +8,7 @@ public sealed record CreateDiscountRuleCommand(
     string Code,
     string Name,
     string Scope,
-    Guid? ItemId,
+    List<Guid> ItemIds,
     Guid? ItemCategoryId,
     string DiscountType,
     decimal DiscountValue,

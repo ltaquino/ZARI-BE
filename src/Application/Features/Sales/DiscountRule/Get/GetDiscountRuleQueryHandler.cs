@@ -15,7 +15,7 @@ public sealed class GetDiscountRuleQueryHandler(IAppDbContext dbContext, IPermis
 
         var rule = await dbContext.DiscountRules
             .Where(r => r.Id == query.Id)
-            .Select(r => new DiscountRuleResponse(r.Id, r.Code, r.Name, r.Scope, r.ItemId, r.ItemCategoryId, r.DiscountType, r.DiscountValue,
+            .Select(r => new DiscountRuleResponse(r.Id, r.Code, r.Name, r.Scope, r.Items.Select(i => i.ItemId).ToList(), r.ItemCategoryId, r.DiscountType, r.DiscountValue,
                 r.MinQty, r.StartDate, r.EndDate, r.BranchId, r.Priority, r.Status, r.CreatedAt))
             .FirstOrDefaultAsync(cancellationToken);
 

@@ -10,7 +10,7 @@ public sealed record DiscountRuleResponse(
     string Code,
     string Name,
     string Scope,
-    Guid? ItemId,
+    List<Guid> ItemIds,
     Guid? ItemCategoryId,
     string DiscountType,
     decimal DiscountValue,
