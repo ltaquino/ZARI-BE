@@ -48,6 +48,7 @@ public sealed class CreateItemCommandHandler(IAppDbContext dbContext, IPermissio
             IsPurchased = command.IsPurchased,
             IsStocked = command.IsStocked,
             IsTileDisplay = command.IsTileDisplay,
+            AllowNegativeStock = command.AllowNegativeStock,
             SalesAccountId = command.SalesAccountId,
             PurchaseAccountId = command.PurchaseAccountId,
             InventoryAccountId = command.InventoryAccountId,
@@ -61,7 +62,7 @@ public sealed class CreateItemCommandHandler(IAppDbContext dbContext, IPermissio
 
         var response = new ItemResponse(
             item.Id, item.Code, item.Name, item.Description, item.CategoryId, item.BaseUomId, item.ItemType, item.CostingMethod,
-            item.IsSerialized, item.IsBatchTracked, item.IsSold, item.IsPurchased, item.IsStocked, item.IsTileDisplay,
+            item.IsSerialized, item.IsBatchTracked, item.IsSold, item.IsPurchased, item.IsStocked, item.IsTileDisplay, item.AllowNegativeStock,
             item.SalesAccountId, item.PurchaseAccountId, item.InventoryAccountId, item.CogsAccountId,
             item.VatType, item.Status, item.CreatedAt);
 

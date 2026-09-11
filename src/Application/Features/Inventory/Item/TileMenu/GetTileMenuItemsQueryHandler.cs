@@ -34,7 +34,7 @@ public sealed class GetTileMenuItemsQueryHandler(IAppDbContext dbContext, IPermi
             .Select(t => new TileMenuItemResponse(
                 new ItemResponse(
                     t.Item.Id, t.Item.Code, t.Item.Name, t.Item.Description, t.Item.CategoryId, t.Item.BaseUomId, t.Item.ItemType, t.Item.CostingMethod,
-                    t.Item.IsSerialized, t.Item.IsBatchTracked, t.Item.IsSold, t.Item.IsPurchased, t.Item.IsStocked, t.Item.IsTileDisplay,
+                    t.Item.IsSerialized, t.Item.IsBatchTracked, t.Item.IsSold, t.Item.IsPurchased, t.Item.IsStocked, t.Item.IsTileDisplay, t.Item.AllowNegativeStock,
                     t.Item.SalesAccountId, t.Item.PurchaseAccountId, t.Item.InventoryAccountId, t.Item.CogsAccountId,
                     t.Item.VatType, t.Item.Status, t.Item.CreatedAt),
                 t.Setting.SellingPrice ?? 0))

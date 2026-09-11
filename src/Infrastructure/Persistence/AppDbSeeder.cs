@@ -23,23 +23,23 @@ public static class AppDbSeeder
         await SeedRolesAsync(roleManager, logger);
         await SeedBranchesAsync(context, logger);
         await SeedDemoUsersAsync(userManager, passwordHasher, context, logger);
-        //await SeedUomsAsync(context, logger);
-        //await SeedItemCategoriesAsync(context, logger);
-        //await SeedWarehousesAsync(context, logger);
+        await SeedUomsAsync(context, logger);
+        await SeedItemCategoriesAsync(context, logger);
+        await SeedWarehousesAsync(context, logger);
         await SeedAdjustmentReasonsAsync(context, logger);
         await SeedDocumentSequencesAsync(context, logger);
         await SeedGlAccountsAsync(context, logger);
         await SeedCostCentersAsync(context, logger);
         await SeedCurrenciesAsync(context, logger);
         await SeedCompanyAsync(context, logger);
-        //await SeedFiscalYearsAsync(context, logger);
+        await SeedFiscalYearsAsync(context, logger);
         await SeedExchangeRatesAsync(context, logger);
-        //await SeedBankAccountsAsync(context, logger);
-        //await SeedSuppliersAsync(context, logger);
-        //await SeedPurchaseOrdersAsync(context, logger);
+        await SeedBankAccountsAsync(context, logger);
+        await SeedSuppliersAsync(context, logger);
+        await SeedPurchaseOrdersAsync(context, logger);
         await SeedStatutoryDiscountTypesAsync(context, logger);
-        //await SeedPaymentMethodsAsync(context, logger);
-        //await SeedWalkInCustomersAsync(context, logger);
+        await SeedPaymentMethodsAsync(context, logger);
+        await SeedWalkInCustomersAsync(context, logger);
         await SeedFormsAsync(context, logger);
         await SeedRolePermissionsAsync(context, roleManager, logger);
     }
@@ -71,14 +71,14 @@ public static class AppDbSeeder
     {
         (string Email, string FirstName, string LastName, string Phone, string Role, string[] BranchIds)[] demoUsers =
         [
-            ("admin@zari.coop", "Maria", "Santos", "+63 917 111 2222", "Admin", ["br-hq"]),
-            //("admin@zari.coop", "Maria", "Santos", "+63 917 111 2222", "Admin", ["br-hq", "br-north", "br-south", "br-east"]),
-            //("manager@zari.coop", "Carlo", "Reyes", "+63 918 222 3333", "Manager", ["br-north"]),
-            //("ana.lopez@zari.coop", "Ana", "Lopez", "+63 919 333 4444", "Staff", ["br-south"]),
-            //("rico.tan@zari.coop", "Rico", "Tan", "+63 920 444 5555", "Staff", ["br-east"]),
-            //("staff.north@zari.coop", "Jenny", "Cruz", "+63 921 555 6666", "Staff", ["br-north"]),
-            //("manager.hq@zari.coop", "Bea", "Santos", "+63 922 666 7777", "Manager", ["br-hq"]),
-            //("staff.hq@zari.coop", "Miguel", "Torres", "+63 923 777 8888", "Staff", ["br-hq"]),
+            //("admin@zari.coop", "Maria", "Santos", "+63 917 111 2222", "Admin", ["br-hq"]),
+            ("admin@zari.coop", "Maria", "Santos", "+63 917 111 2222", "Admin", ["br-hq", "br-north", "br-south", "br-east"]),
+            ("manager@zari.coop", "Carlo", "Reyes", "+63 918 222 3333", "Manager", ["br-north"]),
+            ("ana.lopez@zari.coop", "Ana", "Lopez", "+63 919 333 4444", "Staff", ["br-south"]),
+            ("rico.tan@zari.coop", "Rico", "Tan", "+63 920 444 5555", "Staff", ["br-east"]),
+            ("staff.north@zari.coop", "Jenny", "Cruz", "+63 921 555 6666", "Staff", ["br-north"]),
+            ("manager.hq@zari.coop", "Bea", "Santos", "+63 922 666 7777", "Manager", ["br-hq"]),
+            ("staff.hq@zari.coop", "Miguel", "Torres", "+63 923 777 8888", "Staff", ["br-hq"]),
         ];
 
         // "zari123" fails the real signup password policy (no uppercase) — seeded directly via the
@@ -128,9 +128,9 @@ public static class AppDbSeeder
 
         context.Branches.AddRange(
             new Branch { Id = "br-hq", Name = "Head Office", Code = "HQ", City = "Cebu City", Address = "Osmena Blvd, Cebu City", Phone = "+63 32 111 2222", Status = "active", IsHeadOffice = true }
-            //new Branch { Id = "br-north", Name = "North Branch", Code = "NB", City = "Mandaue City", Address = "A.S. Fortuna St, Mandaue City", Phone = "+63 32 222 3333", Status = "active", IsHeadOffice = false },
-            //new Branch { Id = "br-south", Name = "South Branch", Code = "SB", City = "Talisay City", Address = "Tabunok, Talisay City", Phone = "+63 32 333 4444", Status = "active", IsHeadOffice = false },
-            //new Branch { Id = "br-east", Name = "East Branch", Code = "EB", City = "Lapu-Lapu City", Address = "Pusok, Lapu-Lapu City", Phone = "+63 32 444 5555", Status = "active", IsHeadOffice = false } 
+            new Branch { Id = "br-north", Name = "North Branch", Code = "NB", City = "Mandaue City", Address = "A.S. Fortuna St, Mandaue City", Phone = "+63 32 222 3333", Status = "active", IsHeadOffice = false },
+            new Branch { Id = "br-south", Name = "South Branch", Code = "SB", City = "Talisay City", Address = "Tabunok, Talisay City", Phone = "+63 32 333 4444", Status = "active", IsHeadOffice = false },
+            new Branch { Id = "br-east", Name = "East Branch", Code = "EB", City = "Lapu-Lapu City", Address = "Pusok, Lapu-Lapu City", Phone = "+63 32 444 5555", Status = "active", IsHeadOffice = false } 
             );
 
         await context.SaveChangesAsync();

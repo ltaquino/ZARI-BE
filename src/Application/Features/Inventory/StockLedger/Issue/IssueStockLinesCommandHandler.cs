@@ -80,6 +80,8 @@ public sealed class IssueStockLinesCommandHandler(IAppDbContext dbContext)
 
             foreach (var (key, qty) in demandByKey)
             {
+                if (items[key.ItemId].AllowNegativeStock) continue;
+
                 var onHand = StockBalanceLocker.CandidateBalances(lockedRows, key.ItemId, key.WarehouseId, key.BatchNo).Sum(b => b.QtyOnHand);
                 if (onHand < qty)
                 {
@@ -111,6 +113,8 @@ public sealed class IssueStockLinesCommandHandler(IAppDbContext dbContext)
 
             foreach (var (iwKey, qty) in demandByItemWarehouse)
             {
+                if (items[iwKey.ItemId].AllowNegativeStock) continue;
+
                 var totalOnHand = lockedRows.Where(b => b.ItemId == iwKey.ItemId && b.WarehouseId == iwKey.WarehouseId).Sum(b => b.QtyOnHand);
                 var reserved = reservedByItemWarehouse.GetValueOrDefault(iwKey);
                 var availableForIssue = Math.Max(totalOnHand - reserved, 0);
@@ -141,8 +145,8 @@ public sealed class IssueStockLinesCommandHandler(IAppDbContext dbContext)
                 }
 
                 var applyResult = item.CostingMethod == "Fifo"
-                    ? ApplyFifoIssue(lockedRows, costLayers, item, line, batchNo)
-                    : ApplyAvgIssue(lockedRows, item, line, batchNo);
+                    ? ApplyFifoIssue(dbContext, lockedRows, costLayers, item, line, batchNo)
+                    : ApplyAvgIssue(dbContext, lockedRows, item, line, batchNo);
 
                 if (applyResult.IsFailure)
                     return Result.Failure<IssueStockLinesResponse>(applyResult.Error!);
@@ -186,6 +190,7 @@ public sealed class IssueStockLinesCommandHandler(IAppDbContext dbContext)
     private readonly record struct IssueLineResult(decimal UnitCost, string? ConsumptionsJson, string? BalanceDrawsJson, decimal RunningQty, decimal RunningValue);
 
     private static Result<IssueLineResult> ApplyFifoIssue(
+        IAppDbContext dbContext,
         List<StockBalance> lockedRows,
         List<CostLayer> costLayers,
         Item item,
@@ -216,11 +221,34 @@ public sealed class IssueStockLinesCommandHandler(IAppDbContext dbContext)
             layer.QtyRemaining -= take;
         }
 
+        // Captured now (before the real-draw balance mutation below touches anything) so a
+        // fallback cost read from an existing bucket reflects its cost basis pre-mutation, and
+        // applied only after that loop so we never double-decrement the same balance row if the
+        // shortfall lands on a bucket that was also partially drawn from via real cost layers.
+        decimal shortfallQty = 0;
+        decimal shortfallCost = 0;
+        StockBalance? shortfallTarget = null;
+
         if (remaining > 0.0001m)
         {
-            return Result.Failure<IssueLineResult>(Error.Failure(
-                "StockLedger.InsufficientCostLayers",
-                $"Insufficient FIFO cost layers for {item.Code} to cover this quantity — stock data may be out of sync."));
+            if (!item.AllowNegativeStock)
+            {
+                return Result.Failure<IssueLineResult>(Error.Failure(
+                    "StockLedger.InsufficientCostLayers",
+                    $"Insufficient FIFO cost layers for {item.Code} to cover this quantity — stock data may be out of sync."));
+            }
+
+            // No cost layer left to draw from — cost the shortfall at the last real layer consumed
+            // for this line, or this bucket's own AvgUnitCost if no layer was ever consumed, or 0
+            // for a genuinely-never-costed item/batch.
+            shortfallQty = remaining;
+            shortfallTarget = candidates.Count > 0
+                ? candidates[^1]
+                : StockBalanceLocker.GetOrCreate(dbContext, lockedRows, line.ItemId, line.BranchId, line.WarehouseId, batchNo);
+            shortfallCost = used.Count > 0 ? eligibleLayers.First(l => l.Id == used[^1].LayerId).UnitCost : shortfallTarget.AvgUnitCost;
+
+            totalCost += shortfallQty * shortfallCost;
+            remaining = 0;
         }
 
         var unitCost = totalCost / line.Qty;
@@ -245,7 +273,19 @@ public sealed class IssueStockLinesCommandHandler(IAppDbContext dbContext)
             balance.LastMovementDate = line.TransactionDate;
         }
 
-        var postTotals = StockBalanceLocker.CandidateBalances(lockedRows,line.ItemId, line.WarehouseId, batchNo);
+        if (shortfallTarget is not null)
+        {
+            var newQty = shortfallTarget.QtyOnHand - shortfallQty;
+            var newValue = shortfallTarget.TotalValue - shortfallQty * shortfallCost;
+            shortfallTarget.QtyOnHand = newQty;
+            shortfallTarget.TotalValue = newValue;
+            shortfallTarget.AvgUnitCost = newQty != 0 ? newValue / newQty : shortfallCost;
+            shortfallTarget.LastMovementDate = line.TransactionDate;
+        }
+
+        // onlyPositive: false — a negative bucket (possible now with AllowNegativeStock) must still
+        // count toward the reported running balance, not be silently excluded from it.
+        var postTotals = StockBalanceLocker.CandidateBalances(lockedRows, line.ItemId, line.WarehouseId, batchNo, onlyPositive: false);
         var runningQty = postTotals.Sum(b => b.QtyOnHand);
         var runningValue = postTotals.Sum(b => b.TotalValue);
 
@@ -257,7 +297,7 @@ public sealed class IssueStockLinesCommandHandler(IAppDbContext dbContext)
             runningValue));
     }
 
-    private static Result<IssueLineResult> ApplyAvgIssue(List<StockBalance> lockedRows, Item item, IssueStockLineItem line, string? batchNo)
+    private static Result<IssueLineResult> ApplyAvgIssue(IAppDbContext dbContext, List<StockBalance> lockedRows, Item item, IssueStockLineItem line, string? batchNo)
     {
         var candidates = StockBalanceLocker.CandidateBalances(lockedRows,line.ItemId, line.WarehouseId, batchNo);
 
@@ -280,9 +320,41 @@ public sealed class IssueStockLinesCommandHandler(IAppDbContext dbContext)
             balance.LastMovementDate = line.TransactionDate;
         }
 
+        if (remaining > 0.0001m)
+        {
+            if (!item.AllowNegativeStock)
+            {
+                return Result.Failure<IssueLineResult>(Error.Failure(
+                    "StockLedger.InsufficientStock",
+                    $"Insufficient stock for {item.Code} to cover this quantity."));
+            }
+
+            // Same shortfall handling as ApplyFifoIssue: draw whatever real supply existed above,
+            // then cost the rest at the last-drawn bucket's own AvgUnitCost (0 for a bucket that
+            // never had a cost basis) and let that bucket's QtyOnHand go negative.
+            var target = candidates.Count > 0
+                ? candidates[^1]
+                : StockBalanceLocker.GetOrCreate(dbContext, lockedRows, line.ItemId, line.BranchId, line.WarehouseId, batchNo);
+            var shortfallCost = target.AvgUnitCost;
+
+            draws.Add(new BalanceDrawDto(target.BatchNo, remaining, shortfallCost));
+            totalCost += remaining * shortfallCost;
+
+            var newQty = target.QtyOnHand - remaining;
+            var newValue = target.TotalValue - remaining * shortfallCost;
+            target.QtyOnHand = newQty;
+            target.TotalValue = newValue;
+            target.AvgUnitCost = newQty != 0 ? newValue / newQty : shortfallCost;
+            target.LastMovementDate = line.TransactionDate;
+
+            remaining = 0;
+        }
+
         var unitCost = line.Qty > 0 ? totalCost / line.Qty : 0;
 
-        var postTotals = StockBalanceLocker.CandidateBalances(lockedRows,line.ItemId, line.WarehouseId, batchNo);
+        // onlyPositive: false — a negative bucket (possible now with AllowNegativeStock) must still
+        // count toward the reported running balance, not be silently excluded from it.
+        var postTotals = StockBalanceLocker.CandidateBalances(lockedRows, line.ItemId, line.WarehouseId, batchNo, onlyPositive: false);
         var runningQty = postTotals.Sum(b => b.QtyOnHand);
         var runningValue = postTotals.Sum(b => b.TotalValue);
 
