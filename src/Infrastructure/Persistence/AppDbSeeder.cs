@@ -720,13 +720,15 @@ public static class AppDbSeeder
 
             ("REPORT_DESIGNER", "Report Designer", "Reporting"),
 
-            // Loan module (ZARI-FE/frs/loan/LoanModuleContext.md) — build-order steps 2-7 so far;
+            // Loan module (ZARI-FE/frs/loan/LoanModuleContext.md) — build-order steps 2-9 so far;
             // the rest are added as each later step lands.
             ("LOAN_PRODUCTS", "Loan Products", "Loan"),
             ("LOAN_APPLICATIONS", "Loan Applications", "Loan"),
             ("LOAN_ACCOUNTS", "Loan Accounts", "Loan"),
             ("LOAN_DISBURSEMENTS", "Loan Disbursements", "Loan"),
             ("LOAN_PAYMENTS", "Loan Payments", "Loan"),
+            ("LOAN_RESTRUCTURINGS", "Loan Restructurings", "Loan"),
+            ("LOAN_WRITE_OFFS", "Loan Write-offs", "Loan"),
         ];
 
         var existingCodes = await context.Forms.Select(f => f.Code).ToListAsync();
@@ -797,7 +799,7 @@ public static class AppDbSeeder
             "PURCHASE_REQUESTS", "GOODS_RECEIPT_PO", "GOODS_RETURNS", "AP_INVOICES", "OUTGOING_PAYMENTS",
             "MANUAL_JOURNAL_ENTRIES",
             "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING", "POS_MODE",
-            "LOAN_APPLICATIONS", "LOAN_ACCOUNTS", "LOAN_DISBURSEMENTS", "LOAN_PAYMENTS"
+            "LOAN_APPLICATIONS", "LOAN_ACCOUNTS", "LOAN_DISBURSEMENTS", "LOAN_PAYMENTS", "LOAN_RESTRUCTURINGS", "LOAN_WRITE_OFFS"
         ];
         string[] managerMasterDataForms =
         [
@@ -828,7 +830,7 @@ public static class AppDbSeeder
             "PURCHASE_REQUESTS", "GOODS_RECEIPT_PO", "GOODS_RETURNS", "AP_INVOICES", "OUTGOING_PAYMENTS",
             "MANUAL_JOURNAL_ENTRIES",
             "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING", "POS_MODE",
-            "LOAN_APPLICATIONS", "LOAN_ACCOUNTS", "LOAN_DISBURSEMENTS", "LOAN_PAYMENTS"
+            "LOAN_APPLICATIONS", "LOAN_ACCOUNTS", "LOAN_DISBURSEMENTS", "LOAN_PAYMENTS", "LOAN_RESTRUCTURINGS", "LOAN_WRITE_OFFS"
         ];
         string[] staffViewOnlyForms =
         [

@@ -182,6 +182,8 @@ try
     app.MapLoanDisbursementEndpoints();
     app.MapLoanPaymentEndpoints();
     app.MapLoanReportsEndpoints();
+    app.MapLoanRestructuringEndpoints();
+    app.MapLoanWriteOffEndpoints();
     //app.MapGet("/debug-user", (HttpContext ctx) =>
     //{
     //    return new

@@ -27,4 +27,13 @@ public interface IPermissionService
     /// RejectCancellation step of the two-tier cancellation flow on posted documents.
     /// </summary>
     Task<bool> HasCancellationAuthorityAsync(string formCode, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Cross-branch approval authority for documents whose main Approve step needs to be elevated
+    /// beyond the document's own branch (e.g. LoanWriteOff — a write-off permanently removes a
+    /// receivable from the books, not just a routine transactional approval): CanApprove on the
+    /// form AND assigned to the HQ branch. Same HQ-branch-assignment shape as
+    /// HasCancellationAuthorityAsync, checked against FormAction.Approve instead of Cancel.
+    /// </summary>
+    Task<bool> HasHqApprovalAuthorityAsync(string formCode, CancellationToken cancellationToken = default);
 }

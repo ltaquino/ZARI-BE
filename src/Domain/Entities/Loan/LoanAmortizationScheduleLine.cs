@@ -29,6 +29,8 @@ public sealed class LoanAmortizationScheduleLine : BaseEntity
     public decimal InterestPaid { get; set; }
     public decimal PenaltyPaid { get; set; }
 
-    /// DUE | PARTIALLY_PAID | PAID
+    /// DUE | PARTIALLY_PAID | PAID | SUPERSEDED (the last set only on lines belonging to an account
+    /// that's been rolled into a LoanRestructuring's new account — the line itself is untouched, just
+    /// no longer payable).
     public string Status { get; set; } = default!;
 }

@@ -104,6 +104,8 @@ public interface IAppDbContext
     DbSet<LoanLedgerEntry> LoanLedgerEntries { get; }
     DbSet<LoanPayment> LoanPayments { get; }
     DbSet<LoanPaymentAllocation> LoanPaymentAllocations { get; }
+    DbSet<LoanRestructuring> LoanRestructurings { get; }
+    DbSet<LoanWriteOff> LoanWriteOffs { get; }
 
     // Exposed only for the stock-ledger posting handlers, which need an explicit transaction plus
     // raw-SQL "FOR UPDATE" locking (see Application/Features/Inventory/StockLedger/Shared/

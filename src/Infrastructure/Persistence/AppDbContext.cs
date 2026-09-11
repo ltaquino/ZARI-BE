@@ -101,6 +101,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<LoanLedgerEntry> LoanLedgerEntries => Set<LoanLedgerEntry>();
     public DbSet<LoanPayment> LoanPayments => Set<LoanPayment>();
     public DbSet<LoanPaymentAllocation> LoanPaymentAllocations => Set<LoanPaymentAllocation>();
+    public DbSet<LoanRestructuring> LoanRestructurings => Set<LoanRestructuring>();
+    public DbSet<LoanWriteOff> LoanWriteOffs => Set<LoanWriteOff>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using ZARI.Infrastructure.Persistence;
 
@@ -11,9 +12,11 @@ using ZARI.Infrastructure.Persistence;
 namespace ZARI.Infrastructure.Persistence.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260911142300_AddLoanRestructuring")]
+    partial class AddLoanRestructuring
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -3204,87 +3207,6 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.HasIndex("BranchId", "RestructureDate");
 
                     b.ToTable("LoanRestructurings");
-                });
-
-            modelBuilder.Entity("ZARI.Domain.Entities.LoanWriteOff", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<decimal>("Amount")
-                        .HasColumnType("DECIMAL(14,4)");
-
-                    b.Property<string>("BranchId")
-                        .IsRequired()
-                        .HasMaxLength(25)
-                        .HasColumnType("varchar(25)");
-
-                    b.Property<string>("CancelReason")
-                        .HasMaxLength(300)
-                        .HasColumnType("varchar(300)");
-
-                    b.Property<DateTimeOffset?>("CancelledAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("CancelledBy")
-                        .HasMaxLength(150)
-                        .HasColumnType("varchar(150)");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("longtext");
-
-                    b.Property<DateTimeOffset?>("LastModifiedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("longtext");
-
-                    b.Property<Guid>("LoanAccountId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("Reason")
-                        .IsRequired()
-                        .HasMaxLength(300)
-                        .HasColumnType("varchar(300)");
-
-                    b.Property<string>("Remarks")
-                        .HasMaxLength(300)
-                        .HasColumnType("varchar(300)");
-
-                    b.Property<string>("Status")
-                        .IsRequired()
-                        .HasMaxLength(25)
-                        .HasColumnType("varchar(25)");
-
-                    b.Property<DateTimeOffset>("WriteOffDate")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<Guid>("WriteOffExpenseAccountId")
-                        .HasColumnType("char(36)");
-
-                    b.Property<string>("WriteOffNo")
-                        .IsRequired()
-                        .HasMaxLength(25)
-                        .HasColumnType("varchar(25)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("LoanAccountId");
-
-                    b.HasIndex("Status");
-
-                    b.HasIndex("WriteOffExpenseAccountId");
-
-                    b.HasIndex("WriteOffNo")
-                        .IsUnique();
-
-                    b.HasIndex("BranchId", "WriteOffDate");
-
-                    b.ToTable("LoanWriteOffs");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.ManualJournalEntry", b =>
@@ -6880,33 +6802,6 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Navigation("NewLoanAccount");
 
                     b.Navigation("OldLoanAccount");
-                });
-
-            modelBuilder.Entity("ZARI.Domain.Entities.LoanWriteOff", b =>
-                {
-                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
-                        .WithMany()
-                        .HasForeignKey("BranchId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ZARI.Domain.Entities.LoanAccount", "LoanAccount")
-                        .WithMany()
-                        .HasForeignKey("LoanAccountId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.HasOne("ZARI.Domain.Entities.GlAccount", "WriteOffExpenseAccount")
-                        .WithMany()
-                        .HasForeignKey("WriteOffExpenseAccountId")
-                        .OnDelete(DeleteBehavior.Restrict)
-                        .IsRequired();
-
-                    b.Navigation("Branch");
-
-                    b.Navigation("LoanAccount");
-
-                    b.Navigation("WriteOffExpenseAccount");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.ManualJournalEntry", b =>
