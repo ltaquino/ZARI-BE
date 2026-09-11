@@ -20,6 +20,7 @@ public sealed class LoanAccountConfiguration : BaseModelConfig, IEntityTypeConfi
         builder.Property(a => a.Remarks).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
         builder.Property(a => a.CancelledBy).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_150);
         builder.Property(a => a.CancelReason).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
+        builder.Property(a => a.DisputeNotes).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
 
         builder.HasIndex(a => a.LoanAcctNo).IsUnique();
         builder.HasIndex(a => new { a.BranchId, a.GrantDate });

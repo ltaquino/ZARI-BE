@@ -19,6 +19,20 @@ public sealed class CreateCustomerValidator : AbstractValidator<CreateCustomerCo
         RuleFor(x => x.PaymentTermsDays).GreaterThanOrEqualTo(0).When(x => x.PaymentTermsDays.HasValue);
         RuleFor(x => x.StandingDiscountPct).InclusiveBetween(0, 100).When(x => x.StandingDiscountPct.HasValue);
 
+        RuleFor(x => x.Tin).MaximumLength(100);
+        RuleFor(x => x.SssOrGsisNo).MaximumLength(100);
+        RuleFor(x => x.Sex).MaximumLength(25);
+        RuleFor(x => x.CivilStatus).MaximumLength(25);
+        RuleFor(x => x.DependentsCount).GreaterThanOrEqualTo(0).When(x => x.DependentsCount.HasValue);
+        RuleFor(x => x.Employer).MaximumLength(150);
+        RuleFor(x => x.EmployerPosition).MaximumLength(150);
+        RuleFor(x => x.NetIncomeLastYear).GreaterThanOrEqualTo(0).When(x => x.NetIncomeLastYear.HasValue);
+        RuleFor(x => x.PriorResidenceHistory).MaximumLength(300);
+        RuleFor(x => x.PriorEmploymentHistory).MaximumLength(300);
+        RuleFor(x => x.HousingStatus).MaximumLength(25);
+        RuleFor(x => x.BankAccountInfo).MaximumLength(300);
+        RuleFor(x => x.OtherAssetsNotes).MaximumLength(300);
+
         RuleFor(x => x.Type)
             .NotEmpty()
             .Must(t => ValidTypes.Contains(t))

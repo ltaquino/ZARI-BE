@@ -18,7 +18,14 @@ using ZARI.Domain.Entities;
 /// <summary>
 /// Quick-posts immediately — no DRAFT/Submit/Approve step (see LoanPayment's own class doc
 /// comment). Allocates the tendered amount oldest-installment-first via
-/// LoanPaymentAllocationEngine, saves the resulting schedule-line/allocation mutations, posts a
+/// LoanPaymentAllocationEngine — including prepayment: an amount larger than the nearest due
+/// installment cascades into subsequent not-yet-due installments in the same order, paying them
+/// off early and shortening the remaining term (the standard approach — vs. re-amortizing to
+/// shrink future installment amounts instead, which this module does not do). The only cap is the
+/// obvious one: an amount can't exceed the account's entire remaining balance across every
+/// installment (§6's "prepayment handling" question — DECIDED: term reduction via the existing
+/// oldest-first cascade, no new mechanism needed). Saves the resulting schedule-line/allocation
+/// mutations, posts a
 /// balanced GL journal (Dr the funding PaymentMethod's account, Cr Loans Receivable/Interest
 /// Income/Penalty Income as applicable), records the payment on the account's append-only
 /// LoanLedgerEntry, and — if this payment fully retires every installment — flips the LoanAccount
@@ -78,7 +85,7 @@ public sealed class CreateLoanPaymentCommandHandler(
         {
             return Result.Failure<LoanPaymentResponse>(Error.Validation(
                 "LoanPayment.AmountExceedsOutstanding",
-                $"The payment amount ({command.Amount}) exceeds this loan account's total outstanding balance of {allocation.TotalOutstanding} — partial prepayment beyond what's currently due isn't supported yet."));
+                $"The payment amount ({command.Amount}) exceeds this loan account's total outstanding balance of {allocation.TotalOutstanding}."));
         }
 
         if (allocation.PrincipalTotal > 0 && account.LoanReceivableAccountId is null)

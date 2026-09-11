@@ -17,7 +17,11 @@ public sealed class GetAllCustomersQueryHandler(IAppDbContext dbContext, IPermis
         var customers = await dbContext.Customers.AsNoTracking()
             .OrderByDescending(c => c.CreatedAt)
             .Select(c => new CustomerResponse(c.Id, c.Name, c.Type, c.Email, c.Phone, c.BranchId, c.Status, c.Owner, c.Address, c.Notes,
-                c.ArAccountId, c.PaymentTermsDays, c.StandingDiscountPct, c.MemberNo, c.CreatedAt))
+                c.ArAccountId, c.PaymentTermsDays, c.StandingDiscountPct, c.MemberNo,
+                c.Tin, c.SssOrGsisNo, c.DateOfBirth, c.Sex, c.CivilStatus, c.DependentsCount, c.Employer, c.EmployerPosition,
+                c.NetIncomeLastYear, c.ResidenceSince, c.PriorResidenceHistory, c.EmploymentSince, c.PriorEmploymentHistory,
+                c.HousingStatus, c.OwnsVehicle, c.BankAccountInfo, c.OtherAssetsNotes, c.DataSharingConsent, c.DataSharingConsentDate,
+                c.CreatedAt))
             .ToListAsync(cancellationToken);
 
         return Result.Success(customers);

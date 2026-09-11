@@ -40,6 +40,7 @@ public interface IAppDbContext
     DbSet<StockLocationTransfer> StockLocationTransfers { get; }
     DbSet<StockLocationTransferLine> StockLocationTransferLines { get; }
     DbSet<Customer> Customers { get; }
+    DbSet<CustomerCreditRecord> CustomerCreditRecords { get; }
     DbSet<Company> Companies { get; }
     DbSet<Branch> Branches { get; }
     DbSet<GlAccount> GlAccounts { get; }

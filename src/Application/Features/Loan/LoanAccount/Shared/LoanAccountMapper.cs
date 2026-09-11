@@ -33,6 +33,8 @@ internal static class LoanAccountMapper
         account.CancelledBy,
         account.CancelledAt,
         account.CancelReason,
+        account.IsDisputed,
+        account.DisputeNotes,
         account.CreatedAt,
         account.CreatedBy);
 

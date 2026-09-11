@@ -12,6 +12,18 @@ using ZARI.Domain.Common;
 /// LoanRestructuring, no arrears-settlement precondition applies here — a write-off exists precisely
 /// to absorb a loan that won't be collected, arrears included.
 ///
+/// §6's write-off-authority question — DECIDED: HQ-only, per this class's existing design, kept as
+/// final rather than modeling a separate Board-of-Directors approval role. No CDA circular found
+/// (across the CISA/MC 2019-01 and Portfolio Quality/MC 02-04 research this module cites elsewhere)
+/// specifies who must authorize a write-off, so this is a systems-design call, not a sourced
+/// citation: HQ-only mirrors every other elevated-authority gate already in this codebase (the
+/// two-tier cancellation pattern's own ApproveCancellation/RejectCancellation step), a real Board
+/// resolution is a governance/minutes matter no software gate can actually enforce anyway, and
+/// building a distinct BOD role with no other use in this ERP would be new complexity for a
+/// requirement nothing sourced actually demands. If the cooperative's real by-laws require a
+/// specific Board resolution before write-off, that happens procedurally alongside this approval,
+/// not instead of it.
+///
 /// v1 policy: direct write-off method (Dr Loan Write-off Expense / Cr Loans Receivable) rather than
 /// drawing down a pre-funded allowance account, since this codebase has no separate loan-loss
 /// provisioning workflow that would have built up an allowance balance to draw down. The expense

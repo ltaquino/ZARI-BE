@@ -45,5 +45,7 @@ public sealed record LoanAccountResponse(
     string? CancelledBy,
     DateTimeOffset? CancelledAt,
     string? CancelReason,
+    bool IsDisputed,
+    string? DisputeNotes,
     DateTimeOffset CreatedAt,
     string? CreatedBy);

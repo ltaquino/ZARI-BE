@@ -78,7 +78,11 @@ public static class CustomerEndpoints
     {
         var command = new UpdateCustomerCommand(id, request.Name, request.Type, request.Email, request.Phone,
             request.BranchId, request.Status, request.Owner, request.Address, request.Notes,
-            request.ArAccountId, request.PaymentTermsDays, request.StandingDiscountPct);
+            request.ArAccountId, request.PaymentTermsDays, request.StandingDiscountPct, request.MemberNo,
+            request.Tin, request.SssOrGsisNo, request.DateOfBirth, request.Sex, request.CivilStatus, request.DependentsCount,
+            request.Employer, request.EmployerPosition, request.NetIncomeLastYear, request.ResidenceSince, request.PriorResidenceHistory,
+            request.EmploymentSince, request.PriorEmploymentHistory, request.HousingStatus, request.OwnsVehicle, request.BankAccountInfo,
+            request.OtherAssetsNotes, request.DataSharingConsent, request.DataSharingConsentDate);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
         var result = await handler.HandleAsync(command, cancellationToken);
@@ -107,4 +111,24 @@ public sealed record UpdateCustomerRequest(
     string? Notes,
     Guid? ArAccountId,
     int? PaymentTermsDays,
-    decimal? StandingDiscountPct);
+    decimal? StandingDiscountPct,
+    string? MemberNo,
+    string? Tin,
+    string? SssOrGsisNo,
+    DateTimeOffset? DateOfBirth,
+    string? Sex,
+    string? CivilStatus,
+    int? DependentsCount,
+    string? Employer,
+    string? EmployerPosition,
+    decimal? NetIncomeLastYear,
+    DateTimeOffset? ResidenceSince,
+    string? PriorResidenceHistory,
+    DateTimeOffset? EmploymentSince,
+    string? PriorEmploymentHistory,
+    string? HousingStatus,
+    bool OwnsVehicle,
+    string? BankAccountInfo,
+    string? OtherAssetsNotes,
+    bool DataSharingConsent,
+    DateTimeOffset? DataSharingConsentDate);

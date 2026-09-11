@@ -3,13 +3,15 @@ namespace ZARI.Application.Features.Loan.LoanPayments.Shared;
 using ZARI.Domain.Entities;
 
 /// <summary>
-/// v1 penalty policy (ZARI-FE/frs/loan/LoanModuleContext.md §6 flags the exact computation rule as
-/// an open question the cooperative still needs to confirm): LoanProduct/LoanAccount's
-/// PenaltyRatePct is treated as a monthly rate, pro-rated per day overdue, applied against an
-/// installment's still-unpaid principal+interest once it's been overdue longer than
-/// GracePeriodDays past its DueDate. No compounding — a straight daily accrual on the outstanding
-/// installment amount, computed live (never stored ahead of time, since it depends on the actual
-/// payment date). Flag this assumption to the cooperative before relying on it for real collection.
+/// Penalty policy — DECIDED per ZARI-FE/frs/loan/LoanModuleContext.md §6 (previously an open
+/// question, now confirmed as the standard formula to use): PenaltyRatePct is set per LoanProduct
+/// ("loan account type") and snapshotted onto each LoanAccount at creation, exactly like the
+/// interest rate/term/frequency it's alongside — no separate per-account override needed, the same
+/// product-level knob every other loan term already uses. Treated as a monthly rate, pro-rated per
+/// day overdue, applied against an installment's still-unpaid principal+interest once it's been
+/// overdue longer than GracePeriodDays past its DueDate. No compounding — a straight daily accrual
+/// on the outstanding installment amount, computed live (never stored ahead of time, since it
+/// depends on the actual payment date).
 /// </summary>
 internal static class LoanPenaltyCalculator
 {

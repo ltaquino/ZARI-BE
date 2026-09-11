@@ -918,8 +918,16 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Property<Guid?>("ArAccountId")
                         .HasColumnType("char(36)");
 
+                    b.Property<string>("BankAccountInfo")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
                     b.Property<string>("BranchId")
                         .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("CivilStatus")
                         .HasMaxLength(25)
                         .HasColumnType("varchar(25)");
 
@@ -929,10 +937,37 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("longtext");
 
+                    b.Property<bool>("DataSharingConsent")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTimeOffset?>("DataSharingConsentDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTimeOffset?>("DateOfBirth")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int?>("DependentsCount")
+                        .HasColumnType("int");
+
                     b.Property<string>("Email")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Employer")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("EmployerPosition")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<DateTimeOffset?>("EmploymentSince")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("HousingStatus")
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
 
                     b.Property<DateTimeOffset?>("LastModifiedAt")
                         .HasColumnType("datetime(6)");
@@ -949,7 +984,14 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
 
+                    b.Property<decimal?>("NetIncomeLastYear")
+                        .HasColumnType("DECIMAL(14,4)");
+
                     b.Property<string>("Notes")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("OtherAssetsNotes")
                         .HasMaxLength(300)
                         .HasColumnType("varchar(300)");
 
@@ -958,11 +1000,33 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
 
+                    b.Property<bool>("OwnsVehicle")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<int?>("PaymentTermsDays")
                         .HasColumnType("int");
 
                     b.Property<string>("Phone")
                         .IsRequired()
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<string>("PriorEmploymentHistory")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("PriorResidenceHistory")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTimeOffset?>("ResidenceSince")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Sex")
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("SssOrGsisNo")
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
@@ -973,6 +1037,10 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(25)
                         .HasColumnType("varchar(25)");
+
+                    b.Property<string>("Tin")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
 
                     b.Property<string>("Type")
                         .IsRequired()
@@ -986,6 +1054,56 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.HasIndex("BranchId");
 
                     b.ToTable("Customers");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.CustomerCreditRecord", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal?>("Amount")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset>("RecordDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("RecordType")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("RecordType");
+
+                    b.ToTable("CustomerCreditRecords");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.CustomerPayment", b =>
@@ -2462,6 +2580,10 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Property<Guid>("CustomerId")
                         .HasColumnType("char(36)");
 
+                    b.Property<string>("DisputeNotes")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
                     b.Property<DateTimeOffset>("FirstDueDate")
                         .HasColumnType("datetime(6)");
 
@@ -2473,6 +2595,9 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.Property<Guid?>("InterestIncomeAccountId")
                         .HasColumnType("char(36)");
+
+                    b.Property<bool>("IsDisputed")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<DateTimeOffset?>("LastModifiedAt")
                         .HasColumnType("datetime(6)");
@@ -6013,6 +6138,17 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Navigation("ArAccount");
 
                     b.Navigation("Branch");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.CustomerCreditRecord", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.CustomerPayment", b =>

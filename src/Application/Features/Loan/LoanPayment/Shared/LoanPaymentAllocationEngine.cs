@@ -8,11 +8,16 @@ internal sealed record LoanPaymentAllocationResult(List<LoanPaymentLineAllocatio
 
 /// <summary>
 /// Oldest-installment-first, Penalty -> Interest -> Principal per installment (standard collection
-/// priority) — ZARI-FE/frs/loan/LoanModuleContext.md §4.8. Mutates each touched line's
+/// priority) — ZARI-FE/frs/loan/LoanModuleContext.md §4.8. The `foreach` below doesn't stop at the
+/// nearest-due line — it keeps cascading into every subsequent not-yet-due installment until the
+/// tendered amount runs out, which is what makes prepayment work: paying more than what's minimally
+/// due pays future installments off early (term reduction), rather than shrinking their amounts
+/// (re-amortizing) — §6's prepayment-handling question, DECIDED in favor of this already-existing
+/// cascade rather than adding a separate re-amortization mode. Mutates each touched line's
 /// PrincipalPaid/InterestPaid/PenaltyPaid/Status directly (the caller persists them); always
-/// computes and returns TotalOutstanding regardless of the amount tendered, so the caller can
-/// reject an amount that exceeds it (no overpayment/prepayment support in v1 — still an open
-/// question per §6) before ever saving anything.
+/// computes and returns TotalOutstanding (the sum owed across the ENTIRE remaining schedule, not
+/// just the nearest installment) regardless of the amount tendered, so the caller can reject an
+/// amount that exceeds it — the only real cap on prepayment — before ever saving anything.
 /// </summary>
 internal static class LoanPaymentAllocationEngine
 {

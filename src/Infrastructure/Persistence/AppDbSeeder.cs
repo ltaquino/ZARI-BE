@@ -659,6 +659,7 @@ public static class AppDbSeeder
             ("DASHBOARD", "Dashboard", "Dashboard"),
 
             ("CUSTOMERS", "Customers", "CRM"),
+            ("CUSTOMER_CREDIT_RECORDS", "Member Credit Records (CISA)", "CRM"),
 
             ("USERS", "Users", "System"),
             ("ROLES", "Roles", "System"),
@@ -822,6 +823,7 @@ public static class AppDbSeeder
             Grant(managerRole.Id, formCode, view);
         Grant(managerRole.Id, "CUSTOMERS", manage);
         Grant(managerRole.Id, "SUPPLIERS", manage);
+        Grant(managerRole.Id, "CUSTOMER_CREDIT_RECORDS", manage);
 
         string[] staffTransactionalForms =
         [
@@ -834,7 +836,7 @@ public static class AppDbSeeder
         ];
         string[] staffViewOnlyForms =
         [
-            "DASHBOARD", "CUSTOMERS", "UOMS", "ITEM_CATEGORIES", "WAREHOUSES", "STORAGE_LOCATIONS",
+            "DASHBOARD", "CUSTOMERS", "CUSTOMER_CREDIT_RECORDS", "UOMS", "ITEM_CATEGORIES", "WAREHOUSES", "STORAGE_LOCATIONS",
             "ITEMS", "ADJUSTMENT_REASONS", "ITEM_BRANCH_SETTINGS", "STOCK_RESERVATIONS",
             "SERIAL_NUMBERS", "APPROVAL_REQUESTS", "NOTIFICATIONS", "SUPPLIERS", "PURCHASE_RETURN_REASONS",
             "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES", "LOAN_PRODUCTS",

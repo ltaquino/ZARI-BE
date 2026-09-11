@@ -6,6 +6,7 @@ using ZARI.Application.Features.Loan.LoanAccounts.Create;
 using ZARI.Application.Features.Loan.LoanAccounts.Delete;
 using ZARI.Application.Features.Loan.LoanAccounts.Get;
 using ZARI.Application.Features.Loan.LoanAccounts.GetAll;
+using ZARI.Application.Features.Loan.LoanAccounts.SetDisputeStatus;
 using ZARI.Application.Features.Loan.LoanAccounts.Update;
 using ZARI.Application.Features.Loan.LoanLedgerEntries.GetByAccount;
 using ZARI.Domain.Common;
@@ -49,6 +50,10 @@ public static class LoanAccountEndpoints
         group.MapPost("/{id:guid}/cancel", Cancel)
             .WithName("CancelLoanAccount")
             .WithSummary("Cancel a loan account still pending disbursement");
+
+        group.MapPost("/{id:guid}/dispute-status", SetDisputeStatus)
+            .WithName("SetLoanAccountDisputeStatus")
+            .WithSummary("Raise or clear the CISA negative-credit-information dispute flag on a loan account");
     }
 
     private static async Task<IResult> GetAll(
@@ -127,6 +132,20 @@ public static class LoanAccountEndpoints
         var result = await handler.HandleAsync(command, cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
+
+    private static async Task<IResult> SetDisputeStatus(
+        Guid id,
+        SetLoanAccountDisputeStatusRequest request,
+        IValidator<SetLoanAccountDisputeStatusCommand> validator,
+        ICommandHandler<SetLoanAccountDisputeStatusCommand, Result<LoanAccountResponse>> handler,
+        CancellationToken cancellationToken)
+    {
+        var command = new SetLoanAccountDisputeStatusCommand(id, request.IsDisputed, request.DisputeNotes, request.UpdatedBy);
+        if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
+
+        var result = await handler.HandleAsync(command, cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
+    }
 }
 
 public sealed record UpdateLoanAccountRequest(
@@ -144,3 +163,4 @@ public sealed record UpdateLoanAccountRequest(
     string? UpdatedBy);
 
 public sealed record CancelLoanAccountRequest(string CancelledBy, string Reason);
+public sealed record SetLoanAccountDisputeStatusRequest(bool IsDisputed, string? DisputeNotes, string? UpdatedBy);

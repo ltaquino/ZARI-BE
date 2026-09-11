@@ -54,4 +54,13 @@ public sealed class LoanAccount : AuditableEntity
     public string? CancelledBy { get; set; }
     public DateTimeOffset? CancelledAt { get; set; }
     public string? CancelReason { get; set; }
+
+    // CISA (RA 9510 / CDA MC 2019-01) negative-credit-information flag — "pending litigation
+    // affecting creditworthiness" has no other home in this module (not a loan Status value, since
+    // a dispute doesn't change what's owed or the workflow state) and can be raised or cleared at
+    // any point in the account's life, unlike every other mutation on this entity which is
+    // status-gated — so it's set via its own dedicated command
+    // (Features/Loan/LoanAccount/SetDisputeStatus), not folded into Update.
+    public bool IsDisputed { get; set; }
+    public string? DisputeNotes { get; set; }
 }

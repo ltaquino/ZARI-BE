@@ -22,6 +22,20 @@ public sealed class CustomerConfiguration : BaseModelConfig, IEntityTypeConfigur
         builder.Property(c => c.MemberNo).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_100);
         builder.Property(c => c.StandingDiscountPct).HasColumnType(DefaultDecimal);
 
+        // CISA (RA 9510 / CDA MC 2019-01) Basic Credit Data fields — see Customer.cs doc comment.
+        builder.Property(c => c.Tin).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_100);
+        builder.Property(c => c.SssOrGsisNo).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_100);
+        builder.Property(c => c.Sex).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
+        builder.Property(c => c.CivilStatus).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
+        builder.Property(c => c.Employer).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_150);
+        builder.Property(c => c.EmployerPosition).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_150);
+        builder.Property(c => c.NetIncomeLastYear).HasColumnType(DefaultDecimal);
+        builder.Property(c => c.PriorResidenceHistory).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
+        builder.Property(c => c.PriorEmploymentHistory).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
+        builder.Property(c => c.HousingStatus).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
+        builder.Property(c => c.BankAccountInfo).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
+        builder.Property(c => c.OtherAssetsNotes).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
+
         builder.HasOne(c => c.Branch)
             .WithMany()
             .HasForeignKey(c => c.BranchId)
