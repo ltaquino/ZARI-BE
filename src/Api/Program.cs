@@ -176,6 +176,11 @@ try
     app.MapSalesReportsEndpoints();
     app.MapInventoryReportsEndpoints();
     app.MapReportingEndpoints();
+    app.MapLoanProductEndpoints();
+    app.MapLoanApplicationEndpoints();
+    app.MapLoanAccountEndpoints();
+    app.MapLoanDisbursementEndpoints();
+    app.MapLoanPaymentEndpoints();
     //app.MapGet("/debug-user", (HttpContext ctx) =>
     //{
     //    return new

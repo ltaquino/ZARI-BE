@@ -2428,6 +2428,683 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.ToTable("ItemCategories");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanAccount", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("AnnualInterestRatePct")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CancelledBy")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset>("FirstDueDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("GracePeriodDays")
+                        .HasColumnType("int");
+
+                    b.Property<DateTimeOffset>("GrantDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid?>("InterestIncomeAccountId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("LoanAcctNo")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<Guid?>("LoanApplicationId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("LoanProductId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("LoanReceivableAccountId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("PenaltyIncomeAccountId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("PenaltyRatePct")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("PrincipalAmount")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("RepaymentFrequency")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<int>("TermMonths")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("InterestIncomeAccountId");
+
+                    b.HasIndex("LoanAcctNo")
+                        .IsUnique();
+
+                    b.HasIndex("LoanApplicationId");
+
+                    b.HasIndex("LoanProductId");
+
+                    b.HasIndex("LoanReceivableAccountId");
+
+                    b.HasIndex("PenaltyIncomeAccountId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BranchId", "GrantDate");
+
+                    b.ToTable("LoanAccounts");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanAmortizationScheduleLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset>("DueDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<int>("InstallmentNo")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("InterestDue")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("InterestPaid")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<Guid>("LoanAccountId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("OutstandingPrincipalAfter")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("PenaltyPaid")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("PrincipalDue")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("PrincipalPaid")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<decimal>("TotalDue")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DueDate");
+
+                    b.HasIndex("LoanAccountId", "InstallmentNo")
+                        .IsUnique();
+
+                    b.ToTable("LoanAmortizationScheduleLines");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanApplication", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset>("ApplicationDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("ApplicationNo")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CancelledBy")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("LoanProductId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Purpose")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<decimal>("RequestedPrincipal")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<int>("RequestedTermMonths")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ApplicationNo")
+                        .IsUnique();
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("LoanProductId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BranchId", "ApplicationDate");
+
+                    b.ToTable("LoanApplications");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanCoMaker", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("CoMakerCustomerId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("ContactNo")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<Guid>("LoanApplicationId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CoMakerCustomerId");
+
+                    b.HasIndex("LoanApplicationId");
+
+                    b.ToTable("LoanCoMakers");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanCollateral", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("CollateralType")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("Description")
+                        .IsRequired()
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("DocumentRef")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<decimal>("EstimatedValue")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<Guid>("LoanApplicationId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoanApplicationId");
+
+                    b.ToTable("LoanCollaterals");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanDisbursement", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CancelledBy")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<Guid?>("CostCenterId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset>("DisbursementDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("DisbursementNo")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("LoanAccountId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("PaymentMethodId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("ReferenceNo")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CostCenterId");
+
+                    b.HasIndex("DisbursementNo")
+                        .IsUnique();
+
+                    b.HasIndex("LoanAccountId");
+
+                    b.HasIndex("PaymentMethodId");
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BranchId", "DisbursementDate");
+
+                    b.ToTable("LoanDisbursements");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanLedgerEntry", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTimeOffset>("EntryDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<bool>("IsReversal")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("LoanAccountId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset>("PostedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("PrincipalIn")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("PrincipalOut")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("ReferenceId")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("ReferenceTable")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<decimal>("RunningPrincipalBalance")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<int>("SequenceNo")
+                        .HasColumnType("int");
+
+                    b.Property<string>("TransactionType")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoanAccountId", "SequenceNo")
+                        .IsUnique();
+
+                    b.HasIndex("ReferenceTable", "ReferenceId");
+
+                    b.ToTable("LoanLedgerEntries");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanPayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CancelledBy")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<Guid?>("CostCenterId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("LoanAccountId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset>("PaymentDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("PaymentMethodId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("PaymentNo")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("ReferenceNo")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CostCenterId");
+
+                    b.HasIndex("LoanAccountId");
+
+                    b.HasIndex("PaymentMethodId");
+
+                    b.HasIndex("PaymentNo")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BranchId", "PaymentDate");
+
+                    b.ToTable("LoanPayments");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanPaymentAllocation", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("InterestApplied")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<Guid>("LoanAmortizationScheduleLineId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("LoanPaymentId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("PenaltyApplied")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("PrincipalApplied")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("LoanAmortizationScheduleLineId");
+
+                    b.HasIndex("LoanPaymentId");
+
+                    b.ToTable("LoanPaymentAllocations");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanProduct", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("AnnualInterestRatePct")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<int>("GracePeriodDays")
+                        .HasColumnType("int");
+
+                    b.Property<Guid?>("InterestIncomeAccountId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("InterestMethod")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid?>("LoanReceivableAccountId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("MaxPrincipal")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<int>("MaxTermMonths")
+                        .HasColumnType("int");
+
+                    b.Property<decimal>("MinPrincipal")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<int>("MinTermMonths")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<Guid?>("PenaltyIncomeAccountId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("PenaltyRatePct")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("RepaymentFrequency")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<bool>("RequiresCoMaker")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<bool>("RequiresCollateral")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Code")
+                        .IsUnique();
+
+                    b.HasIndex("InterestIncomeAccountId");
+
+                    b.HasIndex("LoanReceivableAccountId");
+
+                    b.HasIndex("PenaltyIncomeAccountId");
+
+                    b.ToTable("LoanProducts");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.ManualJournalEntry", b =>
                 {
                     b.Property<Guid>("Id")
@@ -5753,6 +6430,250 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Navigation("ParentCategory");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanAccount", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.GlAccount", "InterestIncomeAccount")
+                        .WithMany()
+                        .HasForeignKey("InterestIncomeAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ZARI.Domain.Entities.LoanApplication", "LoanApplication")
+                        .WithMany()
+                        .HasForeignKey("LoanApplicationId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ZARI.Domain.Entities.LoanProduct", "LoanProduct")
+                        .WithMany()
+                        .HasForeignKey("LoanProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.GlAccount", "LoanReceivableAccount")
+                        .WithMany()
+                        .HasForeignKey("LoanReceivableAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ZARI.Domain.Entities.GlAccount", "PenaltyIncomeAccount")
+                        .WithMany()
+                        .HasForeignKey("PenaltyIncomeAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("InterestIncomeAccount");
+
+                    b.Navigation("LoanApplication");
+
+                    b.Navigation("LoanProduct");
+
+                    b.Navigation("LoanReceivableAccount");
+
+                    b.Navigation("PenaltyIncomeAccount");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanAmortizationScheduleLine", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.LoanAccount", "LoanAccount")
+                        .WithMany("ScheduleLines")
+                        .HasForeignKey("LoanAccountId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("LoanAccount");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanApplication", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.LoanProduct", "LoanProduct")
+                        .WithMany()
+                        .HasForeignKey("LoanProductId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("LoanProduct");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanCoMaker", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Customer", "CoMakerCustomer")
+                        .WithMany()
+                        .HasForeignKey("CoMakerCustomerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ZARI.Domain.Entities.LoanApplication", "LoanApplication")
+                        .WithMany("CoMakers")
+                        .HasForeignKey("LoanApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("CoMakerCustomer");
+
+                    b.Navigation("LoanApplication");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanCollateral", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.LoanApplication", "LoanApplication")
+                        .WithMany("Collaterals")
+                        .HasForeignKey("LoanApplicationId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("LoanApplication");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanDisbursement", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.CostCenter", "CostCenter")
+                        .WithMany()
+                        .HasForeignKey("CostCenterId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ZARI.Domain.Entities.LoanAccount", "LoanAccount")
+                        .WithMany()
+                        .HasForeignKey("LoanAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.PaymentMethod", "PaymentMethod")
+                        .WithMany()
+                        .HasForeignKey("PaymentMethodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("CostCenter");
+
+                    b.Navigation("LoanAccount");
+
+                    b.Navigation("PaymentMethod");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanLedgerEntry", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.LoanAccount", "LoanAccount")
+                        .WithMany()
+                        .HasForeignKey("LoanAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("LoanAccount");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanPayment", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.CostCenter", "CostCenter")
+                        .WithMany()
+                        .HasForeignKey("CostCenterId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ZARI.Domain.Entities.LoanAccount", "LoanAccount")
+                        .WithMany()
+                        .HasForeignKey("LoanAccountId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.PaymentMethod", "PaymentMethod")
+                        .WithMany()
+                        .HasForeignKey("PaymentMethodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("CostCenter");
+
+                    b.Navigation("LoanAccount");
+
+                    b.Navigation("PaymentMethod");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanPaymentAllocation", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.LoanAmortizationScheduleLine", "LoanAmortizationScheduleLine")
+                        .WithMany()
+                        .HasForeignKey("LoanAmortizationScheduleLineId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.LoanPayment", "LoanPayment")
+                        .WithMany("Allocations")
+                        .HasForeignKey("LoanPaymentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("LoanAmortizationScheduleLine");
+
+                    b.Navigation("LoanPayment");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanProduct", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.GlAccount", "InterestIncomeAccount")
+                        .WithMany()
+                        .HasForeignKey("InterestIncomeAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ZARI.Domain.Entities.GlAccount", "LoanReceivableAccount")
+                        .WithMany()
+                        .HasForeignKey("LoanReceivableAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ZARI.Domain.Entities.GlAccount", "PenaltyIncomeAccount")
+                        .WithMany()
+                        .HasForeignKey("PenaltyIncomeAccountId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("InterestIncomeAccount");
+
+                    b.Navigation("LoanReceivableAccount");
+
+                    b.Navigation("PenaltyIncomeAccount");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.ManualJournalEntry", b =>
                 {
                     b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
@@ -6676,6 +7597,23 @@ namespace ZARI.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("ZARI.Domain.Entities.GoodsReturn", b =>
                 {
                     b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanAccount", b =>
+                {
+                    b.Navigation("ScheduleLines");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanApplication", b =>
+                {
+                    b.Navigation("CoMakers");
+
+                    b.Navigation("Collaterals");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.LoanPayment", b =>
+                {
+                    b.Navigation("Allocations");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.ManualJournalEntry", b =>
