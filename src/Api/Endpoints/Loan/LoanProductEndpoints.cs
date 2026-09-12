@@ -80,7 +80,7 @@ public static class LoanProductEndpoints
             id, request.Code, request.Name, request.InterestMethod, request.AnnualInterestRatePct, request.MinPrincipal, request.MaxPrincipal,
             request.MinTermMonths, request.MaxTermMonths, request.RepaymentFrequency, request.GracePeriodDays, request.PenaltyRatePct,
             request.RequiresCollateral, request.RequiresCoMaker, request.LoanReceivableAccountId, request.InterestIncomeAccountId,
-            request.PenaltyIncomeAccountId, request.Status);
+            request.PenaltyIncomeAccountId, request.Status, request.CicContractTypeCode);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
         var result = await handler.HandleAsync(command, cancellationToken);
@@ -114,4 +114,5 @@ public sealed record UpdateLoanProductRequest(
     Guid? LoanReceivableAccountId,
     Guid? InterestIncomeAccountId,
     Guid? PenaltyIncomeAccountId,
-    string Status);
+    string Status,
+    string? CicContractTypeCode);

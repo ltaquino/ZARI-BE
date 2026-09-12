@@ -21,4 +21,5 @@ public sealed record CreateLoanProductCommand(
     Guid? LoanReceivableAccountId,
     Guid? InterestIncomeAccountId,
     Guid? PenaltyIncomeAccountId,
-    string Status) : ICommand<Result<LoanProductResponse>>;
+    string Status,
+    string? CicContractTypeCode = null) : ICommand<Result<LoanProductResponse>>;

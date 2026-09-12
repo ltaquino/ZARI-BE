@@ -20,4 +20,5 @@ public sealed record UpdateLoanProductCommand(
     Guid? LoanReceivableAccountId,
     Guid? InterestIncomeAccountId,
     Guid? PenaltyIncomeAccountId,
-    string Status) : ICommand;
+    string Status,
+    string? CicContractTypeCode = null) : ICommand;

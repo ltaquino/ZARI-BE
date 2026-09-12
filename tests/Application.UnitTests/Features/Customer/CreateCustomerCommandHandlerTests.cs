@@ -58,6 +58,30 @@ public sealed class CreateCustomerCommandHandlerTests
     }
 
     [Fact]
+    public async Task HandleAsync_Should_Persist_Cic_Id_Record_Fields()
+    {
+        var (db, branchId) = await Seed();
+        var handler = new CreateCustomerCommandHandler(db, LoanTestFixtures.AllowAllPermissionService());
+        var command = Command(branchId) with
+        {
+            FirstName = "Juan", MiddleName = "Santos", LastName = "Dela Cruz", Suffix = "Jr",
+            PlaceOfBirth = "Manila", CountryOfBirthCode = "PH", NationalityCode = "PH", Resident = true,
+            AddressBarangay = "Matala", AddressCity = "Ibaan", AddressProvince = "Batangas",
+            AddressHouseOwnerOrLessee = "OWN"
+        };
+
+        var result = await handler.HandleAsync(command, TestContext.Current.CancellationToken);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.FirstName.Should().Be("Juan");
+        result.Value!.LastName.Should().Be("Dela Cruz");
+        result.Value!.AddressBarangay.Should().Be("Matala");
+        result.Value!.AddressHouseOwnerOrLessee.Should().Be("OWN");
+        result.Value!.Resident.Should().BeTrue();
+        await db.DisposeAsync();
+    }
+
+    [Fact]
     public async Task HandleAsync_Should_Fail_When_Forbidden()
     {
         var (db, branchId) = await Seed();

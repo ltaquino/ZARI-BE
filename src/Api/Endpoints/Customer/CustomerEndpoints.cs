@@ -82,7 +82,11 @@ public static class CustomerEndpoints
             request.Tin, request.SssOrGsisNo, request.DateOfBirth, request.Sex, request.CivilStatus, request.DependentsCount,
             request.Employer, request.EmployerPosition, request.NetIncomeLastYear, request.ResidenceSince, request.PriorResidenceHistory,
             request.EmploymentSince, request.PriorEmploymentHistory, request.HousingStatus, request.OwnsVehicle, request.BankAccountInfo,
-            request.OtherAssetsNotes, request.DataSharingConsent, request.DataSharingConsentDate);
+            request.OtherAssetsNotes, request.DataSharingConsent, request.DataSharingConsentDate,
+            request.Title, request.FirstName, request.MiddleName, request.LastName, request.Suffix,
+            request.PlaceOfBirth, request.CountryOfBirthCode, request.NationalityCode, request.Resident,
+            request.AddressSubdivision, request.AddressBarangay, request.AddressCity, request.AddressProvince,
+            request.AddressPostalCode, request.AddressCountryCode, request.AddressHouseOwnerOrLessee, request.AddressOccupiedSince);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
         var result = await handler.HandleAsync(command, cancellationToken);
@@ -131,4 +135,21 @@ public sealed record UpdateCustomerRequest(
     string? BankAccountInfo,
     string? OtherAssetsNotes,
     bool DataSharingConsent,
-    DateTimeOffset? DataSharingConsentDate);
+    DateTimeOffset? DataSharingConsentDate,
+    string? Title,
+    string? FirstName,
+    string? MiddleName,
+    string? LastName,
+    string? Suffix,
+    string? PlaceOfBirth,
+    string? CountryOfBirthCode,
+    string? NationalityCode,
+    bool? Resident,
+    string? AddressSubdivision,
+    string? AddressBarangay,
+    string? AddressCity,
+    string? AddressProvince,
+    string? AddressPostalCode,
+    string? AddressCountryCode,
+    string? AddressHouseOwnerOrLessee,
+    DateTimeOffset? AddressOccupiedSince);

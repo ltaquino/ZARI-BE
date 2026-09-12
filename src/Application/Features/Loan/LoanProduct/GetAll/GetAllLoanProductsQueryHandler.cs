@@ -18,7 +18,7 @@ public sealed class GetAllLoanProductsQueryHandler(IAppDbContext dbContext, IPer
             .OrderBy(p => p.Code)
             .Select(p => new LoanProductResponse(p.Id, p.Code, p.Name, p.InterestMethod, p.AnnualInterestRatePct, p.MinPrincipal, p.MaxPrincipal,
                 p.MinTermMonths, p.MaxTermMonths, p.RepaymentFrequency, p.GracePeriodDays, p.PenaltyRatePct, p.RequiresCollateral, p.RequiresCoMaker,
-                p.LoanReceivableAccountId, p.InterestIncomeAccountId, p.PenaltyIncomeAccountId, p.Status, p.CreatedAt))
+                p.LoanReceivableAccountId, p.InterestIncomeAccountId, p.PenaltyIncomeAccountId, p.Status, p.CicContractTypeCode, p.CreatedAt))
             .ToListAsync(cancellationToken);
 
         return Result.Success(products);

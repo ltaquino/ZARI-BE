@@ -60,7 +60,24 @@ public sealed class CreateCustomerCommandHandler(IAppDbContext dbContext, IPermi
             BankAccountInfo = command.BankAccountInfo,
             OtherAssetsNotes = command.OtherAssetsNotes,
             DataSharingConsent = command.DataSharingConsent,
-            DataSharingConsentDate = command.DataSharingConsent ? command.DataSharingConsentDate ?? DateTimeOffset.UtcNow : null
+            DataSharingConsentDate = command.DataSharingConsent ? command.DataSharingConsentDate ?? DateTimeOffset.UtcNow : null,
+            Title = command.Title,
+            FirstName = command.FirstName,
+            MiddleName = command.MiddleName,
+            LastName = command.LastName,
+            Suffix = command.Suffix,
+            PlaceOfBirth = command.PlaceOfBirth,
+            CountryOfBirthCode = command.CountryOfBirthCode,
+            NationalityCode = command.NationalityCode,
+            Resident = command.Resident,
+            AddressSubdivision = command.AddressSubdivision,
+            AddressBarangay = command.AddressBarangay,
+            AddressCity = command.AddressCity,
+            AddressProvince = command.AddressProvince,
+            AddressPostalCode = command.AddressPostalCode,
+            AddressCountryCode = command.AddressCountryCode,
+            AddressHouseOwnerOrLessee = command.AddressHouseOwnerOrLessee,
+            AddressOccupiedSince = command.AddressOccupiedSince
         };
 
         dbContext.Customers.Add(customer);

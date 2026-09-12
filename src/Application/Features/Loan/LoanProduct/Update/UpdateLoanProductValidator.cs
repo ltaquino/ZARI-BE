@@ -34,5 +34,7 @@ public sealed class UpdateLoanProductValidator : AbstractValidator<UpdateLoanPro
 
         RuleFor(x => x.Status).NotEmpty().Must(s => ValidStatuses.Contains(s))
             .WithMessage($"Status must be one of: {string.Join(", ", ValidStatuses)}.");
+
+        RuleFor(x => x.CicContractTypeCode).MaximumLength(25);
     }
 }

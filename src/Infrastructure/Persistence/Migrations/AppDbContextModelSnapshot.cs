@@ -915,6 +915,37 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("varchar(300)");
 
+                    b.Property<string>("AddressBarangay")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("AddressCity")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("AddressCountryCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<string>("AddressHouseOwnerOrLessee")
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<DateTimeOffset?>("AddressOccupiedSince")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("AddressPostalCode")
+                        .HasMaxLength(6)
+                        .HasColumnType("varchar(6)");
+
+                    b.Property<string>("AddressProvince")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("AddressSubdivision")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
                     b.Property<Guid?>("ArAccountId")
                         .HasColumnType("char(36)");
 
@@ -930,6 +961,10 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Property<string>("CivilStatus")
                         .HasMaxLength(25)
                         .HasColumnType("varchar(25)");
+
+                    b.Property<string>("CountryOfBirthCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetime(6)");
@@ -965,6 +1000,10 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset?>("EmploymentSince")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<string>("FirstName")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
                     b.Property<string>("HousingStatus")
                         .HasMaxLength(25)
                         .HasColumnType("varchar(25)");
@@ -975,14 +1014,26 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("longtext");
 
+                    b.Property<string>("LastName")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
                     b.Property<string>("MemberNo")
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
+
+                    b.Property<string>("MiddleName")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
 
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
+
+                    b.Property<string>("NationalityCode")
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
 
                     b.Property<decimal?>("NetIncomeLastYear")
                         .HasColumnType("DECIMAL(14,4)");
@@ -1011,6 +1062,10 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
 
+                    b.Property<string>("PlaceOfBirth")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
                     b.Property<string>("PriorEmploymentHistory")
                         .HasMaxLength(300)
                         .HasColumnType("varchar(300)");
@@ -1021,6 +1076,9 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.Property<DateTimeOffset?>("ResidenceSince")
                         .HasColumnType("datetime(6)");
+
+                    b.Property<bool?>("Resident")
+                        .HasColumnType("tinyint(1)");
 
                     b.Property<string>("Sex")
                         .HasMaxLength(25)
@@ -1038,9 +1096,17 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasMaxLength(25)
                         .HasColumnType("varchar(25)");
 
+                    b.Property<string>("Suffix")
+                        .HasMaxLength(10)
+                        .HasColumnType("varchar(10)");
+
                     b.Property<string>("Tin")
                         .HasMaxLength(100)
                         .HasColumnType("varchar(100)");
+
+                    b.Property<string>("Title")
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
 
                     b.Property<string>("Type")
                         .IsRequired()
@@ -3145,6 +3211,10 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.Property<decimal>("AnnualInterestRatePct")
                         .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("CicContractTypeCode")
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
 
                     b.Property<string>("Code")
                         .IsRequired()

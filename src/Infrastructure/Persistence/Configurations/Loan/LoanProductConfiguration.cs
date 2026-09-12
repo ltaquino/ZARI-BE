@@ -19,6 +19,7 @@ public sealed class LoanProductConfiguration : BaseModelConfig, IEntityTypeConfi
         builder.Property(p => p.RepaymentFrequency).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
         builder.Property(p => p.PenaltyRatePct).HasColumnType(DefaultDecimal);
         builder.Property(p => p.Status).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
+        builder.Property(p => p.CicContractTypeCode).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
 
         builder.HasOne(p => p.LoanReceivableAccount).WithMany().HasForeignKey(p => p.LoanReceivableAccountId).OnDelete(DeleteBehavior.Restrict);
         builder.HasOne(p => p.InterestIncomeAccount).WithMany().HasForeignKey(p => p.InterestIncomeAccountId).OnDelete(DeleteBehavior.Restrict);

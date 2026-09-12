@@ -44,4 +44,10 @@ public sealed class LoanProduct : AuditableEntity
     public GlAccount? PenaltyIncomeAccount { get; set; }
 
     public string Status { get; set; } = default!;
+
+    // CIC CSDF "CI" record's Contract Type domain code (e.g. "12"=Personal Loan, "18"=Unsecured
+    // Loan — ZARI-FE/frs/loan-cic/LoanCicContext.md §4.2) for loans of this product. A cooperative
+    // policy call per product, not derivable from anything else on this entity — left null until
+    // set, and defaulted to a generic code at export time (see CicDomainCodes.ContractTypeCode).
+    public string? CicContractTypeCode { get; set; }
 }

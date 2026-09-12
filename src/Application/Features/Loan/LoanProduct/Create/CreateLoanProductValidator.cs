@@ -33,5 +33,11 @@ public sealed class CreateLoanProductValidator : AbstractValidator<CreateLoanPro
 
         RuleFor(x => x.Status).NotEmpty().Must(s => ValidStatuses.Contains(s))
             .WithMessage($"Status must be one of: {string.Join(", ", ValidStatuses)}.");
+
+        // CIC CSDF "CI" record's Contract Type domain code — see LoanProduct.cs doc comment /
+        // LoanCicContext.md §4.2. Not restricted to a fixed list here: the domain has dozens of
+        // valid codes (the Excel's "Installment ContractTypeDomain" sheet) and picking which ones
+        // apply is a cooperative policy call, not something this validator should gatekeep.
+        RuleFor(x => x.CicContractTypeCode).MaximumLength(25);
     }
 }

@@ -45,7 +45,8 @@ public sealed class CreateLoanProductCommandHandler(IAppDbContext dbContext, IPe
             LoanReceivableAccountId = command.LoanReceivableAccountId,
             InterestIncomeAccountId = command.InterestIncomeAccountId,
             PenaltyIncomeAccountId = command.PenaltyIncomeAccountId,
-            Status = command.Status
+            Status = command.Status,
+            CicContractTypeCode = command.CicContractTypeCode
         };
 
         dbContext.LoanProducts.Add(product);
@@ -54,7 +55,8 @@ public sealed class CreateLoanProductCommandHandler(IAppDbContext dbContext, IPe
         var response = new LoanProductResponse(product.Id, product.Code, product.Name, product.InterestMethod, product.AnnualInterestRatePct,
             product.MinPrincipal, product.MaxPrincipal, product.MinTermMonths, product.MaxTermMonths, product.RepaymentFrequency,
             product.GracePeriodDays, product.PenaltyRatePct, product.RequiresCollateral, product.RequiresCoMaker,
-            product.LoanReceivableAccountId, product.InterestIncomeAccountId, product.PenaltyIncomeAccountId, product.Status, product.CreatedAt);
+            product.LoanReceivableAccountId, product.InterestIncomeAccountId, product.PenaltyIncomeAccountId, product.Status,
+            product.CicContractTypeCode, product.CreatedAt);
 
         return Result.Success(response);
     }

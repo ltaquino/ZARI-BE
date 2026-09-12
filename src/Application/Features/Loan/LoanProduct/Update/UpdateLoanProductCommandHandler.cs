@@ -46,6 +46,7 @@ public sealed class UpdateLoanProductCommandHandler(IAppDbContext dbContext, IPe
         product.InterestIncomeAccountId = command.InterestIncomeAccountId;
         product.PenaltyIncomeAccountId = command.PenaltyIncomeAccountId;
         product.Status = command.Status;
+        product.CicContractTypeCode = command.CicContractTypeCode;
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

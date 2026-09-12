@@ -17,7 +17,7 @@ public sealed class GetLoanProductQueryHandler(IAppDbContext dbContext, IPermiss
             .Where(p => p.Id == query.Id)
             .Select(p => new LoanProductResponse(p.Id, p.Code, p.Name, p.InterestMethod, p.AnnualInterestRatePct, p.MinPrincipal, p.MaxPrincipal,
                 p.MinTermMonths, p.MaxTermMonths, p.RepaymentFrequency, p.GracePeriodDays, p.PenaltyRatePct, p.RequiresCollateral, p.RequiresCoMaker,
-                p.LoanReceivableAccountId, p.InterestIncomeAccountId, p.PenaltyIncomeAccountId, p.Status, p.CreatedAt))
+                p.LoanReceivableAccountId, p.InterestIncomeAccountId, p.PenaltyIncomeAccountId, p.Status, p.CicContractTypeCode, p.CreatedAt))
             .FirstOrDefaultAsync(cancellationToken);
 
         if (product is null)

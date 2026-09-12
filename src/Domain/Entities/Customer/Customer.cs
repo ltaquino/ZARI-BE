@@ -70,4 +70,31 @@ public sealed class Customer : AuditableEntity
     // submitted to the CIC and consent captured — typically via a clause on the loan application.
     public bool DataSharingConsent { get; set; }
     public DateTimeOffset? DataSharingConsentDate { get; set; }
+
+    // CIC's real CSDF v1.4 "ID" (Individual) record fields (ZARI-FE/frs/loan-cic/LoanCicContext.md
+    // §4.1) that the CISA block above doesn't cover. All nullable/optional, same rule as the block
+    // above — only loan borrowers actually reported to CIC need these filled in. `Name` stays the
+    // single free-text field used everywhere else in the app (Sales, POS, etc.); these are captured
+    // in addition to it, specifically for the CIC export, rather than replacing it.
+    public string? Title { get; set; }
+    public string? FirstName { get; set; }
+    public string? MiddleName { get; set; }
+    public string? LastName { get; set; }
+    public string? Suffix { get; set; }
+    public string? PlaceOfBirth { get; set; }
+    // CIC's CountryDomain 2-letter code (e.g. "PH") — same domain used for both fields.
+    public string? CountryOfBirthCode { get; set; }
+    public string? NationalityCode { get; set; }
+    public bool? Resident { get; set; }
+    // Structured breakdown of the single free-text `Address` above, for CIC's Address 1 block.
+    public string? AddressSubdivision { get; set; }
+    public string? AddressBarangay { get; set; }
+    public string? AddressCity { get; set; }
+    public string? AddressProvince { get; set; }
+    public string? AddressPostalCode { get; set; }
+    public string? AddressCountryCode { get; set; }
+    // "OWN" / "RENT" / "LEASE" / "OTHER" — enum-shaped string (this codebase's usual convention),
+    // mapped to CIC's numeric HouseOwnerLesseeType code only at export time.
+    public string? AddressHouseOwnerOrLessee { get; set; }
+    public DateTimeOffset? AddressOccupiedSince { get; set; }
 }

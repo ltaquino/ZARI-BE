@@ -29,6 +29,23 @@ public sealed class UpdateLoanProductCommandHandlerTests
     }
 
     [Fact]
+    public async Task HandleAsync_Should_Persist_Cic_Contract_Type_Code()
+    {
+        await using var dbContext = TestDbContextFactory.Create();
+        var product = LoanTestFixtures.LoanProduct();
+        dbContext.LoanProducts.Add(product);
+        await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var handler = new UpdateLoanProductCommandHandler(dbContext, LoanTestFixtures.AllowAllPermissionService());
+        var command = Command(product.Id) with { CicContractTypeCode = "15" };
+
+        var result = await handler.HandleAsync(command, TestContext.Current.CancellationToken);
+
+        result.IsSuccess.Should().BeTrue();
+        var saved = await dbContext.LoanProducts.FindAsync([product.Id], TestContext.Current.CancellationToken);
+        saved!.CicContractTypeCode.Should().Be("15");
+    }
+
+    [Fact]
     public async Task HandleAsync_Should_Fail_When_Not_Found()
     {
         await using var dbContext = TestDbContextFactory.Create();

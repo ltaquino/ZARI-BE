@@ -19,5 +19,10 @@ internal static class CustomerMapper
         customer.DependentsCount, customer.Employer, customer.EmployerPosition, customer.NetIncomeLastYear,
         customer.ResidenceSince, customer.PriorResidenceHistory, customer.EmploymentSince, customer.PriorEmploymentHistory,
         customer.HousingStatus, customer.OwnsVehicle, customer.BankAccountInfo, customer.OtherAssetsNotes,
-        customer.DataSharingConsent, customer.DataSharingConsentDate, customer.CreatedAt);
+        customer.DataSharingConsent, customer.DataSharingConsentDate,
+        customer.Title, customer.FirstName, customer.MiddleName, customer.LastName, customer.Suffix,
+        customer.PlaceOfBirth, customer.CountryOfBirthCode, customer.NationalityCode, customer.Resident,
+        customer.AddressSubdivision, customer.AddressBarangay, customer.AddressCity, customer.AddressProvince,
+        customer.AddressPostalCode, customer.AddressCountryCode, customer.AddressHouseOwnerOrLessee, customer.AddressOccupiedSince,
+        customer.CreatedAt);
 }

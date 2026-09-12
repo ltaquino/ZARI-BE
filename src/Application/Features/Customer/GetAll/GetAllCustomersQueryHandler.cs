@@ -21,6 +21,9 @@ public sealed class GetAllCustomersQueryHandler(IAppDbContext dbContext, IPermis
                 c.Tin, c.SssOrGsisNo, c.DateOfBirth, c.Sex, c.CivilStatus, c.DependentsCount, c.Employer, c.EmployerPosition,
                 c.NetIncomeLastYear, c.ResidenceSince, c.PriorResidenceHistory, c.EmploymentSince, c.PriorEmploymentHistory,
                 c.HousingStatus, c.OwnsVehicle, c.BankAccountInfo, c.OtherAssetsNotes, c.DataSharingConsent, c.DataSharingConsentDate,
+                c.Title, c.FirstName, c.MiddleName, c.LastName, c.Suffix, c.PlaceOfBirth, c.CountryOfBirthCode, c.NationalityCode, c.Resident,
+                c.AddressSubdivision, c.AddressBarangay, c.AddressCity, c.AddressProvince, c.AddressPostalCode, c.AddressCountryCode,
+                c.AddressHouseOwnerOrLessee, c.AddressOccupiedSince,
                 c.CreatedAt))
             .ToListAsync(cancellationToken);
 

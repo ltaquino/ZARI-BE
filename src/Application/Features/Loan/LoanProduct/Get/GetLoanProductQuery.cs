@@ -24,4 +24,5 @@ public sealed record LoanProductResponse(
     Guid? InterestIncomeAccountId,
     Guid? PenaltyIncomeAccountId,
     string Status,
+    string? CicContractTypeCode,
     DateTimeOffset CreatedAt);

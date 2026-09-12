@@ -64,6 +64,23 @@ public sealed class UpdateCustomerCommandHandler(IAppDbContext dbContext, IPermi
             ? command.DataSharingConsentDate ?? customer.DataSharingConsentDate ?? DateTimeOffset.UtcNow
             : null;
         customer.DataSharingConsent = command.DataSharingConsent;
+        customer.Title = command.Title;
+        customer.FirstName = command.FirstName;
+        customer.MiddleName = command.MiddleName;
+        customer.LastName = command.LastName;
+        customer.Suffix = command.Suffix;
+        customer.PlaceOfBirth = command.PlaceOfBirth;
+        customer.CountryOfBirthCode = command.CountryOfBirthCode;
+        customer.NationalityCode = command.NationalityCode;
+        customer.Resident = command.Resident;
+        customer.AddressSubdivision = command.AddressSubdivision;
+        customer.AddressBarangay = command.AddressBarangay;
+        customer.AddressCity = command.AddressCity;
+        customer.AddressProvince = command.AddressProvince;
+        customer.AddressPostalCode = command.AddressPostalCode;
+        customer.AddressCountryCode = command.AddressCountryCode;
+        customer.AddressHouseOwnerOrLessee = command.AddressHouseOwnerOrLessee;
+        customer.AddressOccupiedSince = command.AddressOccupiedSince;
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

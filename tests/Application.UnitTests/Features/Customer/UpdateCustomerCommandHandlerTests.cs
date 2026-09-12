@@ -78,6 +78,28 @@ public sealed class UpdateCustomerCommandHandlerTests
     }
 
     [Fact]
+    public async Task HandleAsync_Should_Persist_Cic_Id_Record_Fields()
+    {
+        var (db, customer, branchId) = await Seed();
+        var handler = new UpdateCustomerCommandHandler(db, LoanTestFixtures.AllowAllPermissionService());
+        var command = Command(customer.Id, branchId) with
+        {
+            FirstName = "Juan", LastName = "Dela Cruz", AddressCity = "Ibaan", AddressProvince = "Batangas",
+            AddressHouseOwnerOrLessee = "RENT", Resident = true
+        };
+
+        var result = await handler.HandleAsync(command, TestContext.Current.CancellationToken);
+
+        result.IsSuccess.Should().BeTrue();
+        var updated = await db.Customers.FindAsync([customer.Id], TestContext.Current.CancellationToken);
+        updated!.FirstName.Should().Be("Juan");
+        updated.AddressCity.Should().Be("Ibaan");
+        updated.AddressHouseOwnerOrLessee.Should().Be("RENT");
+        updated.Resident.Should().BeTrue();
+        await db.DisposeAsync();
+    }
+
+    [Fact]
     public async Task HandleAsync_Should_Fail_When_Not_Found()
     {
         var (db, _, branchId) = await Seed();
