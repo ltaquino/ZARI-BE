@@ -5,6 +5,7 @@ using ZARI.Application.Features.Hr.DailyTimeRecords.Create;
 using ZARI.Application.Features.Hr.DailyTimeRecords.Delete;
 using ZARI.Application.Features.Hr.DailyTimeRecords.Get;
 using ZARI.Application.Features.Hr.DailyTimeRecords.GetAll;
+using ZARI.Application.Features.Hr.DailyTimeRecords.KioskClock;
 using ZARI.Application.Features.Hr.DailyTimeRecords.Update;
 using ZARI.Domain.Common;
 
@@ -24,6 +25,10 @@ public static class DailyTimeRecordEndpoints
         group.MapPost("/", Create).AddEndpointFilter<ValidationFilter<CreateDailyTimeRecordCommand>>().WithName("CreateDailyTimeRecord").WithSummary("Create a new daily time record");
         group.MapPut("/{id:guid}", Update).WithName("UpdateDailyTimeRecord").WithSummary("Update an existing daily time record");
         group.MapDelete("/{id:guid}", Delete).WithName("DeleteDailyTimeRecord").WithSummary("Delete a daily time record");
+        group.MapPost("/kiosk-clock", KioskClock)
+            .AddEndpointFilter<ValidationFilter<ClockDtrKioskCommand>>()
+            .WithName("ClockDtrKiosk")
+            .WithSummary("Clock an employee in or out by scanning their barcode/RFID badge — no individual employee login required");
     }
 
     private static async Task<IResult> GetAll(IQueryHandler<GetAllDailyTimeRecordsQuery, Result<List<DailyTimeRecordResponse>>> handler, CancellationToken cancellationToken)
@@ -57,6 +62,12 @@ public static class DailyTimeRecordEndpoints
     {
         var result = await handler.HandleAsync(new DeleteDailyTimeRecordCommand(id), cancellationToken);
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblemDetails();
+    }
+
+    private static async Task<IResult> KioskClock(ClockDtrKioskCommand command, ICommandHandler<ClockDtrKioskCommand, Result<DtrKioskClockResponse>> handler, CancellationToken cancellationToken)
+    {
+        var result = await handler.HandleAsync(command, cancellationToken);
+        return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 }
 
