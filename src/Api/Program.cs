@@ -159,6 +159,7 @@ try
     app.MapGovernmentContributionRateEndpoints();
     app.MapWithholdingTaxBracketEndpoints();
     app.MapPayrollRunEndpoints();
+    app.MapThirteenthMonthPayRunEndpoints();
     app.MapCompanyEndpoints();
     app.MapBranchEndpoints();
     app.MapFormEndpoints();

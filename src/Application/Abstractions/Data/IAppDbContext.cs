@@ -58,6 +58,8 @@ public interface IAppDbContext
     DbSet<WithholdingTaxBracket> WithholdingTaxBrackets { get; }
     DbSet<PayrollRun> PayrollRuns { get; }
     DbSet<PayrollLine> PayrollLines { get; }
+    DbSet<ThirteenthMonthPayRun> ThirteenthMonthPayRuns { get; }
+    DbSet<ThirteenthMonthPayLine> ThirteenthMonthPayLines { get; }
     DbSet<CustomerCreditRecord> CustomerCreditRecords { get; }
     DbSet<Company> Companies { get; }
     DbSet<Branch> Branches { get; }

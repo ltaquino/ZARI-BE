@@ -270,6 +270,8 @@ public static class AppDbSeeder
             // formatted numbers would be genuinely confusing to a real user.
             ("br-hq", "PAYROLL-RUN", "HQ-PAY-", 1),
             ("br-north", "PAYROLL-RUN", "NB-PAY-", 1),
+            ("br-hq", "13TH-PAY", "HQ-13P-", 1),
+            ("br-north", "13TH-PAY", "NB-13P-", 1),
         ];
 
         var existingPairs = (await context.DocumentSequences.Select(s => new { s.BranchId, s.DocType }).ToListAsync())
@@ -785,6 +787,7 @@ public static class AppDbSeeder
             ("GOVT_CONTRIBUTION_RATES", "Government Contribution Rates", "HR"),
             ("WITHHOLDING_TAX_BRACKETS", "Withholding Tax Brackets", "HR"),
             ("PAYROLL_RUNS", "Payroll Runs", "HR"),
+            ("13TH_MONTH_PAY_RUNS", "13th Month Pay Runs", "HR"),
         ];
 
         var existingCodes = await context.Forms.Select(f => f.Code).ToListAsync();
@@ -856,7 +859,7 @@ public static class AppDbSeeder
             "MANUAL_JOURNAL_ENTRIES",
             "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING", "POS_MODE",
             "LOAN_APPLICATIONS", "LOAN_ACCOUNTS", "LOAN_DISBURSEMENTS", "LOAN_PAYMENTS", "LOAN_RESTRUCTURINGS", "LOAN_WRITE_OFFS",
-            "LEAVE_REQUESTS", "OVERTIME_REQUESTS", "PAYROLL_RUNS"
+            "LEAVE_REQUESTS", "OVERTIME_REQUESTS", "PAYROLL_RUNS", "13TH_MONTH_PAY_RUNS"
         ];
         string[] managerMasterDataForms =
         [
@@ -893,7 +896,7 @@ public static class AppDbSeeder
             "MANUAL_JOURNAL_ENTRIES",
             "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING", "POS_MODE",
             "LOAN_APPLICATIONS", "LOAN_ACCOUNTS", "LOAN_DISBURSEMENTS", "LOAN_PAYMENTS", "LOAN_RESTRUCTURINGS", "LOAN_WRITE_OFFS",
-            "LEAVE_REQUESTS", "OVERTIME_REQUESTS", "PAYROLL_RUNS"
+            "LEAVE_REQUESTS", "OVERTIME_REQUESTS", "PAYROLL_RUNS", "13TH_MONTH_PAY_RUNS"
         ];
         string[] staffViewOnlyForms =
         [

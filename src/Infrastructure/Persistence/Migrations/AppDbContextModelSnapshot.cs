@@ -6727,6 +6727,98 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.ToTable("TaxCodes");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.ThirteenthMonthPayLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("ThirteenthMonthPay")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<Guid>("ThirteenthMonthPayRunId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("TotalBasicPay")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("ThirteenthMonthPayRunId", "EmployeeId")
+                        .IsUnique();
+
+                    b.ToTable("ThirteenthMonthPayLines");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.ThirteenthMonthPayRun", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset>("PayDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("RunNo")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<int>("Year")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("RunNo")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.HasIndex("BranchId", "Year")
+                        .IsUnique();
+
+                    b.ToTable("ThirteenthMonthPayRuns");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.Uom", b =>
                 {
                     b.Property<Guid>("Id")
@@ -9201,6 +9293,36 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Navigation("GlAccount");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.ThirteenthMonthPayLine", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.ThirteenthMonthPayRun", "ThirteenthMonthPayRun")
+                        .WithMany("Lines")
+                        .HasForeignKey("ThirteenthMonthPayRunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("ThirteenthMonthPayRun");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.ThirteenthMonthPayRun", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.UserBranch", b =>
                 {
                     b.HasOne("ZARI.Domain.Entities.Branch", null)
@@ -9385,6 +9507,11 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.StockTransferRequest", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.ThirteenthMonthPayRun", b =>
                 {
                     b.Navigation("Lines");
                 });

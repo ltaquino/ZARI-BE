@@ -54,6 +54,10 @@ public sealed class DeleteEmployeeCommandHandler(IAppDbContext dbContext, IPermi
         if (payrollLineCount > 0)
             return Result.Failure(Error.Conflict("Employee.HasPayrollLines", $"Cannot delete this employee — they appear on {payrollLineCount} payroll line{(payrollLineCount == 1 ? "" : "s")}."));
 
+        var thirteenthMonthPayLineCount = await dbContext.ThirteenthMonthPayLines.CountAsync(l => l.EmployeeId == command.Id, cancellationToken);
+        if (thirteenthMonthPayLineCount > 0)
+            return Result.Failure(Error.Conflict("Employee.HasThirteenthMonthPayLines", $"Cannot delete this employee — they appear on {thirteenthMonthPayLineCount} 13th month pay line{(thirteenthMonthPayLineCount == 1 ? "" : "s")}."));
+
         dbContext.Employees.Remove(employee);
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

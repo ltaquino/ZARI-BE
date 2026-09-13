@@ -319,4 +319,30 @@ public static class HrTestFixtures
         DeductionTotal = deductionTotal,
         NetPay = netPay
     };
+
+    public static ThirteenthMonthPayRun ThirteenthMonthPayRun(
+        string runNo = "HQ-13P-000001",
+        string branchId = "br-1",
+        int year = 2026,
+        DateTimeOffset? payDate = null,
+        string status = "DRAFT") => new()
+    {
+        RunNo = runNo,
+        BranchId = branchId,
+        Year = year,
+        PayDate = payDate ?? new DateTimeOffset(2026, 12, 15, 0, 0, 0, TimeSpan.Zero),
+        Status = status
+    };
+
+    public static ThirteenthMonthPayLine ThirteenthMonthPayLine(
+        Guid thirteenthMonthPayRunId = default,
+        Guid employeeId = default,
+        decimal totalBasicPay = 120000m,
+        decimal thirteenthMonthPay = 10000m) => new()
+    {
+        ThirteenthMonthPayRunId = thirteenthMonthPayRunId,
+        EmployeeId = employeeId,
+        TotalBasicPay = totalBasicPay,
+        ThirteenthMonthPay = thirteenthMonthPay
+    };
 }
