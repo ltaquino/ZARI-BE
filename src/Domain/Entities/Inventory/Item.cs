@@ -25,6 +25,14 @@ public sealed class Item : AuditableEntity
     // item isn't sellable in the first place).
     public bool IsTileDisplay { get; set; }
 
+    // Lets this item's stock-out transactions (Goods Issue, negative Adjustment/Opname, Delivery
+    // Order, POS checkout, Goods Return-to-supplier — every one funnels through
+    // IssueStockLinesCommandHandler) succeed even when on-hand quantity is zero or insufficient,
+    // instead of being hard-blocked. StockBalance.QtyOnHand goes negative to reflect the real
+    // (over-)issued position; a later Goods Receipt brings it back up as usual. Only meaningful
+    // when IsStocked is also true — an unstocked item never reaches that handler in the first place.
+    public bool AllowNegativeStock { get; set; }
+
     // GL account references — the Accounting module isn't a backend entity yet,
     // so these stay plain strings (not Guid/FK) until it exists.
     public string? SalesAccountId { get; set; }

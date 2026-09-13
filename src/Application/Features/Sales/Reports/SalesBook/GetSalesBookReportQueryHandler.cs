@@ -2,6 +2,7 @@ namespace ZARI.Application.Features.Sales.Reports.SalesBook;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Sales.SalesInvoices.Shared;
 using ZARI.Domain.Common;
@@ -14,10 +15,13 @@ using ZARI.Domain.Entities;
 /// SalesInvoiceLineCalculator.Calculate + SplitVat exactly as the live invoice/receipt posting path
 /// does, so the report always ties out to what was actually invoiced — no parallel VAT math.
 /// </summary>
-public sealed class GetSalesBookReportQueryHandler(IAppDbContext dbContext) : IQueryHandler<GetSalesBookReportQuery, Result<SalesBookReportResponse>>
+public sealed class GetSalesBookReportQueryHandler(IAppDbContext dbContext, IPermissionService permissionService) : IQueryHandler<GetSalesBookReportQuery, Result<SalesBookReportResponse>>
 {
     public async Task<Result<SalesBookReportResponse>> HandleAsync(GetSalesBookReportQuery query, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionAsync("SALES_INVOICES", FormAction.View, cancellationToken))
+            return Result.Failure<SalesBookReportResponse>(Error.Forbidden("SalesBook.Forbidden", "You do not have permission to view the sales book."));
+
         var invoices = await dbContext.SalesInvoices.AsNoTracking()
             .Include(i => i.Customer)
             .Include(i => i.Lines).ThenInclude(l => l.StatutoryDiscountType)

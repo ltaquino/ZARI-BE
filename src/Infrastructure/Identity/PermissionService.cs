@@ -43,6 +43,18 @@ public sealed class PermissionService(
         return await HasPermissionAsync(formCode, FormAction.Cancel, cancellationToken);
     }
 
+    public async Task<bool> HasHqApprovalAuthorityAsync(string formCode, CancellationToken cancellationToken = default)
+    {
+        if (currentUser.UserId is null) return false;
+
+        var isAssignedToHq = await dbContext.UserBranches
+            .Join(dbContext.Branches, ub => ub.BranchId, b => b.Id, (ub, b) => new { ub.UserId, b.IsHeadOffice })
+            .AnyAsync(x => x.UserId == currentUser.UserId && x.IsHeadOffice, cancellationToken);
+        if (!isAssignedToHq) return false;
+
+        return await HasPermissionAsync(formCode, FormAction.Approve, cancellationToken);
+    }
+
     private async Task<FormPermissionResponse?> ResolveAsync(string formCode, CancellationToken cancellationToken)
     {
         if (currentUser.UserId is null) return null;

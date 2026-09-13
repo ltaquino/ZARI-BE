@@ -5,6 +5,7 @@ using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Customers.Get;
+using ZARI.Application.Features.Customers.Shared;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
@@ -40,15 +41,48 @@ public sealed class CreateCustomerCommandHandler(IAppDbContext dbContext, IPermi
             ArAccountId = command.ArAccountId,
             PaymentTermsDays = command.PaymentTermsDays,
             StandingDiscountPct = command.StandingDiscountPct,
-            MemberNo = command.MemberNo
+            MemberNo = command.MemberNo,
+            Tin = command.Tin,
+            SssOrGsisNo = command.SssOrGsisNo,
+            DateOfBirth = command.DateOfBirth,
+            Sex = command.Sex,
+            CivilStatus = command.CivilStatus,
+            DependentsCount = command.DependentsCount,
+            Employer = command.Employer,
+            EmployerPosition = command.EmployerPosition,
+            NetIncomeLastYear = command.NetIncomeLastYear,
+            ResidenceSince = command.ResidenceSince,
+            PriorResidenceHistory = command.PriorResidenceHistory,
+            EmploymentSince = command.EmploymentSince,
+            PriorEmploymentHistory = command.PriorEmploymentHistory,
+            HousingStatus = command.HousingStatus,
+            OwnsVehicle = command.OwnsVehicle,
+            BankAccountInfo = command.BankAccountInfo,
+            OtherAssetsNotes = command.OtherAssetsNotes,
+            DataSharingConsent = command.DataSharingConsent,
+            DataSharingConsentDate = command.DataSharingConsent ? command.DataSharingConsentDate ?? DateTimeOffset.UtcNow : null,
+            Title = command.Title,
+            FirstName = command.FirstName,
+            MiddleName = command.MiddleName,
+            LastName = command.LastName,
+            Suffix = command.Suffix,
+            PlaceOfBirth = command.PlaceOfBirth,
+            CountryOfBirthCode = command.CountryOfBirthCode,
+            NationalityCode = command.NationalityCode,
+            Resident = command.Resident,
+            AddressSubdivision = command.AddressSubdivision,
+            AddressBarangay = command.AddressBarangay,
+            AddressCity = command.AddressCity,
+            AddressProvince = command.AddressProvince,
+            AddressPostalCode = command.AddressPostalCode,
+            AddressCountryCode = command.AddressCountryCode,
+            AddressHouseOwnerOrLessee = command.AddressHouseOwnerOrLessee,
+            AddressOccupiedSince = command.AddressOccupiedSince
         };
 
         dbContext.Customers.Add(customer);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var response = new CustomerResponse(customer.Id, customer.Name, customer.Type, customer.Email, customer.Phone,
-            customer.BranchId, customer.Status, customer.Owner, customer.Address, customer.Notes,
-            customer.ArAccountId, customer.PaymentTermsDays, customer.StandingDiscountPct, customer.MemberNo, customer.CreatedAt);
-        return Result.Success(response);
+        return Result.Success(CustomerMapper.ToResponse(customer));
     }
 }

@@ -13,7 +13,14 @@ public sealed class GetCustomerQueryHandler(IAppDbContext dbContext, IPermission
         var customer = await dbContext.Customers
             .Where(c => c.Id == query.Id)
             .Select(c => new CustomerResponse(c.Id, c.Name, c.Type, c.Email, c.Phone, c.BranchId, c.Status, c.Owner, c.Address, c.Notes,
-                c.ArAccountId, c.PaymentTermsDays, c.StandingDiscountPct, c.MemberNo, c.CreatedAt))
+                c.ArAccountId, c.PaymentTermsDays, c.StandingDiscountPct, c.MemberNo,
+                c.Tin, c.SssOrGsisNo, c.DateOfBirth, c.Sex, c.CivilStatus, c.DependentsCount, c.Employer, c.EmployerPosition,
+                c.NetIncomeLastYear, c.ResidenceSince, c.PriorResidenceHistory, c.EmploymentSince, c.PriorEmploymentHistory,
+                c.HousingStatus, c.OwnsVehicle, c.BankAccountInfo, c.OtherAssetsNotes, c.DataSharingConsent, c.DataSharingConsentDate,
+                c.Title, c.FirstName, c.MiddleName, c.LastName, c.Suffix, c.PlaceOfBirth, c.CountryOfBirthCode, c.NationalityCode, c.Resident,
+                c.AddressSubdivision, c.AddressBarangay, c.AddressCity, c.AddressProvince, c.AddressPostalCode, c.AddressCountryCode,
+                c.AddressHouseOwnerOrLessee, c.AddressOccupiedSince,
+                c.CreatedAt))
             .FirstOrDefaultAsync(cancellationToken);
 
         if (customer is null)

@@ -41,6 +41,46 @@ public sealed class UpdateCustomerCommandHandler(IAppDbContext dbContext, IPermi
         customer.PaymentTermsDays = command.PaymentTermsDays;
         customer.StandingDiscountPct = command.StandingDiscountPct;
         customer.MemberNo = command.MemberNo;
+        customer.Tin = command.Tin;
+        customer.SssOrGsisNo = command.SssOrGsisNo;
+        customer.DateOfBirth = command.DateOfBirth;
+        customer.Sex = command.Sex;
+        customer.CivilStatus = command.CivilStatus;
+        customer.DependentsCount = command.DependentsCount;
+        customer.Employer = command.Employer;
+        customer.EmployerPosition = command.EmployerPosition;
+        customer.NetIncomeLastYear = command.NetIncomeLastYear;
+        customer.ResidenceSince = command.ResidenceSince;
+        customer.PriorResidenceHistory = command.PriorResidenceHistory;
+        customer.EmploymentSince = command.EmploymentSince;
+        customer.PriorEmploymentHistory = command.PriorEmploymentHistory;
+        customer.HousingStatus = command.HousingStatus;
+        customer.OwnsVehicle = command.OwnsVehicle;
+        customer.BankAccountInfo = command.BankAccountInfo;
+        customer.OtherAssetsNotes = command.OtherAssetsNotes;
+        // A consent that was already on record keeps its original date even if this Update call
+        // omits DataSharingConsentDate — only a brand-new consent (false -> true) stamps "now".
+        customer.DataSharingConsentDate = command.DataSharingConsent
+            ? command.DataSharingConsentDate ?? customer.DataSharingConsentDate ?? DateTimeOffset.UtcNow
+            : null;
+        customer.DataSharingConsent = command.DataSharingConsent;
+        customer.Title = command.Title;
+        customer.FirstName = command.FirstName;
+        customer.MiddleName = command.MiddleName;
+        customer.LastName = command.LastName;
+        customer.Suffix = command.Suffix;
+        customer.PlaceOfBirth = command.PlaceOfBirth;
+        customer.CountryOfBirthCode = command.CountryOfBirthCode;
+        customer.NationalityCode = command.NationalityCode;
+        customer.Resident = command.Resident;
+        customer.AddressSubdivision = command.AddressSubdivision;
+        customer.AddressBarangay = command.AddressBarangay;
+        customer.AddressCity = command.AddressCity;
+        customer.AddressProvince = command.AddressProvince;
+        customer.AddressPostalCode = command.AddressPostalCode;
+        customer.AddressCountryCode = command.AddressCountryCode;
+        customer.AddressHouseOwnerOrLessee = command.AddressHouseOwnerOrLessee;
+        customer.AddressOccupiedSince = command.AddressOccupiedSince;
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

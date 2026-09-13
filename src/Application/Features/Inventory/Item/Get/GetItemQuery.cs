@@ -20,6 +20,7 @@ public sealed record ItemResponse(
     bool IsPurchased,
     bool IsStocked,
     bool IsTileDisplay,
+    bool AllowNegativeStock,
     string? SalesAccountId,
     string? PurchaseAccountId,
     string? InventoryAccountId,

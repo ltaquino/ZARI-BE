@@ -37,6 +37,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<StockLocationTransfer> StockLocationTransfers => Set<StockLocationTransfer>();
     public DbSet<StockLocationTransferLine> StockLocationTransferLines => Set<StockLocationTransferLine>();
     public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<CustomerCreditRecord> CustomerCreditRecords => Set<CustomerCreditRecord>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<Branch> Branches => Set<Branch>();
     public DbSet<GlAccount> GlAccounts => Set<GlAccount>();
@@ -91,6 +92,18 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<PosTerminal> PosTerminals => Set<PosTerminal>();
     public DbSet<PosPromoSlide> PosPromoSlides => Set<PosPromoSlide>();
     public DbSet<ReportTemplate> ReportTemplates => Set<ReportTemplate>();
+    public DbSet<LoanProduct> LoanProducts => Set<LoanProduct>();
+    public DbSet<LoanApplication> LoanApplications => Set<LoanApplication>();
+    public DbSet<LoanCollateral> LoanCollaterals => Set<LoanCollateral>();
+    public DbSet<LoanCoMaker> LoanCoMakers => Set<LoanCoMaker>();
+    public DbSet<LoanAccount> LoanAccounts => Set<LoanAccount>();
+    public DbSet<LoanAmortizationScheduleLine> LoanAmortizationScheduleLines => Set<LoanAmortizationScheduleLine>();
+    public DbSet<LoanDisbursement> LoanDisbursements => Set<LoanDisbursement>();
+    public DbSet<LoanLedgerEntry> LoanLedgerEntries => Set<LoanLedgerEntry>();
+    public DbSet<LoanPayment> LoanPayments => Set<LoanPayment>();
+    public DbSet<LoanPaymentAllocation> LoanPaymentAllocations => Set<LoanPaymentAllocation>();
+    public DbSet<LoanRestructuring> LoanRestructurings => Set<LoanRestructuring>();
+    public DbSet<LoanWriteOff> LoanWriteOffs => Set<LoanWriteOff>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

@@ -40,6 +40,7 @@ public interface IAppDbContext
     DbSet<StockLocationTransfer> StockLocationTransfers { get; }
     DbSet<StockLocationTransferLine> StockLocationTransferLines { get; }
     DbSet<Customer> Customers { get; }
+    DbSet<CustomerCreditRecord> CustomerCreditRecords { get; }
     DbSet<Company> Companies { get; }
     DbSet<Branch> Branches { get; }
     DbSet<GlAccount> GlAccounts { get; }
@@ -94,6 +95,18 @@ public interface IAppDbContext
     DbSet<PosTerminal> PosTerminals { get; }
     DbSet<PosPromoSlide> PosPromoSlides { get; }
     DbSet<ReportTemplate> ReportTemplates { get; }
+    DbSet<LoanProduct> LoanProducts { get; }
+    DbSet<LoanApplication> LoanApplications { get; }
+    DbSet<LoanCollateral> LoanCollaterals { get; }
+    DbSet<LoanCoMaker> LoanCoMakers { get; }
+    DbSet<LoanAccount> LoanAccounts { get; }
+    DbSet<LoanAmortizationScheduleLine> LoanAmortizationScheduleLines { get; }
+    DbSet<LoanDisbursement> LoanDisbursements { get; }
+    DbSet<LoanLedgerEntry> LoanLedgerEntries { get; }
+    DbSet<LoanPayment> LoanPayments { get; }
+    DbSet<LoanPaymentAllocation> LoanPaymentAllocations { get; }
+    DbSet<LoanRestructuring> LoanRestructurings { get; }
+    DbSet<LoanWriteOff> LoanWriteOffs { get; }
 
     // Exposed only for the stock-ledger posting handlers, which need an explicit transaction plus
     // raw-SQL "FOR UPDATE" locking (see Application/Features/Inventory/StockLedger/Shared/

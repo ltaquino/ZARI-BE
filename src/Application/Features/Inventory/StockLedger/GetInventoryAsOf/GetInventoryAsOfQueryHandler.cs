@@ -2,6 +2,7 @@ namespace ZARI.Application.Features.Inventory.StockLedgers.GetInventoryAsOf;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
@@ -17,10 +18,13 @@ using ZARI.Domain.Common;
 /// report (an annual filing), not a hot path — pulling every ledger row up to the cutoff date once
 /// is an acceptable cost here.
 /// </summary>
-public sealed class GetInventoryAsOfQueryHandler(IAppDbContext dbContext) : IQueryHandler<GetInventoryAsOfQuery, Result<List<InventoryAsOfLineResponse>>>
+public sealed class GetInventoryAsOfQueryHandler(IAppDbContext dbContext, IPermissionService permissionService) : IQueryHandler<GetInventoryAsOfQuery, Result<List<InventoryAsOfLineResponse>>>
 {
     public async Task<Result<List<InventoryAsOfLineResponse>>> HandleAsync(GetInventoryAsOfQuery query, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionAsync("ITEMS", FormAction.View, cancellationToken))
+            return Result.Failure<List<InventoryAsOfLineResponse>>(Error.Forbidden("InventoryAsOf.Forbidden", "You do not have permission to view inventory as of a date."));
+
         var candidates = await dbContext.StockLedgers
             .Where(l => l.TransactionDate <= query.AsOfDate && (query.BranchId == null || l.BranchId == query.BranchId))
             .OrderBy(l => l.PostedAt)

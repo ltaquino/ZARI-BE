@@ -71,6 +71,7 @@ public static class AppDbSeeder
     {
         (string Email, string FirstName, string LastName, string Phone, string Role, string[] BranchIds)[] demoUsers =
         [
+            //("admin@zari.coop", "Maria", "Santos", "+63 917 111 2222", "Admin", ["br-hq"]),
             ("admin@zari.coop", "Maria", "Santos", "+63 917 111 2222", "Admin", ["br-hq", "br-north", "br-south", "br-east"]),
             ("manager@zari.coop", "Carlo", "Reyes", "+63 918 222 3333", "Manager", ["br-north"]),
             ("ana.lopez@zari.coop", "Ana", "Lopez", "+63 919 333 4444", "Staff", ["br-south"]),
@@ -129,7 +130,8 @@ public static class AppDbSeeder
             new Branch { Id = "br-hq", Name = "Head Office", Code = "HQ", City = "Cebu City", Address = "Osmena Blvd, Cebu City", Phone = "+63 32 111 2222", Status = "active", IsHeadOffice = true },
             new Branch { Id = "br-north", Name = "North Branch", Code = "NB", City = "Mandaue City", Address = "A.S. Fortuna St, Mandaue City", Phone = "+63 32 222 3333", Status = "active", IsHeadOffice = false },
             new Branch { Id = "br-south", Name = "South Branch", Code = "SB", City = "Talisay City", Address = "Tabunok, Talisay City", Phone = "+63 32 333 4444", Status = "active", IsHeadOffice = false },
-            new Branch { Id = "br-east", Name = "East Branch", Code = "EB", City = "Lapu-Lapu City", Address = "Pusok, Lapu-Lapu City", Phone = "+63 32 444 5555", Status = "active", IsHeadOffice = false });
+            new Branch { Id = "br-east", Name = "East Branch", Code = "EB", City = "Lapu-Lapu City", Address = "Pusok, Lapu-Lapu City", Phone = "+63 32 444 5555", Status = "active", IsHeadOffice = false } 
+            );
 
         await context.SaveChangesAsync();
         logger.LogInformation("Seeded default branches");
@@ -311,6 +313,12 @@ public static class AppDbSeeder
             // Contra-revenue account for the credit-memo side of a Sales Return — debited alongside
             // the VAT Payable reversal, against a credit to Accounts Receivable.
             ("4100", "Sales Returns and Allowances", "Revenue", "Debit"),
+            // Loan module (ZARI-FE/frs/loan/LoanModuleContext.md §5) — a member's outstanding
+            // principal balance, and the contra-asset provisioning account against it.
+            ("1300", "Loans Receivable", "Asset", "Debit"),
+            ("1350", "Allowance for Doubtful Loans", "Asset", "Credit"),
+            ("4200", "Interest Income", "Revenue", "Credit"),
+            ("4210", "Penalty / Fines Income", "Revenue", "Credit"),
             ("5000", "Cost of Goods Sold", "Cogs", "Debit"),
             ("5100", "Inventory Variance / Shrinkage", "Cogs", "Debit"),
             // Absorbs the difference when an AP Invoice's billed amount differs from the GRPO's
@@ -325,6 +333,8 @@ public static class AppDbSeeder
             ("6020", "Salaries and Wages", "Expense", "Debit"),
             ("6030", "Rent Expense", "Expense", "Debit"),
             ("6900", "Other Operating Expense", "Expense", "Debit"),
+            // Loan module — booked when a loan is written off (§4.10 of the context doc above).
+            ("6910", "Loan Loss / Bad Debts Expense", "Expense", "Debit"),
         ];
 
         var existingCodes = await context.GlAccounts.Select(a => a.Code).ToListAsync();
@@ -649,6 +659,7 @@ public static class AppDbSeeder
             ("DASHBOARD", "Dashboard", "Dashboard"),
 
             ("CUSTOMERS", "Customers", "CRM"),
+            ("CUSTOMER_CREDIT_RECORDS", "Member Credit Records (CISA)", "CRM"),
 
             ("USERS", "Users", "System"),
             ("ROLES", "Roles", "System"),
@@ -709,6 +720,16 @@ public static class AppDbSeeder
             ("POS_PROMO_SLIDES", "POS Promo Slides", "Sales"),
 
             ("REPORT_DESIGNER", "Report Designer", "Reporting"),
+
+            // Loan module (ZARI-FE/frs/loan/LoanModuleContext.md) — build-order steps 2-9 so far;
+            // the rest are added as each later step lands.
+            ("LOAN_PRODUCTS", "Loan Products", "Loan"),
+            ("LOAN_APPLICATIONS", "Loan Applications", "Loan"),
+            ("LOAN_ACCOUNTS", "Loan Accounts", "Loan"),
+            ("LOAN_DISBURSEMENTS", "Loan Disbursements", "Loan"),
+            ("LOAN_PAYMENTS", "Loan Payments", "Loan"),
+            ("LOAN_RESTRUCTURINGS", "Loan Restructurings", "Loan"),
+            ("LOAN_WRITE_OFFS", "Loan Write-offs", "Loan"),
         ];
 
         var existingCodes = await context.Forms.Select(f => f.Code).ToListAsync();
@@ -778,13 +799,14 @@ public static class AppDbSeeder
             "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS", "APPROVAL_REQUESTS", "PURCHASE_ORDERS",
             "PURCHASE_REQUESTS", "GOODS_RECEIPT_PO", "GOODS_RETURNS", "AP_INVOICES", "OUTGOING_PAYMENTS",
             "MANUAL_JOURNAL_ENTRIES",
-            "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING", "POS_MODE"
+            "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING", "POS_MODE",
+            "LOAN_APPLICATIONS", "LOAN_ACCOUNTS", "LOAN_DISBURSEMENTS", "LOAN_PAYMENTS", "LOAN_RESTRUCTURINGS", "LOAN_WRITE_OFFS"
         ];
         string[] managerMasterDataForms =
         [
             "UOMS", "ITEM_CATEGORIES", "WAREHOUSES", "STORAGE_LOCATIONS", "ITEMS",
             "ADJUSTMENT_REASONS", "ITEM_BRANCH_SETTINGS", "STOCK_RESERVATIONS", "SERIAL_NUMBERS",
-            "PURCHASE_RETURN_REASONS", "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES",
+            "PURCHASE_RETURN_REASONS", "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES", "LOAN_PRODUCTS",
             "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES", "REPORT_DESIGNER"
         ];
         string[] managerViewOnlyForms =
@@ -801,6 +823,7 @@ public static class AppDbSeeder
             Grant(managerRole.Id, formCode, view);
         Grant(managerRole.Id, "CUSTOMERS", manage);
         Grant(managerRole.Id, "SUPPLIERS", manage);
+        Grant(managerRole.Id, "CUSTOMER_CREDIT_RECORDS", manage);
 
         string[] staffTransactionalForms =
         [
@@ -808,14 +831,15 @@ public static class AppDbSeeder
             "STOCK_TRANSFER_REQUESTS", "STOCK_LOCATION_TRANSFERS", "PURCHASE_ORDERS",
             "PURCHASE_REQUESTS", "GOODS_RECEIPT_PO", "GOODS_RETURNS", "AP_INVOICES", "OUTGOING_PAYMENTS",
             "MANUAL_JOURNAL_ENTRIES",
-            "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING", "POS_MODE"
+            "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING", "POS_MODE",
+            "LOAN_APPLICATIONS", "LOAN_ACCOUNTS", "LOAN_DISBURSEMENTS", "LOAN_PAYMENTS", "LOAN_RESTRUCTURINGS", "LOAN_WRITE_OFFS"
         ];
         string[] staffViewOnlyForms =
         [
-            "DASHBOARD", "CUSTOMERS", "UOMS", "ITEM_CATEGORIES", "WAREHOUSES", "STORAGE_LOCATIONS",
+            "DASHBOARD", "CUSTOMERS", "CUSTOMER_CREDIT_RECORDS", "UOMS", "ITEM_CATEGORIES", "WAREHOUSES", "STORAGE_LOCATIONS",
             "ITEMS", "ADJUSTMENT_REASONS", "ITEM_BRANCH_SETTINGS", "STOCK_RESERVATIONS",
             "SERIAL_NUMBERS", "APPROVAL_REQUESTS", "NOTIFICATIONS", "SUPPLIERS", "PURCHASE_RETURN_REASONS",
-            "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES",
+            "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES", "LOAN_PRODUCTS",
             "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES", "REPORT_DESIGNER"
         ];
 

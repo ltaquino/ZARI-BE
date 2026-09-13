@@ -2,6 +2,7 @@ namespace ZARI.Application.Features.Inventory.Reports.InventoryValuation;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
@@ -14,10 +15,13 @@ using ZARI.Domain.Common;
 /// GetInventoryAsOfQueryHandler's own precedent, the candidate rows are pulled once (already
 /// filtered by BranchId/CategoryId at the SQL level) and both levels of grouping happen in memory.
 /// </summary>
-public sealed class GetInventoryValuationReportQueryHandler(IAppDbContext dbContext) : IQueryHandler<GetInventoryValuationReportQuery, Result<InventoryValuationReportResponse>>
+public sealed class GetInventoryValuationReportQueryHandler(IAppDbContext dbContext, IPermissionService permissionService) : IQueryHandler<GetInventoryValuationReportQuery, Result<InventoryValuationReportResponse>>
 {
     public async Task<Result<InventoryValuationReportResponse>> HandleAsync(GetInventoryValuationReportQuery query, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionAsync("ITEMS", FormAction.View, cancellationToken))
+            return Result.Failure<InventoryValuationReportResponse>(Error.Forbidden("InventoryValuation.Forbidden", "You do not have permission to view the inventory valuation report."));
+
         var balances = await dbContext.StockBalances.AsNoTracking()
             .Include(b => b.Item).ThenInclude(i => i.Category)
             .Where(b => (query.BranchId == null || b.BranchId == query.BranchId)

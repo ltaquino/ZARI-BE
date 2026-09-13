@@ -48,6 +48,7 @@ public sealed class UpdateItemCommandHandler(IAppDbContext dbContext, IPermissio
         item.IsPurchased = command.IsPurchased;
         item.IsStocked = command.IsStocked;
         item.IsTileDisplay = command.IsTileDisplay;
+        item.AllowNegativeStock = command.AllowNegativeStock;
         item.SalesAccountId = command.SalesAccountId;
         item.PurchaseAccountId = command.PurchaseAccountId;
         item.InventoryAccountId = command.InventoryAccountId;

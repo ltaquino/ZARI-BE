@@ -141,6 +141,7 @@ try
     app.MapStockTransferRequestEndpoints();
     app.MapStockLocationTransferEndpoints();
     app.MapCustomerEndpoints();
+    app.MapCustomerCreditRecordEndpoints();
     app.MapCompanyEndpoints();
     app.MapBranchEndpoints();
     app.MapFormEndpoints();
@@ -176,6 +177,14 @@ try
     app.MapSalesReportsEndpoints();
     app.MapInventoryReportsEndpoints();
     app.MapReportingEndpoints();
+    app.MapLoanProductEndpoints();
+    app.MapLoanApplicationEndpoints();
+    app.MapLoanAccountEndpoints();
+    app.MapLoanDisbursementEndpoints();
+    app.MapLoanPaymentEndpoints();
+    app.MapLoanReportsEndpoints();
+    app.MapLoanRestructuringEndpoints();
+    app.MapLoanWriteOffEndpoints();
     //app.MapGet("/debug-user", (HttpContext ctx) =>
     //{
     //    return new
