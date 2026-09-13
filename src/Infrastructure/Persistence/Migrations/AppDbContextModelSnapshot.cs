@@ -4564,6 +4564,133 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.ToTable("PaymentMethods");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.PayrollLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("AllowanceTotal")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("BasicPay")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("DeductionTotal")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("GrossPay")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("NetPay")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("OvertimePay")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("PagIbigEmployeeShare")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("PagIbigEmployerShare")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<Guid>("PayrollRunId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("PhilHealthEmployeeShare")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("PhilHealthEmployerShare")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("SssEmployeeShare")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("SssEmployerShare")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("WithholdingTax")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("PayrollRunId", "EmployeeId")
+                        .IsUnique();
+
+                    b.ToTable("PayrollLines");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.PayrollRun", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset>("PayDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTimeOffset>("PayPeriodEnd")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTimeOffset>("PayPeriodStart")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("PayrollRunNo")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("BranchId");
+
+                    b.HasIndex("PayrollRunNo")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("PayrollRuns");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.PosPromoSlide", b =>
                 {
                     b.Property<Guid>("Id")
@@ -8274,6 +8401,36 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Navigation("GlAccount");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.PayrollLine", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.PayrollRun", "PayrollRun")
+                        .WithMany("Lines")
+                        .HasForeignKey("PayrollRunId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+
+                    b.Navigation("PayrollRun");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.PayrollRun", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.PosTerminal", b =>
                 {
                     b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
@@ -9115,6 +9272,11 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.OutgoingPayment", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.PayrollRun", b =>
                 {
                     b.Navigation("Lines");
                 });

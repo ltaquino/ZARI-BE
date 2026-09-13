@@ -52,6 +52,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<SssContributionBracket> SssContributionBrackets => Set<SssContributionBracket>();
     public DbSet<GovernmentContributionRate> GovernmentContributionRates => Set<GovernmentContributionRate>();
     public DbSet<WithholdingTaxBracket> WithholdingTaxBrackets => Set<WithholdingTaxBracket>();
+    public DbSet<PayrollRun> PayrollRuns => Set<PayrollRun>();
+    public DbSet<PayrollLine> PayrollLines => Set<PayrollLine>();
     public DbSet<CustomerCreditRecord> CustomerCreditRecords => Set<CustomerCreditRecord>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<Branch> Branches => Set<Branch>();

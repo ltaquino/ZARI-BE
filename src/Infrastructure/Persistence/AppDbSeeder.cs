@@ -264,6 +264,11 @@ public static class AppDbSeeder
             ("br-north", "LEAVE-REQ", "NB-LR-", 1),
             ("br-hq", "OT-REQ", "HQ-OT-", 1),
             ("br-north", "OT-REQ", "NB-OT-", 1),
+            // "HQ-PAY-"/"NB-PAY-", not "HQ-PR-"/"NB-PR-" — that prefix is already Purchase
+            // Request's, and the two DocTypes' counters don't collide but identical-looking
+            // formatted numbers would be genuinely confusing to a real user.
+            ("br-hq", "PAYROLL-RUN", "HQ-PAY-", 1),
+            ("br-north", "PAYROLL-RUN", "NB-PAY-", 1),
         ];
 
         var existingPairs = (await context.DocumentSequences.Select(s => new { s.BranchId, s.DocType }).ToListAsync())
@@ -348,6 +353,14 @@ public static class AppDbSeeder
             ("2320", "Pag-IBIG Payable", "Liability", "Credit"),
             ("2330", "Withholding Tax Payable", "Liability", "Credit"),
             ("2340", "Net Pay Payable", "Liability", "Credit"),
+            // Clearing account for recurring/ad-hoc EmployeeDeduction amounts (e.g. cash advance
+            // recoveries) that a PayrollRun's Approve journal credits — Net Pay Payable already
+            // reflects the deduction net of NetPay, so this is the other side of that entry.
+            // Reconciled manually by Accounting against whatever receivable/liability the original
+            // deduction was for. Added when ApprovePayrollRunCommandHandler was built (build-order
+            // step 9) — the design doc's own posting skeleton (§3.13) didn't otherwise balance once
+            // EmployeeDeduction amounts are non-zero.
+            ("2350", "Other Payroll Deductions Payable", "Liability", "Credit"),
             ("6021", "Employer SSS Share Expense", "Expense", "Debit"),
             ("6022", "Employer PhilHealth Share Expense", "Expense", "Debit"),
             ("6023", "Employer Pag-IBIG Share Expense", "Expense", "Debit"),
@@ -769,6 +782,7 @@ public static class AppDbSeeder
             ("SSS_CONTRIBUTION_BRACKETS", "SSS Contribution Brackets", "HR"),
             ("GOVT_CONTRIBUTION_RATES", "Government Contribution Rates", "HR"),
             ("WITHHOLDING_TAX_BRACKETS", "Withholding Tax Brackets", "HR"),
+            ("PAYROLL_RUNS", "Payroll Runs", "HR"),
         ];
 
         var existingCodes = await context.Forms.Select(f => f.Code).ToListAsync();
@@ -840,7 +854,7 @@ public static class AppDbSeeder
             "MANUAL_JOURNAL_ENTRIES",
             "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING", "POS_MODE",
             "LOAN_APPLICATIONS", "LOAN_ACCOUNTS", "LOAN_DISBURSEMENTS", "LOAN_PAYMENTS", "LOAN_RESTRUCTURINGS", "LOAN_WRITE_OFFS",
-            "LEAVE_REQUESTS", "OVERTIME_REQUESTS"
+            "LEAVE_REQUESTS", "OVERTIME_REQUESTS", "PAYROLL_RUNS"
         ];
         string[] managerMasterDataForms =
         [
@@ -877,7 +891,7 @@ public static class AppDbSeeder
             "MANUAL_JOURNAL_ENTRIES",
             "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING", "POS_MODE",
             "LOAN_APPLICATIONS", "LOAN_ACCOUNTS", "LOAN_DISBURSEMENTS", "LOAN_PAYMENTS", "LOAN_RESTRUCTURINGS", "LOAN_WRITE_OFFS",
-            "LEAVE_REQUESTS", "OVERTIME_REQUESTS"
+            "LEAVE_REQUESTS", "OVERTIME_REQUESTS", "PAYROLL_RUNS"
         ];
         string[] staffViewOnlyForms =
         [

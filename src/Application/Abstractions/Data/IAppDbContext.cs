@@ -55,6 +55,8 @@ public interface IAppDbContext
     DbSet<SssContributionBracket> SssContributionBrackets { get; }
     DbSet<GovernmentContributionRate> GovernmentContributionRates { get; }
     DbSet<WithholdingTaxBracket> WithholdingTaxBrackets { get; }
+    DbSet<PayrollRun> PayrollRuns { get; }
+    DbSet<PayrollLine> PayrollLines { get; }
     DbSet<CustomerCreditRecord> CustomerCreditRecords { get; }
     DbSet<Company> Companies { get; }
     DbSet<Branch> Branches { get; }

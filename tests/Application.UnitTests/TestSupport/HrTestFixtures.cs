@@ -29,7 +29,8 @@ public static class HrTestFixtures
         Guid departmentId = default,
         string status = "active",
         string employmentStatus = "PROBATIONARY",
-        decimal basicSalary = 20000m) => new()
+        decimal basicSalary = 20000m,
+        DateTimeOffset? dateHired = null) => new()
     {
         EmployeeNo = employeeNo,
         FirstName = firstName,
@@ -37,7 +38,7 @@ public static class HrTestFixtures
         BranchId = branchId,
         PositionId = positionId,
         DepartmentId = departmentId,
-        DateHired = DateTimeOffset.UtcNow,
+        DateHired = dateHired ?? DateTimeOffset.UtcNow,
         Status = status,
         EmploymentStatus = employmentStatus,
         BasicSalary = basicSalary
@@ -243,5 +244,55 @@ public static class HrTestFixtures
         RateOverExcess = rateOverExcess,
         EffectiveDate = effectiveDate ?? DateTimeOffset.UtcNow,
         Status = status
+    };
+
+    public static PayrollRun PayrollRun(
+        string payrollRunNo = "HQ-PAY-000001",
+        string branchId = "br-1",
+        DateTimeOffset? payPeriodStart = null,
+        DateTimeOffset? payPeriodEnd = null,
+        DateTimeOffset? payDate = null,
+        string status = "DRAFT") => new()
+    {
+        PayrollRunNo = payrollRunNo,
+        BranchId = branchId,
+        PayPeriodStart = payPeriodStart ?? new DateTimeOffset(2026, 1, 1, 0, 0, 0, TimeSpan.Zero),
+        PayPeriodEnd = payPeriodEnd ?? new DateTimeOffset(2026, 1, 15, 0, 0, 0, TimeSpan.Zero),
+        PayDate = payDate ?? new DateTimeOffset(2026, 1, 16, 0, 0, 0, TimeSpan.Zero),
+        Status = status
+    };
+
+    public static PayrollLine PayrollLine(
+        Guid payrollRunId = default,
+        Guid employeeId = default,
+        decimal basicPay = 10000m,
+        decimal overtimePay = 0m,
+        decimal allowanceTotal = 0m,
+        decimal grossPay = 10000m,
+        decimal sssEmployeeShare = 0m,
+        decimal sssEmployerShare = 0m,
+        decimal philHealthEmployeeShare = 0m,
+        decimal philHealthEmployerShare = 0m,
+        decimal pagIbigEmployeeShare = 0m,
+        decimal pagIbigEmployerShare = 0m,
+        decimal withholdingTax = 0m,
+        decimal deductionTotal = 0m,
+        decimal netPay = 10000m) => new()
+    {
+        PayrollRunId = payrollRunId,
+        EmployeeId = employeeId,
+        BasicPay = basicPay,
+        OvertimePay = overtimePay,
+        AllowanceTotal = allowanceTotal,
+        GrossPay = grossPay,
+        SssEmployeeShare = sssEmployeeShare,
+        SssEmployerShare = sssEmployerShare,
+        PhilHealthEmployeeShare = philHealthEmployeeShare,
+        PhilHealthEmployerShare = philHealthEmployerShare,
+        PagIbigEmployeeShare = pagIbigEmployeeShare,
+        PagIbigEmployerShare = pagIbigEmployerShare,
+        WithholdingTax = withholdingTax,
+        DeductionTotal = deductionTotal,
+        NetPay = netPay
     };
 }

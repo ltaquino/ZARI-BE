@@ -50,6 +50,10 @@ public sealed class DeleteEmployeeCommandHandler(IAppDbContext dbContext, IPermi
         if (deductionCount > 0)
             return Result.Failure(Error.Conflict("Employee.HasDeductions", $"Cannot delete this employee — they have {deductionCount} deduction{(deductionCount == 1 ? "" : "s")}."));
 
+        var payrollLineCount = await dbContext.PayrollLines.CountAsync(l => l.EmployeeId == command.Id, cancellationToken);
+        if (payrollLineCount > 0)
+            return Result.Failure(Error.Conflict("Employee.HasPayrollLines", $"Cannot delete this employee — they appear on {payrollLineCount} payroll line{(payrollLineCount == 1 ? "" : "s")}."));
+
         dbContext.Employees.Remove(employee);
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();
