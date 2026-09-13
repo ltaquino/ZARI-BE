@@ -1,42 +1,34 @@
 namespace ZARI.Application.UnitTests.Features.Todos;
 
-//using ZARI.Application.Features.Todos.Create;
-using FluentAssertions;
+using ZARI.Application.Features.Todos.Create;
+using ZARI.Application.UnitTests.TestSupport;
+using ZARI.Infrastructure.Persistence.Repositories.Todo;
 
 public sealed class CreateTodoCommandHandlerTests
 {
-    //[Fact]
-    //public async Task HandleAsync_Should_Return_Success_With_Created_Todo()
-    //{
-    //    // Arrange
-    //    await using var dbContext = TestDbContextFactory.Create();
-    //    var handler = new CreateTodoCommandHandler(dbContext);
-    //    var command = new CreateTodoCommand("Test Todo", "Test Description");
+    [Fact]
+    public async Task HandleAsync_Should_Create_Todo()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var handler = new CreateTodoCommandHandler(db, new TodoItemRepository(db));
 
-    //    // Act
-    //    var result = await handler.HandleAsync(command, TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(new CreateTodoCommand("Follow up with supplier", "Call before Friday"), TestContext.Current.CancellationToken);
 
-    //    // Assert
-    //    result.IsSuccess.Should().BeTrue();
-    //    result.Value.Should().NotBeNull();
-    //    result.Value!.Title.Should().Be("Test Todo");
-    //    dbContext.Todos.Should().HaveCount(1);
-    //}
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Title.Should().Be("Follow up with supplier");
+        result.Value.Description.Should().Be("Call before Friday");
+        db.Todos.Should().ContainSingle();
+    }
 
-    //[Fact]
-    //public async Task HandleAsync_Should_Persist_Title_And_Description()
-    //{
-    //    // Arrange
-    //    await using var dbContext = TestDbContextFactory.Create();
-    //    var handler = new CreateTodoCommandHandler(dbContext);
-    //    var command = new CreateTodoCommand("My Task", "Some details");
+    [Fact]
+    public async Task HandleAsync_Should_Create_Todo_With_Null_Description()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var handler = new CreateTodoCommandHandler(db, new TodoItemRepository(db));
 
-    //    // Act
-    //    await handler.HandleAsync(command, TestContext.Current.CancellationToken);
+        var result = await handler.HandleAsync(new CreateTodoCommand("Simple task", null), TestContext.Current.CancellationToken);
 
-    //    // Assert
-    //    var todo = dbContext.Todos.Single();
-    //    todo.Title.Should().Be("My Task");
-    //    todo.Description.Should().Be("Some details");
-    //}
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Description.Should().BeNull();
+    }
 }

@@ -2,6 +2,7 @@ namespace ZARI.Application.Features.Sales.Reports.CashReceiptsBook;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
@@ -12,10 +13,13 @@ using ZARI.Domain.Common;
 /// OutgoingPayment — see CustomerPaymentMapper.ToResponse, which computes its own TotalAmount the
 /// same way). The running total accumulates POSTED payments only; every row is still returned.
 /// </summary>
-public sealed class GetCashReceiptsBookReportQueryHandler(IAppDbContext dbContext) : IQueryHandler<GetCashReceiptsBookReportQuery, Result<CashReceiptsBookReportResponse>>
+public sealed class GetCashReceiptsBookReportQueryHandler(IAppDbContext dbContext, IPermissionService permissionService) : IQueryHandler<GetCashReceiptsBookReportQuery, Result<CashReceiptsBookReportResponse>>
 {
     public async Task<Result<CashReceiptsBookReportResponse>> HandleAsync(GetCashReceiptsBookReportQuery query, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionAsync("CUSTOMER_PAYMENTS", FormAction.View, cancellationToken))
+            return Result.Failure<CashReceiptsBookReportResponse>(Error.Forbidden("CashReceiptsBook.Forbidden", "You do not have permission to view the cash receipts book."));
+
         var payments = await dbContext.CustomerPayments.AsNoTracking()
             .Include(p => p.Customer)
             .Include(p => p.Lines)

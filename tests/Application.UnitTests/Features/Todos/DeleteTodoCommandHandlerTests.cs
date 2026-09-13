@@ -1,43 +1,37 @@
 namespace ZARI.Application.UnitTests.Features.Todos;
 
-//using ZARI.Application.Features.Todos.Delete;
+using ZARI.Application.Features.Todos.Delete;
+using ZARI.Application.UnitTests.TestSupport;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
-using FluentAssertions;
+using ZARI.Infrastructure.Persistence.Repositories.Todo;
 
 public sealed class DeleteTodoCommandHandlerTests
 {
-    //[Fact]
-    //public async Task HandleAsync_Should_Delete_Todo_When_Found()
-    //{
-    //    // Arrange
-    //    await using var dbContext = TestDbContextFactory.Create();
-    //    var todo = new TodoItem { Title = "Test" };
-    //    dbContext.Todos.Add(todo);
-    //    await dbContext.SaveChangesAsync(TestContext.Current.CancellationToken);
+    [Fact]
+    public async Task HandleAsync_Should_Fail_When_Not_Found()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var handler = new DeleteTodoCommandHandler(db, new TodoItemRepository(db));
 
-    //    var handler = new DeleteTodoCommandHandler(dbContext);
+        var result = await handler.HandleAsync(new DeleteTodoCommand(Guid.NewGuid()), TestContext.Current.CancellationToken);
 
-    //    // Act
-    //    var result = await handler.HandleAsync(new DeleteTodoCommand(todo.Id), TestContext.Current.CancellationToken);
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Type.Should().Be(ErrorType.NotFound);
+    }
 
-    //    // Assert
-    //    result.IsSuccess.Should().BeTrue();
-    //    dbContext.Todos.Should().BeEmpty();
-    //}
+    [Fact]
+    public async Task HandleAsync_Should_Delete_Existing_Todo()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var todo = new TodoItem { Title = "To delete" };
+        db.Todos.Add(todo);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var handler = new DeleteTodoCommandHandler(db, new TodoItemRepository(db));
 
-    //[Fact]
-    //public async Task HandleAsync_Should_Return_NotFound_When_Missing()
-    //{
-    //    // Arrange
-    //    await using var dbContext = TestDbContextFactory.Create();
-    //    var handler = new DeleteTodoCommandHandler(dbContext);
+        var result = await handler.HandleAsync(new DeleteTodoCommand(todo.Id), TestContext.Current.CancellationToken);
 
-    //    // Act
-    //    var result = await handler.HandleAsync(new DeleteTodoCommand(Guid.NewGuid()), TestContext.Current.CancellationToken);
-
-    //    // Assert
-    //    result.IsFailure.Should().BeTrue();
-    //    result.Error!.Type.Should().Be(ErrorType.NotFound);
-    //}
+        result.IsSuccess.Should().BeTrue();
+        db.Todos.Should().BeEmpty();
+    }
 }

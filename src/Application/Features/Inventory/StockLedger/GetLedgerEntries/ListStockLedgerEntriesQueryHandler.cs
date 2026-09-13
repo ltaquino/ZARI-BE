@@ -3,13 +3,17 @@ namespace ZARI.Application.Features.Inventory.StockLedgers.GetLedgerEntries;
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
-public sealed class ListStockLedgerEntriesQueryHandler(IAppDbContext dbContext) : IQueryHandler<ListStockLedgerEntriesQuery, Result<List<StockLedgerEntryResponse>>>
+public sealed class ListStockLedgerEntriesQueryHandler(IAppDbContext dbContext, IPermissionService permissionService) : IQueryHandler<ListStockLedgerEntriesQuery, Result<List<StockLedgerEntryResponse>>>
 {
     public async Task<Result<List<StockLedgerEntryResponse>>> HandleAsync(ListStockLedgerEntriesQuery query, CancellationToken cancellationToken = default)
     {
+        if (!await permissionService.HasPermissionAsync("ITEMS", FormAction.View, cancellationToken))
+            return Result.Failure<List<StockLedgerEntryResponse>>(Error.Forbidden("StockLedgerEntries.Forbidden", "You do not have permission to view stock ledger entries."));
+
         var normalizedBatch = string.IsNullOrWhiteSpace(query.BatchNo) ? null : query.BatchNo.Trim();
 
         var rows = await dbContext.StockLedgers.AsNoTracking()

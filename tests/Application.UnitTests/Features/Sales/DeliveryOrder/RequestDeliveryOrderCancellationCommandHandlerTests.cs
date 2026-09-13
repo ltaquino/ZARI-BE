@@ -1,0 +1,125 @@
+namespace ZARI.Application.UnitTests.Features.Sales.DeliveryOrder;
+
+using ZARI.Application.Features.Sales.DeliveryOrders.RequestCancellation;
+using ZARI.Application.Features.Workflow.ApprovalRequests.Submit;
+using ZARI.Application.Features.Workflow.Notifications.Create;
+using ZARI.Application.Features.Workflow.Notifications.GetAll;
+using ZARI.Application.UnitTests.TestSupport;
+using ZARI.Domain.Common;
+using ZARI.Domain.Entities;
+
+public sealed class RequestDeliveryOrderCancellationCommandHandlerTests
+{
+    private static RequestDeliveryOrderCancellationCommandHandler Handler(ZARI.Infrastructure.Persistence.AppDbContext db, ZARI.Application.Abstractions.Identity.IPermissionService? permissions = null) =>
+        new(db, new SubmitForApprovalCommandHandler(db), new CreateNotificationCommandHandler(db), permissions ?? LoanTestFixtures.AllowAllPermissionService());
+
+    private static async Task<(ZARI.Infrastructure.Persistence.AppDbContext db, DeliveryOrder order, Guid customerId)> Seed(string status = "POSTED")
+    {
+        var db = TestDbContextFactory.Create();
+        var branch = LoanTestFixtures.Branch();
+        db.Branches.Add(branch);
+        var warehouse = InventoryTestFixtures.Warehouse(branch.Id);
+        db.Warehouses.Add(warehouse);
+        var customer = LoanTestFixtures.Customer(branch.Id);
+        db.Customers.Add(customer);
+        var uom = InventoryTestFixtures.Uom();
+        db.Uoms.Add(uom);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var item = InventoryTestFixtures.Item(uom.Id);
+        db.Items.Add(item);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var order = SalesTestFixtures.DeliveryOrder(branch.Id, warehouse.Id, customer.Id, item.Id, uom.Id, status: status);
+        db.DeliveryOrders.Add(order);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        return (db, order, customer.Id);
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Request_Cancellation_Of_Posted_Delivery()
+    {
+        var (db, order, _) = await Seed();
+
+        var result = await Handler(db).HandleAsync(new RequestDeliveryOrderCancellationCommand(order.Id, "manager", "wrong item"), TestContext.Current.CancellationToken);
+
+        result.IsSuccess.Should().BeTrue();
+        result.Value!.Status.Should().Be("PENDING_CANCELLATION");
+        db.ApprovalRequests.Should().ContainSingle(r => r.EntityType == "DELIVERY_ORDER" && r.RequestType == "CANCEL");
+        await db.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Fail_When_Not_Found()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var result = await Handler(db).HandleAsync(new RequestDeliveryOrderCancellationCommand(Guid.NewGuid(), "manager", "x"), TestContext.Current.CancellationToken);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Type.Should().Be(ErrorType.NotFound);
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Fail_When_Forbidden()
+    {
+        var (db, order, _) = await Seed();
+        var permissions = LoanTestFixtures.AllowAllPermissionService();
+        permissions.HasPermissionOnBranchAsync("DELIVERIES", FormAction.Cancel, order.BranchId, Arg.Any<CancellationToken>()).Returns(false);
+
+        var result = await Handler(db, permissions).HandleAsync(new RequestDeliveryOrderCancellationCommand(order.Id, "manager", "x"), TestContext.Current.CancellationToken);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Type.Should().Be(ErrorType.Forbidden);
+        await db.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Fail_When_Not_Posted()
+    {
+        var (db, order, _) = await Seed(status: "DRAFT");
+
+        var result = await Handler(db).HandleAsync(new RequestDeliveryOrderCancellationCommand(order.Id, "manager", "x"), TestContext.Current.CancellationToken);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("DeliveryOrder.NotPosted");
+        await db.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Fail_When_Has_Posted_Sales_Invoice()
+    {
+        var (db, order, customerId) = await Seed();
+        var invoice = new SalesInvoice
+        {
+            InvoiceNo = "SINV-0001", BranchId = order.BranchId, CustomerId = customerId,
+            InvoiceDate = DateTimeOffset.UtcNow, Status = "POSTED",
+            Lines = [new SalesInvoiceLine { ItemId = order.Lines[0].ItemId, Qty = order.Lines[0].QtyShipped, UomId = order.Lines[0].UomId, UnitPrice = 100, DeliveryOrderLineId = order.Lines[0].Id }]
+        };
+        db.SalesInvoices.Add(invoice);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var result = await Handler(db).HandleAsync(new RequestDeliveryOrderCancellationCommand(order.Id, "manager", "x"), TestContext.Current.CancellationToken);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("DeliveryOrder.HasPostedSalesInvoice");
+        await db.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Fail_When_Has_Posted_Sales_Return()
+    {
+        var (db, order, customerId) = await Seed();
+        var ret = new SalesReturn
+        {
+            ReturnNo = "SRTN-0001", BranchId = order.BranchId, WarehouseId = order.WarehouseId, CustomerId = customerId,
+            ReturnDate = DateTimeOffset.UtcNow, Status = "POSTED",
+            Lines = [new SalesReturnLine { ItemId = order.Lines[0].ItemId, QtyReturned = order.Lines[0].QtyShipped, UomId = order.Lines[0].UomId, UnitPrice = 100, DeliveryOrderLineId = order.Lines[0].Id }]
+        };
+        db.SalesReturns.Add(ret);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var result = await Handler(db).HandleAsync(new RequestDeliveryOrderCancellationCommand(order.Id, "manager", "x"), TestContext.Current.CancellationToken);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("DeliveryOrder.HasPostedSalesReturn");
+        await db.DisposeAsync();
+    }
+}
