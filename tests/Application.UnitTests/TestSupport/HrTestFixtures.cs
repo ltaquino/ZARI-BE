@@ -42,4 +42,50 @@ public static class HrTestFixtures
         EmploymentStatus = employmentStatus,
         BasicSalary = basicSalary
     };
+
+    public static WorkSchedule WorkSchedule(
+        string code = "SHIFT-1",
+        string name = "Day Shift",
+        string timeIn = "08:00",
+        string timeOut = "17:00",
+        string workDays = "MON,TUE,WED,THU,FRI",
+        int gracePeriodMinutes = 10,
+        int breakMinutes = 60,
+        string status = "active") => new()
+    {
+        Code = code,
+        Name = name,
+        TimeIn = TimeOnly.Parse(timeIn),
+        TimeOut = TimeOnly.Parse(timeOut),
+        WorkDays = workDays,
+        GracePeriodMinutes = gracePeriodMinutes,
+        BreakMinutes = breakMinutes,
+        Status = status
+    };
+
+    public static EmployeeScheduleAssignment EmployeeScheduleAssignment(
+        Guid employeeId = default,
+        Guid workScheduleId = default,
+        DateTimeOffset? effectiveDate = null,
+        DateTimeOffset? endDate = null) => new()
+    {
+        EmployeeId = employeeId,
+        WorkScheduleId = workScheduleId,
+        EffectiveDate = effectiveDate ?? DateTimeOffset.UtcNow.AddDays(-30),
+        EndDate = endDate
+    };
+
+    public static DailyTimeRecord DailyTimeRecord(
+        Guid employeeId = default,
+        DateTimeOffset? date = null,
+        DateTimeOffset? timeIn = null,
+        DateTimeOffset? timeOut = null,
+        string source = "MANUAL") => new()
+    {
+        EmployeeId = employeeId,
+        Date = date ?? DateTimeOffset.UtcNow.Date,
+        TimeIn = timeIn,
+        TimeOut = timeOut,
+        Source = source
+    };
 }

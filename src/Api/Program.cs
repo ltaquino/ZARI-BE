@@ -144,6 +144,9 @@ try
     app.MapDepartmentEndpoints();
     app.MapPositionEndpoints();
     app.MapEmployeeEndpoints();
+    app.MapWorkScheduleEndpoints();
+    app.MapEmployeeScheduleAssignmentEndpoints();
+    app.MapDailyTimeRecordEndpoints();
     app.MapCompanyEndpoints();
     app.MapBranchEndpoints();
     app.MapFormEndpoints();

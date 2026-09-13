@@ -42,6 +42,9 @@ public interface IAppDbContext
     DbSet<Department> Departments { get; }
     DbSet<Position> Positions { get; }
     DbSet<Employee> Employees { get; }
+    DbSet<WorkSchedule> WorkSchedules { get; }
+    DbSet<EmployeeScheduleAssignment> EmployeeScheduleAssignments { get; }
+    DbSet<DailyTimeRecord> DailyTimeRecords { get; }
     DbSet<CustomerCreditRecord> CustomerCreditRecords { get; }
     DbSet<Company> Companies { get; }
     DbSet<Branch> Branches { get; }

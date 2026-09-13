@@ -751,6 +751,9 @@ public static class AppDbSeeder
             ("DEPARTMENTS", "Departments", "HR"),
             ("POSITIONS", "Positions", "HR"),
             ("EMPLOYEES", "Employees", "HR"),
+            ("WORK_SCHEDULES", "Work Schedules", "HR"),
+            ("EMPLOYEE_SCHEDULES", "Employee Schedule Assignments", "HR"),
+            ("DAILY_TIME_RECORDS", "Daily Time Records", "HR"),
         ];
 
         var existingCodes = await context.Forms.Select(f => f.Code).ToListAsync();
@@ -829,7 +832,7 @@ public static class AppDbSeeder
             "ADJUSTMENT_REASONS", "ITEM_BRANCH_SETTINGS", "STOCK_RESERVATIONS", "SERIAL_NUMBERS",
             "PURCHASE_RETURN_REASONS", "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES", "LOAN_PRODUCTS",
             "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES", "REPORT_DESIGNER",
-            "DEPARTMENTS", "POSITIONS", "EMPLOYEES"
+            "DEPARTMENTS", "POSITIONS", "EMPLOYEES", "WORK_SCHEDULES", "EMPLOYEE_SCHEDULES", "DAILY_TIME_RECORDS"
         ];
         string[] managerViewOnlyForms =
         [
@@ -863,7 +866,7 @@ public static class AppDbSeeder
             "SERIAL_NUMBERS", "APPROVAL_REQUESTS", "NOTIFICATIONS", "SUPPLIERS", "PURCHASE_RETURN_REASONS",
             "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES", "LOAN_PRODUCTS",
             "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES", "REPORT_DESIGNER",
-            "DEPARTMENTS", "POSITIONS", "EMPLOYEES"
+            "DEPARTMENTS", "POSITIONS", "EMPLOYEES", "WORK_SCHEDULES", "EMPLOYEE_SCHEDULES", "DAILY_TIME_RECORDS"
         ];
 
         foreach (var formCode in staffTransactionalForms)
