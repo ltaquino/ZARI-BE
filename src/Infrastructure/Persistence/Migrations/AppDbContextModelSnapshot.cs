@@ -701,6 +701,10 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasMaxLength(25)
                         .HasColumnType("varchar(25)");
 
+                    b.Property<string>("CicProviderCode")
+                        .HasMaxLength(8)
+                        .HasColumnType("varchar(8)");
+
                     b.Property<string>("Code")
                         .IsRequired()
                         .HasMaxLength(25)

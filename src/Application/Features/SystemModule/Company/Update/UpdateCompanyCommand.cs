@@ -15,4 +15,5 @@ public sealed record UpdateCompanyCommand(
     bool DeliveryQuickPostEnabled,
     bool SalesInvoiceQuickPostEnabled,
     bool CustomerPaymentQuickPostEnabled,
-    bool SalesReturnQuickPostEnabled) : ICommand;
+    bool SalesReturnQuickPostEnabled,
+    string? CicProviderCode) : ICommand;

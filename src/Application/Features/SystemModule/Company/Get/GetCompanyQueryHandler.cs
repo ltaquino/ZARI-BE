@@ -18,7 +18,8 @@ public sealed class GetCompanyQueryHandler(IAppDbContext dbContext, IPermissionS
                 c.Id, c.Code, c.Name, c.TaxId, c.BaseCurrencyId, c.CreatedAt,
                 c.RegisteredAddress, c.TradeName, c.VatRegistrationType,
                 c.MaxUnapprovedDiscountPct, c.SalesOrderQuickPostEnabled, c.DeliveryQuickPostEnabled,
-                c.SalesInvoiceQuickPostEnabled, c.CustomerPaymentQuickPostEnabled, c.SalesReturnQuickPostEnabled))
+                c.SalesInvoiceQuickPostEnabled, c.CustomerPaymentQuickPostEnabled, c.SalesReturnQuickPostEnabled,
+                c.CicProviderCode))
             .FirstOrDefaultAsync(cancellationToken);
 
         if (company is null)

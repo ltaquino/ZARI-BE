@@ -3,14 +3,7 @@ namespace ZARI.Application.Features.Loan.Reports.CicCsdf;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
-/// <param name="ProviderCode">
-/// CIC's assigned 8-alphanumeric code for the cooperative (LoanCicContext.md §6 #1 — not yet known
-/// to this repo). Threaded in from the Api layer's configuration rather than read here directly, so
-/// the Application layer stays config-agnostic; defaults to a clearly-fake placeholder when neither
-/// is set, so an unconfigured environment produces an obviously-wrong file rather than a silently
-/// wrong one.
-/// </param>
-public sealed record GetCicCsdfExportQuery(string? BranchId, Guid? CustomerId, DateTimeOffset? AsOfDate, string? ProviderCode = null) : IQuery<Result<CicCsdfExport>>;
+public sealed record GetCicCsdfExportQuery(string? BranchId, Guid? CustomerId, DateTimeOffset? AsOfDate) : IQuery<Result<CicCsdfExport>>;
 
 /// <summary>
 /// The raw material for a CIC CSDF v1.4 submission file (ZARI-FE/frs/loan-cic/LoanCicContext.md).

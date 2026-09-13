@@ -40,4 +40,11 @@ public sealed class Company : AuditableEntity
     public bool SalesInvoiceQuickPostEnabled { get; set; }
     public bool CustomerPaymentQuickPostEnabled { get; set; }
     public bool SalesReturnQuickPostEnabled { get; set; }
+
+    // Credit Information Corporation (RA 9510)'s 8-alphanumeric code assigned to this cooperative
+    // as a submitting entity — stamped into every ID/CI record and the output filename of a CIC
+    // CSDF v1.4 submission file (see GetCicCsdfExportQueryHandler, ZARI-FE/frs/loan-cic/LoanCicContext.md
+    // §6 #1). Null until the cooperative's real code is known; the CSDF generator falls back to an
+    // obviously-fake placeholder rather than silently producing a wrong-but-plausible file.
+    public string? CicProviderCode { get; set; }
 }

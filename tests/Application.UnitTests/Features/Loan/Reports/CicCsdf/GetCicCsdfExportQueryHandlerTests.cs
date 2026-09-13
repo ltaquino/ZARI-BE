@@ -53,7 +53,7 @@ public sealed class GetCicCsdfExportQueryHandlerTests
         db.LoanAccounts.Add(LoanTestFixtures.LoanAccount(branch.Id, customer.Id, product.Id, withSchedule: false));
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var result = await Handler(db).HandleAsync(new GetCicCsdfExportQuery(null, null, null, null), TestContext.Current.CancellationToken);
+        var result = await Handler(db).HandleAsync(new GetCicCsdfExportQuery(null, null, null), TestContext.Current.CancellationToken);
 
         result.Value!.ProviderCode.Should().Be("UNSET000");
     }
@@ -62,6 +62,9 @@ public sealed class GetCicCsdfExportQueryHandlerTests
     public async Task HandleAsync_Should_Produce_One_Id_And_One_Ci_Record_For_A_Single_Account()
     {
         await using var db = TestDbContextFactory.Create();
+        var company = SystemModuleTestFixtures.Company();
+        company.CicProviderCode = "CO123456";
+        db.Companies.Add(company);
         var branch = LoanTestFixtures.Branch();
         var customer = LoanTestFixtures.Customer(branch.Id);
         var product = LoanTestFixtures.LoanProduct();
@@ -72,7 +75,7 @@ public sealed class GetCicCsdfExportQueryHandlerTests
         db.LoanAccounts.Add(account);
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var result = await Handler(db).HandleAsync(new GetCicCsdfExportQuery(null, null, null, "CO123456"), TestContext.Current.CancellationToken);
+        var result = await Handler(db).HandleAsync(new GetCicCsdfExportQuery(null, null, null), TestContext.Current.CancellationToken);
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.IdRecords.Should().ContainSingle();

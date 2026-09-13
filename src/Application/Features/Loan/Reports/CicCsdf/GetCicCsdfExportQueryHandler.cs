@@ -23,8 +23,8 @@ public sealed class GetCicCsdfExportQueryHandler(
     IQueryHandler<GetCisaCreditDataExportQuery, Result<List<CisaCreditDataRow>>> cisaHandler)
     : IQueryHandler<GetCicCsdfExportQuery, Result<CicCsdfExport>>
 {
-    // Obviously-fake placeholder so an unconfigured environment produces an obviously-wrong file
-    // rather than a silently wrong one — see GetCicCsdfExportQuery.cs's doc comment on ProviderCode.
+    // Obviously-fake placeholder so a cooperative that hasn't set Company.CicProviderCode yet gets
+    // an obviously-wrong file rather than a silently wrong one — see Company.cs's own doc comment.
     private const string PlaceholderProviderCode = "UNSET000";
 
     public async Task<Result<CicCsdfExport>> HandleAsync(GetCicCsdfExportQuery query, CancellationToken cancellationToken = default)
@@ -32,7 +32,8 @@ public sealed class GetCicCsdfExportQueryHandler(
         if (!await permissionService.HasPermissionAsync("LOAN_ACCOUNTS", FormAction.View, cancellationToken))
             return Result.Failure<CicCsdfExport>(Error.Forbidden("CicCsdf.Forbidden", "You do not have permission to view loan accounts."));
 
-        var providerCode = string.IsNullOrWhiteSpace(query.ProviderCode) ? PlaceholderProviderCode : query.ProviderCode;
+        var companyCicProviderCode = await dbContext.Companies.AsNoTracking().Select(c => c.CicProviderCode).FirstOrDefaultAsync(cancellationToken);
+        var providerCode = string.IsNullOrWhiteSpace(companyCicProviderCode) ? PlaceholderProviderCode : companyCicProviderCode;
         var asOfDate = query.AsOfDate ?? DateTimeOffset.UtcNow;
 
         var accountsQuery = dbContext.LoanAccounts.AsNoTracking()

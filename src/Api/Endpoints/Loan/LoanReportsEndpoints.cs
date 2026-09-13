@@ -126,12 +126,10 @@ public static class LoanReportsEndpoints
         string? branchId,
         Guid? customerId,
         DateTimeOffset? asOfDate,
-        IConfiguration configuration,
         IQueryHandler<GetCicCsdfExportQuery, Result<CicCsdfExport>> handler,
         CancellationToken cancellationToken)
     {
-        var providerCode = configuration["Cic:ProviderCode"];
-        var result = await handler.HandleAsync(new GetCicCsdfExportQuery(branchId, customerId, asOfDate, providerCode), cancellationToken);
+        var result = await handler.HandleAsync(new GetCicCsdfExportQuery(branchId, customerId, asOfDate), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 
@@ -139,12 +137,10 @@ public static class LoanReportsEndpoints
         string? branchId,
         Guid? customerId,
         DateTimeOffset? asOfDate,
-        IConfiguration configuration,
         IQueryHandler<GetCicCsdfExportQuery, Result<CicCsdfExport>> handler,
         CancellationToken cancellationToken)
     {
-        var providerCode = configuration["Cic:ProviderCode"];
-        var result = await handler.HandleAsync(new GetCicCsdfExportQuery(branchId, customerId, asOfDate, providerCode), cancellationToken);
+        var result = await handler.HandleAsync(new GetCicCsdfExportQuery(branchId, customerId, asOfDate), cancellationToken);
         if (result.IsFailure) return result.ToProblemDetails();
 
         var bytes = CicCsdfFileWriter.Write(result.Value!);

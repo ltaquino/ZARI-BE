@@ -30,6 +30,7 @@ public sealed class UpdateCompanyCommandHandler(IAppDbContext dbContext, IPermis
         company.SalesInvoiceQuickPostEnabled = command.SalesInvoiceQuickPostEnabled;
         company.CustomerPaymentQuickPostEnabled = command.CustomerPaymentQuickPostEnabled;
         company.SalesReturnQuickPostEnabled = command.SalesReturnQuickPostEnabled;
+        company.CicProviderCode = command.CicProviderCode;
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

@@ -7,8 +7,8 @@ using ZARI.Domain.Common;
 
 public sealed class UpdateCompanyCommandHandlerTests
 {
-    private static UpdateCompanyCommand Command(string code = "SIDC") =>
-        new(code, "Updated Coop Name", null, "cur-php", null, null, null, null, false, false, false, false, false);
+    private static UpdateCompanyCommand Command(string code = "SIDC", string? cicProviderCode = null) =>
+        new(code, "Updated Coop Name", null, "cur-php", null, null, null, null, false, false, false, false, false, cicProviderCode);
 
     [Fact]
     public async Task HandleAsync_Should_Update_Company()
@@ -22,6 +22,20 @@ public sealed class UpdateCompanyCommandHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         (await db.Companies.FirstAsync(TestContext.Current.CancellationToken)).Name.Should().Be("Updated Coop Name");
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Save_Cic_Provider_Code()
+    {
+        await using var db = TestDbContextFactory.Create();
+        db.Companies.Add(SystemModuleTestFixtures.Company());
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var handler = new UpdateCompanyCommandHandler(db, LoanTestFixtures.AllowAllPermissionService());
+
+        var result = await handler.HandleAsync(Command(cicProviderCode: "CO123456"), TestContext.Current.CancellationToken);
+
+        result.IsSuccess.Should().BeTrue();
+        (await db.Companies.FirstAsync(TestContext.Current.CancellationToken)).CicProviderCode.Should().Be("CO123456");
     }
 
     [Fact]
