@@ -28,3 +28,84 @@ jobs:
 
       - name: Test
         run: dotnet test src/ZARI.slnx --no-build --configuration Release --verbosity minimal
+
+  regression:
+    name: Full-Cycle Regression Scripts
+    runs-on: ubuntu-latest
+    needs: build
+
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_ROOT_PASSWORD: root
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -uroot -proot"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
+
+    env:
+      CI_DB_CONNECTION: "Server=127.0.0.1;Port=3306;Database=zari_ci;User=root;Password=root;"
+      BASE_URL: "https://localhost:7200"
+      # AppDbSeeder (the admin/manager users, branches, GL accounts, forms/permissions the
+      # regression scripts log in as and depend on) only runs in Development -- see Program.cs.
+      ASPNETCORE_ENVIRONMENT: "Development"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: '10.0.x'
+
+      - name: Restore
+        run: dotnet restore src/ZARI.slnx
+
+      - name: Build
+        run: dotnet build src/ZARI.slnx --no-restore
+
+      - name: Install dotnet-ef
+        run: |
+          dotnet tool install --global dotnet-ef --version 9.0.0
+          echo "$HOME/.dotnet/tools" >> "$GITHUB_PATH"
+
+      - name: Generate a dev HTTPS certificate
+        run: dotnet dev-certs https
+
+      - name: Apply migrations to the CI database
+        run: >
+          dotnet ef database update
+          --project src/Infrastructure/ZARI.Infrastructure.csproj
+          --startup-project src/Api/ZARI.Api.csproj
+          --connection "$CI_DB_CONNECTION"
+          --no-build
+
+      - name: Start the API
+        run: |
+          nohup dotnet run --project src/Api/ZARI.Api.csproj --no-build --urls "$BASE_URL" \
+            -- --ConnectionStrings:cwm-db="$CI_DB_CONNECTION" \
+            > api.log 2>&1 &
+          for i in $(seq 1 30); do
+            code=$(curl -sk -o /dev/null -w "%{http_code}" "$BASE_URL/swagger/index.html" || true)
+            if [ "$code" = "200" ]; then echo "API up after ${i}s"; exit 0; fi
+            sleep 1
+          done
+          echo "API did not come up in time"; cat api.log; exit 1
+
+      - name: Seed regression-script fixtures
+        run: bash scripts/seed-regression-fixtures.sh
+
+      - name: Run 3-day full-cycle regression script
+        run: bash scripts/full-cycle-3day-test.sh
+
+      - name: Run 5-day full-cycle regression script
+        run: bash scripts/full-cycle-5day-test.sh
+
+      - name: Dump API log on failure
+        if: failure()
+        run: cat api.log || true

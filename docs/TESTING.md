@@ -44,8 +44,8 @@ entity builders and fakes live in `tests/Application.UnitTests/TestSupport/`.
 
 ## 2. Full-cycle regression scripts
 
-Two self-contained Bash scripts live in `SND/ZARI/scripts/` (a sibling folder to this repo, **not**
-version-controlled):
+Two self-contained Bash scripts live in `scripts/` (this repo, git-tracked — also what CI runs;
+see §2.6):
 
 - **`full-cycle-3day-test.sh`** — Purchase-to-Pay feeding Order-to-Cash over 3 backdated days
   (PR → PO → Goods Receipt → AP Invoice, two POS sales, Outgoing Payment, Sales Returns, day
@@ -87,9 +87,9 @@ The API connects to MySQL on `localhost:3307` (`Database=zari_cic`, see
 ### 2.2 Run the scripts
 
 ```bash
-cd /d/Lenard/Personal/Project/SND/ZARI/scripts
-bash full-cycle-3day-test.sh
-bash full-cycle-5day-test.sh
+cd D:\Lenard\Personal\Project\SND\ZARI\ZARI
+bash scripts/full-cycle-3day-test.sh
+bash scripts/full-cycle-5day-test.sh
 ```
 
 Point at a different API instance with `BASE_URL`:
@@ -113,9 +113,17 @@ Full 5-day cycle (master data -> Day1-5) tied out cleanly.
 ### 2.3 Fixture prerequisites (the usual reason a fresh DB fails)
 
 The 3-day script assumes some fixtures already exist in the DB — it does **not** create them, and
-they are **not** part of `AppDbSeeder` (i.e. a freshly-migrated/seeded dev DB won't have them). If
-`Resolved ITEM_A_ID` / `ITEM_B_ID` / `TERMINAL_ID` come back empty, create these once via the API
-(as an admin) and every future run will find and reuse them:
+they are **not** part of `AppDbSeeder` (i.e. a freshly-migrated/seeded dev DB won't have them).
+Run the idempotent seed script once (safe to re-run — every step checks first and skips if already
+present) instead of doing this by hand:
+
+```bash
+BASE_URL=https://localhost:7200 bash scripts/seed-regression-fixtures.sh
+```
+
+If you'd rather do it manually, or want to see exactly what it creates, here's the same thing by
+hand. If `Resolved ITEM_A_ID` / `ITEM_B_ID` / `TERMINAL_ID` come back empty, create these once via
+the API (as an admin) and every future run will find and reuse them:
 
 | Fixture | What | Why |
 |---|---|---|
@@ -167,7 +175,8 @@ record it needs from scratch on first run, and reuses them (by code) on every la
 Several document types only reach `POSTED` immediately at Create when their matching toggle on
 `GET /api/company` is `true`: `salesInvoiceQuickPostEnabled`, `customerPaymentQuickPostEnabled`,
 `salesReturnQuickPostEnabled` (also `salesOrderQuickPostEnabled` / `deliveryQuickPostEnabled`,
-unused by either script). Both scripts expect these three to be on. If a script's Sales
+unused by either script). Both scripts expect these three to be on — `seed-regression-fixtures.sh`
+(§2.3) already flips them for you. If you're doing it by hand instead, and a script's Sales
 Invoice/Customer Payment/Sales Return assertions fail with the document stuck in `DRAFT` (or a
 `CustomerPayment.InvoiceNotPayable` error), check `GET /api/company` and flip whichever are off:
 
@@ -193,6 +202,18 @@ curl -sk -X PUT "https://localhost:7200/api/company" -H "Authorization: Bearer $
   `CustomerPayment.InvoiceNotPayable` → a `Company` quick-post toggle is off; see §2.4.
 - Anything else failing after fixtures/toggles are in place is a real regression — worth a git
   `bisect`/diff review before assuming it's environment.
+
+### 2.6 CI
+
+`.github/workflows/build-and-test.yml` has a second job, `regression`, that runs both scripts on
+every push/PR to `main` (after the `build` job's unit tests pass): it spins up a throwaway MySQL
+8.0 service container, applies every migration to it, starts the API against it
+(`ASPNETCORE_ENVIRONMENT=Development`, so `AppDbSeeder` runs), runs
+`scripts/seed-regression-fixtures.sh`, then both regression scripts. A failure there means a real
+DB-backed success path broke — the same class of bug unit tests can't catch (see the intro table).
+If the job fails, its "Dump API log on failure" step prints the API's own log, which is usually
+enough to tell environment noise (a fixture/toggle gap the seed script should have covered but
+didn't) apart from an actual regression.
 
 ---
 
