@@ -91,6 +91,62 @@ public sealed class CreateEmployeeCommandHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error!.Type.Should().Be(ErrorType.NotFound);
     }
+
+    [Fact]
+    public async Task HandleAsync_Should_Fail_When_BasicSalary_Below_Position_PayGradeMin()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var branch = LoanTestFixtures.Branch();
+        db.Branches.Add(branch);
+        var department = HrTestFixtures.Department();
+        db.Departments.Add(department);
+        var position = HrTestFixtures.Position(departmentId: department.Id, payGradeMin: 25000m, payGradeMax: 40000m);
+        db.Positions.Add(position);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var handler = new CreateEmployeeCommandHandler(db, LoanTestFixtures.AllowAllPermissionService(), IdentityTestFixtures.UserManager(db));
+
+        var result = await handler.HandleAsync(Command(branch.Id, position.Id, department.Id), TestContext.Current.CancellationToken);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("Employee.BelowPayGrade");
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Fail_When_BasicSalary_Above_Position_PayGradeMax()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var branch = LoanTestFixtures.Branch();
+        db.Branches.Add(branch);
+        var department = HrTestFixtures.Department();
+        db.Departments.Add(department);
+        var position = HrTestFixtures.Position(departmentId: department.Id, payGradeMin: 5000m, payGradeMax: 10000m);
+        db.Positions.Add(position);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var handler = new CreateEmployeeCommandHandler(db, LoanTestFixtures.AllowAllPermissionService(), IdentityTestFixtures.UserManager(db));
+
+        var result = await handler.HandleAsync(Command(branch.Id, position.Id, department.Id), TestContext.Current.CancellationToken);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("Employee.AbovePayGrade");
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Succeed_When_BasicSalary_Within_Position_PayGrade()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var branch = LoanTestFixtures.Branch();
+        db.Branches.Add(branch);
+        var department = HrTestFixtures.Department();
+        db.Departments.Add(department);
+        var position = HrTestFixtures.Position(departmentId: department.Id, payGradeMin: 15000m, payGradeMax: 25000m);
+        db.Positions.Add(position);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var handler = new CreateEmployeeCommandHandler(db, LoanTestFixtures.AllowAllPermissionService(), IdentityTestFixtures.UserManager(db));
+
+        var result = await handler.HandleAsync(Command(branch.Id, position.Id, department.Id), TestContext.Current.CancellationToken);
+
+        result.IsSuccess.Should().BeTrue();
+    }
 }
 
 public sealed class UpdateEmployeeCommandHandlerTests
@@ -131,6 +187,31 @@ public sealed class UpdateEmployeeCommandHandlerTests
 
         result.IsFailure.Should().BeTrue();
         result.Error!.Type.Should().Be(ErrorType.NotFound);
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Fail_When_BasicSalary_Outside_Position_PayGrade()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var branch = LoanTestFixtures.Branch();
+        db.Branches.Add(branch);
+        var department = HrTestFixtures.Department();
+        db.Departments.Add(department);
+        var position = HrTestFixtures.Position(departmentId: department.Id, payGradeMin: 15000m, payGradeMax: 25000m);
+        db.Positions.Add(position);
+        var employee = HrTestFixtures.Employee(branchId: branch.Id, positionId: position.Id, departmentId: department.Id, basicSalary: 20000m);
+        db.Employees.Add(employee);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var handler = new UpdateEmployeeCommandHandler(db, LoanTestFixtures.AllowAllPermissionService(), IdentityTestFixtures.UserManager(db));
+
+        var command = new UpdateEmployeeCommand(employee.Id, employee.EmployeeNo, "Juan", null, "Santos", null, null, null, null, null,
+            branch.Id, position.Id, department.Id, employee.DateHired, "active", "REGULAR", null, null, null,
+            null, null, null, null, 30000m, null, null, null, null, null);
+
+        var result = await handler.HandleAsync(command, TestContext.Current.CancellationToken);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("Employee.AbovePayGrade");
     }
 }
 

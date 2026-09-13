@@ -386,6 +386,33 @@ public sealed class ApprovePayrollRunCommandHandlerTests
     }
 
     [Fact]
+    public async Task HandleAsync_Should_Post_Leave_Balance_Usage_When_A_Line_Consumed_Leave()
+    {
+        var (db, employee) = await PayrollRunTestHelpers.SeedBranchAndEmployeeAsync();
+        var leaveType = HrTestFixtures.LeaveType(code: "VL", isPaid: true);
+        db.LeaveTypes.Add(leaveType);
+        await ZARI.Application.Features.Hr.LeaveBalanceEntries.Shared.LeaveBalanceLedgerService.PostEntryAsync(
+            db, employee.Id, leaveType.Id, DateTimeOffset.UtcNow.AddDays(-10), "ACCRUAL", 5m, null, null, TestContext.Current.CancellationToken);
+        var run = HrTestFixtures.PayrollRun(status: "PENDING_APPROVAL");
+        db.PayrollRuns.Add(run);
+        db.PayrollLines.Add(HrTestFixtures.PayrollLine(payrollRunId: run.Id, employeeId: employee.Id, leaveDaysConsumed: 1m, leaveTypeConsumedId: leaveType.Id));
+        db.ApprovalRequests.Add(new ApprovalRequest { EntityType = "PAYROLL_RUN", EntityId = run.Id.ToString(), BranchId = "br-1", RequestedBy = "u1", RequestedAt = DateTimeOffset.UtcNow, Status = "PENDING", RequestType = "SUBMIT" });
+        PayrollRunTestHelpers.SeedPayrollGlAccounts(db);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var handler = BuildHandler(db);
+
+        var result = await handler.HandleAsync(new ApprovePayrollRunCommand(run.Id, "approver1", null), TestContext.Current.CancellationToken);
+
+        result.IsSuccess.Should().BeTrue();
+        var usageEntry = db.LeaveBalanceEntries.Single(e => e.Type == "USAGE" && e.EmployeeId == employee.Id);
+        usageEntry.Days.Should().Be(-1m);
+        usageEntry.LeaveTypeId.Should().Be(leaveType.Id);
+        usageEntry.ReferenceTable.Should().Be("PayrollRuns");
+        usageEntry.ReferenceId.Should().Be(run.Id.ToString());
+        usageEntry.RunningBalance.Should().Be(4m);
+    }
+
+    [Fact]
     public async Task HandleAsync_Should_Fail_When_Gl_Account_Missing()
     {
         var (db, run) = await SeedPendingRunAsync(withGlAccounts: false);

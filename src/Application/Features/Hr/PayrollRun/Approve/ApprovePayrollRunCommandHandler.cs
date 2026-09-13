@@ -6,6 +6,7 @@ using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Accounting.GlJournals.GetAll;
 using ZARI.Application.Features.Accounting.GlJournals.Post;
+using ZARI.Application.Features.Hr.LeaveBalanceEntries.Shared;
 using ZARI.Application.Features.Hr.PayrollRuns.Get;
 using ZARI.Application.Features.Hr.PayrollRuns.Shared;
 using ZARI.Application.Features.Workflow.ApprovalRequests.Decide;
@@ -35,6 +36,7 @@ public sealed class ApprovePayrollRunCommandHandler(
     {
         var run = await dbContext.PayrollRuns
             .Include(r => r.Lines).ThenInclude(l => l.Employee)
+            .Include(r => r.Lines).ThenInclude(l => l.LeaveTypeConsumed)
             .FirstOrDefaultAsync(r => r.Id == command.Id, cancellationToken);
         if (run is null)
             return Result.Failure<PayrollRunResponse>(Error.NotFound("PayrollRun.NotFound", $"Payroll run with ID '{command.Id}' was not found."));
@@ -59,6 +61,17 @@ public sealed class ApprovePayrollRunCommandHandler(
         var postResult = await PostPayrollJournalAsync(run, cancellationToken);
         if (!postResult.IsSuccess)
             return Result.Failure<PayrollRunResponse>(postResult.Error!);
+
+        // Compute only ever previewed each Line's leave consumption (never touching the ledger, so
+        // re-running Compute while DRAFT stays side-effect-free) — Approve is the one point this
+        // becomes permanent, exactly once, matching every other irreversible-side-effect-at-Approve
+        // pattern in this codebase (GL posting included, right above this).
+        foreach (var line in run.Lines.Where(l => l.LeaveDaysConsumed > 0 && l.LeaveTypeConsumedId is not null))
+        {
+            await LeaveBalanceLedgerService.PostEntryAsync(
+                dbContext, line.EmployeeId, line.LeaveTypeConsumedId!.Value, run.PayDate, "USAGE", -line.LeaveDaysConsumed,
+                "PayrollRuns", run.Id.ToString(), cancellationToken);
+        }
 
         run.Status = "POSTED";
         await dbContext.SaveChangesAsync(cancellationToken);

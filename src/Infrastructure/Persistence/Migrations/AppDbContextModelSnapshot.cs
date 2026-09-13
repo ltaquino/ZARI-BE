@@ -4615,6 +4615,9 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .ValueGeneratedOnAdd()
                         .HasColumnType("char(36)");
 
+                    b.Property<decimal>("AbsenceDeduction")
+                        .HasColumnType("DECIMAL(14,4)");
+
                     b.Property<decimal>("AllowanceTotal")
                         .HasColumnType("DECIMAL(14,4)");
 
@@ -4641,6 +4644,12 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("LastModifiedBy")
                         .HasColumnType("longtext");
+
+                    b.Property<decimal>("LeaveDaysConsumed")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<Guid?>("LeaveTypeConsumedId")
+                        .HasColumnType("char(36)");
 
                     b.Property<decimal>("NetPay")
                         .HasColumnType("DECIMAL(14,4)");
@@ -4675,6 +4684,8 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("EmployeeId");
+
+                    b.HasIndex("LeaveTypeConsumedId");
 
                     b.HasIndex("PayrollRunId", "EmployeeId")
                         .IsUnique();
@@ -8454,6 +8465,11 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("ZARI.Domain.Entities.LeaveType", "LeaveTypeConsumed")
+                        .WithMany()
+                        .HasForeignKey("LeaveTypeConsumedId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.HasOne("ZARI.Domain.Entities.PayrollRun", "PayrollRun")
                         .WithMany("Lines")
                         .HasForeignKey("PayrollRunId")
@@ -8461,6 +8477,8 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .IsRequired();
 
                     b.Navigation("Employee");
+
+                    b.Navigation("LeaveTypeConsumed");
 
                     b.Navigation("PayrollRun");
                 });

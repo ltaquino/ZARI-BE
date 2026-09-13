@@ -14,6 +14,7 @@ public sealed class GetPayrollRunQueryHandler(IAppDbContext dbContext, IPermissi
     {
         var run = await dbContext.PayrollRuns
             .Include(r => r.Lines).ThenInclude(l => l.Employee)
+            .Include(r => r.Lines).ThenInclude(l => l.LeaveTypeConsumed)
             .FirstOrDefaultAsync(r => r.Id == query.Id, cancellationToken);
         if (run is null)
             return Result.Failure<PayrollRunResponse>(Error.NotFound("PayrollRun.NotFound", $"Payroll run with ID '{query.Id}' was not found."));

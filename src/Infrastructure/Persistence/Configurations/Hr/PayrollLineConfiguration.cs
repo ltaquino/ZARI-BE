@@ -13,6 +13,8 @@ public sealed class PayrollLineConfiguration : BaseModelConfig, IEntityTypeConfi
         builder.Property(l => l.BasicPay).HasColumnType(DefaultDecimal);
         builder.Property(l => l.OvertimePay).HasColumnType(DefaultDecimal);
         builder.Property(l => l.AllowanceTotal).HasColumnType(DefaultDecimal);
+        builder.Property(l => l.LeaveDaysConsumed).HasColumnType(DefaultDecimal);
+        builder.Property(l => l.AbsenceDeduction).HasColumnType(DefaultDecimal);
         builder.Property(l => l.GrossPay).HasColumnType(DefaultDecimal);
         builder.Property(l => l.SssEmployeeShare).HasColumnType(DefaultDecimal);
         builder.Property(l => l.SssEmployerShare).HasColumnType(DefaultDecimal);
@@ -27,5 +29,6 @@ public sealed class PayrollLineConfiguration : BaseModelConfig, IEntityTypeConfi
         builder.HasIndex(l => new { l.PayrollRunId, l.EmployeeId }).IsUnique();
 
         builder.HasOne(l => l.Employee).WithMany().HasForeignKey(l => l.EmployeeId).OnDelete(DeleteBehavior.Restrict);
+        builder.HasOne(l => l.LeaveTypeConsumed).WithMany().HasForeignKey(l => l.LeaveTypeConsumedId).OnDelete(DeleteBehavior.Restrict);
     }
 }

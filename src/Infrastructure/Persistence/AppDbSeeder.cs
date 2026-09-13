@@ -940,6 +940,23 @@ public static class AppDbSeeder
     {
         var effective = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
 
+        if (!await context.LeaveTypes.AnyAsync())
+        {
+            // Starter set named directly by the cooperative ("Vacation, Sick, Maternity, Solo
+            // Parent, etc.") — AccrualAmount/MaxCarryOverDays are placeholder numbers loosely based
+            // on DOLE-regulated minimums (RA 11210 Expanded Maternity Leave, RA 8187 Paternity
+            // Leave, RA 11861 Solo Parents' Welfare Act), not a substitute for real HR/CBA sign-off.
+            // More leave types can be added freely through the admin UI at any time.
+            context.LeaveTypes.AddRange(
+                new LeaveType { Code = "VL", Name = "Vacation Leave", AccrualFrequency = "MONTHLY", AccrualAmount = 1.25m, MaxCarryOverDays = 15m, IsPaid = true, RequiresDocumentation = false, Status = "active" },
+                new LeaveType { Code = "SL", Name = "Sick Leave", AccrualFrequency = "MONTHLY", AccrualAmount = 1.25m, MaxCarryOverDays = 15m, IsPaid = true, RequiresDocumentation = true, Status = "active" },
+                new LeaveType { Code = "ML", Name = "Maternity Leave", AccrualFrequency = "NONE", AccrualAmount = 105m, MaxCarryOverDays = null, IsPaid = true, RequiresDocumentation = true, Status = "active" },
+                new LeaveType { Code = "PL", Name = "Paternity Leave", AccrualFrequency = "NONE", AccrualAmount = 7m, MaxCarryOverDays = null, IsPaid = true, RequiresDocumentation = true, Status = "active" },
+                new LeaveType { Code = "SPL", Name = "Solo Parent Leave", AccrualFrequency = "NONE", AccrualAmount = 7m, MaxCarryOverDays = null, IsPaid = true, RequiresDocumentation = true, Status = "active" },
+                new LeaveType { Code = "BL", Name = "Bereavement Leave", AccrualFrequency = "NONE", AccrualAmount = 3m, MaxCarryOverDays = null, IsPaid = true, RequiresDocumentation = false, Status = "active" });
+            logger.LogInformation("Seeded 6 starter leave types (placeholder entitlement values — replace with the cooperative's real HR/CBA figures)");
+        }
+
         if (!await context.SssContributionBrackets.AnyAsync())
         {
             context.SssContributionBrackets.AddRange(

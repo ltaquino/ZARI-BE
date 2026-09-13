@@ -209,3 +209,135 @@ public sealed class PayrollComputationServiceTests
         draft.SssEmployerShare.Should().Be(0m);
     }
 }
+
+/// <summary>
+/// Absence/late/undertime handling, confirmed with the cooperative 2026-09-13: consume leave
+/// balance first, then deduct pay per hour for whatever isn't covered. Each test uses a one-day
+/// PayrollRun period (rather than the shared Jan 1-15 helper) so a single absence is isolated
+/// without needing to seed DTR "present" rows for every other work day in a longer period.
+/// </summary>
+public sealed class PayrollComputationServiceAbsenceTests
+{
+    // A Monday, so the default "MON,TUE,WED,THU,FRI" WorkSchedule always covers it.
+    private static readonly DateTimeOffset AbsenceDate = new(2026, 1, 5, 0, 0, 0, TimeSpan.Zero);
+
+    private static ZARI.Domain.Entities.PayrollRun BuildOneDayRun() =>
+        HrTestFixtures.PayrollRun(payPeriodStart: AbsenceDate, payPeriodEnd: AbsenceDate, payDate: AbsenceDate.AddDays(1));
+
+    private static async Task SeedScheduleAsync(AppDbContext db, Guid employeeId)
+    {
+        var schedule = HrTestFixtures.WorkSchedule(timeIn: "08:00", timeOut: "17:00", gracePeriodMinutes: 10);
+        db.WorkSchedules.Add(schedule);
+        db.EmployeeScheduleAssignments.Add(HrTestFixtures.EmployeeScheduleAssignment(employeeId: employeeId, workScheduleId: schedule.Id, effectiveDate: AbsenceDate.AddYears(-1)));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+    }
+
+    [Fact]
+    public async Task ComputeForEmployeeAsync_Should_Consume_Leave_Balance_For_A_Full_Day_Absence_When_Sufficient()
+    {
+        await using var db = TestDbContextFactory.Create();
+        // BasicSalary 17600 -> hourly rate = 17600 / 22 / 8 = 100.00 exactly.
+        var employee = await PayrollTestHelpers.SeedEmployeeAsync(db, basicSalary: 17600m);
+        await SeedScheduleAsync(db, employee.Id);
+
+        var leaveType = HrTestFixtures.LeaveType(code: "VL", isPaid: true);
+        db.LeaveTypes.Add(leaveType);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await ZARI.Application.Features.Hr.LeaveBalanceEntries.Shared.LeaveBalanceLedgerService.PostEntryAsync(
+            db, employee.Id, leaveType.Id, AbsenceDate.AddDays(-1), "ACCRUAL", 5m, null, null, TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        // No DailyTimeRecord for AbsenceDate at all -> IsAbsent.
+
+        var draft = await PayrollComputationService.ComputeForEmployeeAsync(db, employee, BuildOneDayRun(), TestContext.Current.CancellationToken);
+
+        draft.LeaveDaysConsumed.Should().Be(1m);
+        draft.LeaveTypeConsumedId.Should().Be(leaveType.Id);
+        draft.AbsenceDeduction.Should().Be(0m);
+    }
+
+    [Fact]
+    public async Task ComputeForEmployeeAsync_Should_Deduct_Pay_For_A_Full_Day_Absence_When_No_Leave_Balance()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var employee = await PayrollTestHelpers.SeedEmployeeAsync(db, basicSalary: 17600m);
+        await SeedScheduleAsync(db, employee.Id);
+        db.LeaveTypes.Add(HrTestFixtures.LeaveType(code: "VL", isPaid: true));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        // No LeaveBalanceEntry posted at all -> zero balance.
+
+        var draft = await PayrollComputationService.ComputeForEmployeeAsync(db, employee, BuildOneDayRun(), TestContext.Current.CancellationToken);
+
+        draft.LeaveDaysConsumed.Should().Be(0m);
+        draft.LeaveTypeConsumedId.Should().BeNull();
+        draft.AbsenceDeduction.Should().Be(800.00m); // 8 hours * 100.00/hr
+    }
+
+    [Fact]
+    public async Task ComputeForEmployeeAsync_Should_Split_Between_Partial_Leave_Consumption_And_Pay_Deduction()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var employee = await PayrollTestHelpers.SeedEmployeeAsync(db, basicSalary: 17600m);
+        await SeedScheduleAsync(db, employee.Id);
+        var leaveType = HrTestFixtures.LeaveType(code: "VL", isPaid: true);
+        db.LeaveTypes.Add(leaveType);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        await ZARI.Application.Features.Hr.LeaveBalanceEntries.Shared.LeaveBalanceLedgerService.PostEntryAsync(
+            db, employee.Id, leaveType.Id, AbsenceDate.AddDays(-1), "ACCRUAL", 0.5m, null, null, TestContext.Current.CancellationToken);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var draft = await PayrollComputationService.ComputeForEmployeeAsync(db, employee, BuildOneDayRun(), TestContext.Current.CancellationToken);
+
+        draft.LeaveDaysConsumed.Should().Be(0.5m);
+        draft.LeaveTypeConsumedId.Should().Be(leaveType.Id);
+        draft.AbsenceDeduction.Should().Be(400.00m); // remaining 4 hours * 100.00/hr
+    }
+
+    [Fact]
+    public async Task ComputeForEmployeeAsync_Should_Not_Deduct_Or_Consume_For_A_Day_Already_Covered_By_Approved_Paid_Leave()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var employee = await PayrollTestHelpers.SeedEmployeeAsync(db, basicSalary: 17600m);
+        await SeedScheduleAsync(db, employee.Id);
+        var leaveType = HrTestFixtures.LeaveType(code: "VL", isPaid: true);
+        db.LeaveTypes.Add(leaveType);
+        db.LeaveRequests.Add(HrTestFixtures.LeaveRequest(employeeId: employee.Id, leaveTypeId: leaveType.Id, dateFrom: AbsenceDate, dateTo: AbsenceDate, days: 1m, status: "APPROVED"));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var draft = await PayrollComputationService.ComputeForEmployeeAsync(db, employee, BuildOneDayRun(), TestContext.Current.CancellationToken);
+
+        draft.LeaveDaysConsumed.Should().Be(0m);
+        draft.AbsenceDeduction.Should().Be(0m);
+    }
+
+    [Fact]
+    public async Task ComputeForEmployeeAsync_Should_Deduct_Full_Day_For_Approved_Unpaid_Leave()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var employee = await PayrollTestHelpers.SeedEmployeeAsync(db, basicSalary: 17600m);
+        await SeedScheduleAsync(db, employee.Id);
+        var unpaidLeaveType = HrTestFixtures.LeaveType(code: "UL", isPaid: false);
+        db.LeaveTypes.Add(unpaidLeaveType);
+        db.LeaveRequests.Add(HrTestFixtures.LeaveRequest(employeeId: employee.Id, leaveTypeId: unpaidLeaveType.Id, dateFrom: AbsenceDate, dateTo: AbsenceDate, days: 1m, status: "APPROVED"));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var draft = await PayrollComputationService.ComputeForEmployeeAsync(db, employee, BuildOneDayRun(), TestContext.Current.CancellationToken);
+
+        draft.LeaveDaysConsumed.Should().Be(0m); // unpaid leave never draws against a leave balance
+        draft.AbsenceDeduction.Should().Be(800.00m); // full day, at the hourly rate
+    }
+
+    [Fact]
+    public async Task ComputeForEmployeeAsync_Should_Deduct_Only_The_Undertime_Portion_When_Not_Fully_Absent()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var employee = await PayrollTestHelpers.SeedEmployeeAsync(db, basicSalary: 17600m);
+        await SeedScheduleAsync(db, employee.Id);
+        // Clocks in on time but leaves 2 hours early (15:00 instead of 17:00) -> 120 min undertime.
+        db.DailyTimeRecords.Add(HrTestFixtures.DailyTimeRecord(employeeId: employee.Id, date: AbsenceDate, timeIn: AbsenceDate.AddHours(8), timeOut: AbsenceDate.AddHours(15)));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+
+        var draft = await PayrollComputationService.ComputeForEmployeeAsync(db, employee, BuildOneDayRun(), TestContext.Current.CancellationToken);
+
+        draft.AbsenceDeduction.Should().Be(200.00m); // 2 hours * 100.00/hr — no leave type seeded, so nothing to consume
+    }
+}

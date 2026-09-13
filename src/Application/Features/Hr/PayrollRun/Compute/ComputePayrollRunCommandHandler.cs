@@ -50,6 +50,9 @@ public sealed class ComputePayrollRunCommandHandler(IAppDbContext dbContext, IPe
                 BasicPay = draft.BasicPay,
                 OvertimePay = draft.OvertimePay,
                 AllowanceTotal = draft.AllowanceTotal,
+                LeaveDaysConsumed = draft.LeaveDaysConsumed,
+                LeaveTypeConsumedId = draft.LeaveTypeConsumedId,
+                AbsenceDeduction = draft.AbsenceDeduction,
                 GrossPay = draft.GrossPay,
                 SssEmployeeShare = draft.SssEmployeeShare,
                 SssEmployerShare = draft.SssEmployerShare,
@@ -67,6 +70,7 @@ public sealed class ComputePayrollRunCommandHandler(IAppDbContext dbContext, IPe
 
         var reloaded = await dbContext.PayrollRuns
             .Include(r => r.Lines).ThenInclude(l => l.Employee)
+            .Include(r => r.Lines).ThenInclude(l => l.LeaveTypeConsumed)
             .FirstAsync(r => r.Id == run.Id, cancellationToken);
         return Result.Success(PayrollRunMapper.ToResponse(reloaded));
     }

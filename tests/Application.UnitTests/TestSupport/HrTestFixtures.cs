@@ -12,12 +12,14 @@ public static class HrTestFixtures
         HeadEmployeeId = headEmployeeId
     };
 
-    public static Position Position(string code = "POS-1", string name = "Test Position", Guid departmentId = default, string status = "active") => new()
+    public static Position Position(string code = "POS-1", string name = "Test Position", Guid departmentId = default, string status = "active", decimal? payGradeMin = null, decimal? payGradeMax = null) => new()
     {
         Code = code,
         Name = name,
         DepartmentId = departmentId,
-        Status = status
+        Status = status,
+        PayGradeMin = payGradeMin,
+        PayGradeMax = payGradeMax
     };
 
     public static Employee Employee(
@@ -284,6 +286,9 @@ public static class HrTestFixtures
         decimal basicPay = 10000m,
         decimal overtimePay = 0m,
         decimal allowanceTotal = 0m,
+        decimal leaveDaysConsumed = 0m,
+        Guid? leaveTypeConsumedId = null,
+        decimal absenceDeduction = 0m,
         decimal grossPay = 10000m,
         decimal sssEmployeeShare = 0m,
         decimal sssEmployerShare = 0m,
@@ -300,6 +305,9 @@ public static class HrTestFixtures
         BasicPay = basicPay,
         OvertimePay = overtimePay,
         AllowanceTotal = allowanceTotal,
+        LeaveDaysConsumed = leaveDaysConsumed,
+        LeaveTypeConsumedId = leaveTypeConsumedId,
+        AbsenceDeduction = absenceDeduction,
         GrossPay = grossPay,
         SssEmployeeShare = sssEmployeeShare,
         SssEmployerShare = sssEmployerShare,

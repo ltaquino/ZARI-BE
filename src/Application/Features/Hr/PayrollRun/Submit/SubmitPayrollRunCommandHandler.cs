@@ -24,6 +24,7 @@ public sealed class SubmitPayrollRunCommandHandler(
     {
         var run = await dbContext.PayrollRuns
             .Include(r => r.Lines).ThenInclude(l => l.Employee)
+            .Include(r => r.Lines).ThenInclude(l => l.LeaveTypeConsumed)
             .FirstOrDefaultAsync(r => r.Id == command.Id, cancellationToken);
         if (run is null)
             return Result.Failure<PayrollRunResponse>(Error.NotFound("PayrollRun.NotFound", $"Payroll run with ID '{command.Id}' was not found."));

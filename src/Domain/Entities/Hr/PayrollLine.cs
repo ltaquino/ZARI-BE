@@ -19,6 +19,21 @@ public sealed class PayrollLine : AuditableEntity
     public decimal BasicPay { get; set; }
     public decimal OvertimePay { get; set; }
     public decimal AllowanceTotal { get; set; }
+
+    /// <summary>
+    /// Unplanned absence/late/undertime hours (and any explicitly-unpaid approved leave day) are
+    /// first covered by an automatic draw against the employee's own leave balance — whichever
+    /// paid LeaveType currently has the largest balance — before anything reduces pay. Only the
+    /// hours left uncovered (insufficient/no balance) become AbsenceDeduction. Both are computed
+    /// previews only (never touch the LeaveBalanceEntry ledger) until the run is Approved, since
+    /// Compute must stay safely re-runnable while DRAFT — the actual USAGE row posts once, at
+    /// Approve. See PayrollComputationService.
+    /// </summary>
+    public decimal LeaveDaysConsumed { get; set; }
+    public Guid? LeaveTypeConsumedId { get; set; }
+    public LeaveType? LeaveTypeConsumed { get; set; }
+    public decimal AbsenceDeduction { get; set; }
+
     public decimal GrossPay { get; set; }
 
     public decimal SssEmployeeShare { get; set; }

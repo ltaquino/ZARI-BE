@@ -34,9 +34,14 @@ public sealed class CreateEmployeeCommandHandler(IAppDbContext dbContext, IPermi
         if (!branchExists)
             return Result.Failure<EmployeeResponse>(Error.NotFound("Branch.NotFound", $"Branch with ID '{command.BranchId}' was not found."));
 
-        var positionExists = await dbContext.Positions.AnyAsync(p => p.Id == command.PositionId, cancellationToken);
-        if (!positionExists)
+        var position = await dbContext.Positions.FirstOrDefaultAsync(p => p.Id == command.PositionId, cancellationToken);
+        if (position is null)
             return Result.Failure<EmployeeResponse>(Error.NotFound("Position.NotFound", $"Position with ID '{command.PositionId}' was not found."));
+
+        if (position.PayGradeMin is { } min && command.BasicSalary < min)
+            return Result.Failure<EmployeeResponse>(Error.Validation("Employee.BelowPayGrade", $"Basic salary {command.BasicSalary:N2} is below this position's minimum pay grade of {min:N2}."));
+        if (position.PayGradeMax is { } max && command.BasicSalary > max)
+            return Result.Failure<EmployeeResponse>(Error.Validation("Employee.AbovePayGrade", $"Basic salary {command.BasicSalary:N2} is above this position's maximum pay grade of {max:N2}."));
 
         var departmentExists = await dbContext.Departments.AnyAsync(d => d.Id == command.DepartmentId, cancellationToken);
         if (!departmentExists)
