@@ -147,6 +147,9 @@ try
     app.MapWorkScheduleEndpoints();
     app.MapEmployeeScheduleAssignmentEndpoints();
     app.MapDailyTimeRecordEndpoints();
+    app.MapLeaveTypeEndpoints();
+    app.MapLeaveBalanceEntryEndpoints();
+    app.MapLeaveRequestEndpoints();
     app.MapCompanyEndpoints();
     app.MapBranchEndpoints();
     app.MapFormEndpoints();

@@ -169,6 +169,44 @@ public sealed class DeleteEmployeeCommandHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error!.Type.Should().Be(ErrorType.Conflict);
     }
+
+    [Fact]
+    public async Task HandleAsync_Should_Fail_When_Has_Leave_Requests()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var (branchId, positionId, departmentId) = await EmployeeTestHelpers.SeedMasterData(db);
+        var employee = HrTestFixtures.Employee(branchId: branchId, positionId: positionId, departmentId: departmentId);
+        db.Employees.Add(employee);
+        var leaveType = HrTestFixtures.LeaveType();
+        db.LeaveTypes.Add(leaveType);
+        db.LeaveRequests.Add(HrTestFixtures.LeaveRequest(employeeId: employee.Id, leaveTypeId: leaveType.Id));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var handler = new DeleteEmployeeCommandHandler(db, LoanTestFixtures.AllowAllPermissionService());
+
+        var result = await handler.HandleAsync(new DeleteEmployeeCommand(employee.Id), TestContext.Current.CancellationToken);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("Employee.HasLeaveRequests");
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Fail_When_Has_Schedule_Assignments()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var (branchId, positionId, departmentId) = await EmployeeTestHelpers.SeedMasterData(db);
+        var employee = HrTestFixtures.Employee(branchId: branchId, positionId: positionId, departmentId: departmentId);
+        db.Employees.Add(employee);
+        var schedule = HrTestFixtures.WorkSchedule();
+        db.WorkSchedules.Add(schedule);
+        db.EmployeeScheduleAssignments.Add(HrTestFixtures.EmployeeScheduleAssignment(employeeId: employee.Id, workScheduleId: schedule.Id));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var handler = new DeleteEmployeeCommandHandler(db, LoanTestFixtures.AllowAllPermissionService());
+
+        var result = await handler.HandleAsync(new DeleteEmployeeCommand(employee.Id), TestContext.Current.CancellationToken);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("Employee.HasScheduleAssignments");
+    }
 }
 
 public sealed class GetEmployeeQueryHandlerTests

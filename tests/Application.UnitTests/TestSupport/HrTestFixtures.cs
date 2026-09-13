@@ -88,4 +88,42 @@ public static class HrTestFixtures
         TimeOut = timeOut,
         Source = source
     };
+
+    public static LeaveType LeaveType(
+        string code = "VL",
+        string name = "Vacation Leave",
+        string accrualFrequency = "MONTHLY",
+        decimal accrualAmount = 1.25m,
+        decimal? maxCarryOverDays = null,
+        bool isPaid = true,
+        bool requiresDocumentation = false,
+        string status = "active") => new()
+    {
+        Code = code,
+        Name = name,
+        AccrualFrequency = accrualFrequency,
+        AccrualAmount = accrualAmount,
+        MaxCarryOverDays = maxCarryOverDays,
+        IsPaid = isPaid,
+        RequiresDocumentation = requiresDocumentation,
+        Status = status
+    };
+
+    public static LeaveRequest LeaveRequest(
+        string requestNo = "HQ-LR-000001",
+        Guid employeeId = default,
+        Guid leaveTypeId = default,
+        DateTimeOffset? dateFrom = null,
+        DateTimeOffset? dateTo = null,
+        decimal days = 1m,
+        string status = "DRAFT") => new()
+    {
+        RequestNo = requestNo,
+        EmployeeId = employeeId,
+        LeaveTypeId = leaveTypeId,
+        DateFrom = dateFrom ?? DateTimeOffset.UtcNow,
+        DateTo = dateTo ?? DateTimeOffset.UtcNow,
+        Days = days,
+        Status = status
+    };
 }

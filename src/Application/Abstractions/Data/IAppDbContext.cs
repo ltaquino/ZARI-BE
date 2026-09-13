@@ -45,6 +45,9 @@ public interface IAppDbContext
     DbSet<WorkSchedule> WorkSchedules { get; }
     DbSet<EmployeeScheduleAssignment> EmployeeScheduleAssignments { get; }
     DbSet<DailyTimeRecord> DailyTimeRecords { get; }
+    DbSet<LeaveType> LeaveTypes { get; }
+    DbSet<LeaveBalanceEntry> LeaveBalanceEntries { get; }
+    DbSet<LeaveRequest> LeaveRequests { get; }
     DbSet<CustomerCreditRecord> CustomerCreditRecords { get; }
     DbSet<Company> Companies { get; }
     DbSet<Branch> Branches { get; }

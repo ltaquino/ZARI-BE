@@ -42,6 +42,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<WorkSchedule> WorkSchedules => Set<WorkSchedule>();
     public DbSet<EmployeeScheduleAssignment> EmployeeScheduleAssignments => Set<EmployeeScheduleAssignment>();
     public DbSet<DailyTimeRecord> DailyTimeRecords => Set<DailyTimeRecord>();
+    public DbSet<LeaveType> LeaveTypes => Set<LeaveType>();
+    public DbSet<LeaveBalanceEntry> LeaveBalanceEntries => Set<LeaveBalanceEntry>();
+    public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
     public DbSet<CustomerCreditRecord> CustomerCreditRecords => Set<CustomerCreditRecord>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<Branch> Branches => Set<Branch>();
