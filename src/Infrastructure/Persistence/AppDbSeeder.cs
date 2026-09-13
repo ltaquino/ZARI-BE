@@ -262,6 +262,8 @@ public static class AppDbSeeder
             // HR module (ZARI-FE/frs/human-resource/HrModuleContext.md) — Leave Request numbering.
             ("br-hq", "LEAVE-REQ", "HQ-LR-", 1),
             ("br-north", "LEAVE-REQ", "NB-LR-", 1),
+            ("br-hq", "OT-REQ", "HQ-OT-", 1),
+            ("br-north", "OT-REQ", "NB-OT-", 1),
         ];
 
         var existingPairs = (await context.DocumentSequences.Select(s => new { s.BranchId, s.DocType }).ToListAsync())
@@ -760,6 +762,8 @@ public static class AppDbSeeder
             ("LEAVE_TYPES", "Leave Types", "HR"),
             ("LEAVE_BALANCE_ENTRIES", "Leave Balance Entries", "HR"),
             ("LEAVE_REQUESTS", "Leave Requests", "HR"),
+            ("OVERTIME_RATE_RULES", "Overtime Rate Rules", "HR"),
+            ("OVERTIME_REQUESTS", "Overtime Requests", "HR"),
         ];
 
         var existingCodes = await context.Forms.Select(f => f.Code).ToListAsync();
@@ -831,7 +835,7 @@ public static class AppDbSeeder
             "MANUAL_JOURNAL_ENTRIES",
             "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING", "POS_MODE",
             "LOAN_APPLICATIONS", "LOAN_ACCOUNTS", "LOAN_DISBURSEMENTS", "LOAN_PAYMENTS", "LOAN_RESTRUCTURINGS", "LOAN_WRITE_OFFS",
-            "LEAVE_REQUESTS"
+            "LEAVE_REQUESTS", "OVERTIME_REQUESTS"
         ];
         string[] managerMasterDataForms =
         [
@@ -840,7 +844,7 @@ public static class AppDbSeeder
             "PURCHASE_RETURN_REASONS", "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES", "LOAN_PRODUCTS",
             "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES", "REPORT_DESIGNER",
             "DEPARTMENTS", "POSITIONS", "EMPLOYEES", "WORK_SCHEDULES", "EMPLOYEE_SCHEDULES", "DAILY_TIME_RECORDS",
-            "LEAVE_TYPES", "LEAVE_BALANCE_ENTRIES"
+            "LEAVE_TYPES", "LEAVE_BALANCE_ENTRIES", "OVERTIME_RATE_RULES"
         ];
         string[] managerViewOnlyForms =
         [
@@ -866,7 +870,7 @@ public static class AppDbSeeder
             "MANUAL_JOURNAL_ENTRIES",
             "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING", "POS_MODE",
             "LOAN_APPLICATIONS", "LOAN_ACCOUNTS", "LOAN_DISBURSEMENTS", "LOAN_PAYMENTS", "LOAN_RESTRUCTURINGS", "LOAN_WRITE_OFFS",
-            "LEAVE_REQUESTS"
+            "LEAVE_REQUESTS", "OVERTIME_REQUESTS"
         ];
         string[] staffViewOnlyForms =
         [
@@ -876,7 +880,7 @@ public static class AppDbSeeder
             "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES", "LOAN_PRODUCTS",
             "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES", "REPORT_DESIGNER",
             "DEPARTMENTS", "POSITIONS", "EMPLOYEES", "WORK_SCHEDULES", "EMPLOYEE_SCHEDULES", "DAILY_TIME_RECORDS",
-            "LEAVE_TYPES", "LEAVE_BALANCE_ENTRIES"
+            "LEAVE_TYPES", "LEAVE_BALANCE_ENTRIES", "OVERTIME_RATE_RULES"
         ];
 
         foreach (var formCode in staffTransactionalForms)

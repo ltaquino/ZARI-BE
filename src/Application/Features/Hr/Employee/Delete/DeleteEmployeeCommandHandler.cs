@@ -38,6 +38,10 @@ public sealed class DeleteEmployeeCommandHandler(IAppDbContext dbContext, IPermi
         if (leaveBalanceEntryCount > 0)
             return Result.Failure(Error.Conflict("Employee.HasLeaveBalanceEntries", $"Cannot delete this employee — they have {leaveBalanceEntryCount} leave balance ledger entr{(leaveBalanceEntryCount == 1 ? "y" : "ies")}."));
 
+        var overtimeRequestCount = await dbContext.OvertimeRequests.CountAsync(o => o.EmployeeId == command.Id, cancellationToken);
+        if (overtimeRequestCount > 0)
+            return Result.Failure(Error.Conflict("Employee.HasOvertimeRequests", $"Cannot delete this employee — they have {overtimeRequestCount} overtime request{(overtimeRequestCount == 1 ? "" : "s")}."));
+
         dbContext.Employees.Remove(employee);
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

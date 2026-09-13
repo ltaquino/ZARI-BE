@@ -48,6 +48,8 @@ public interface IAppDbContext
     DbSet<LeaveType> LeaveTypes { get; }
     DbSet<LeaveBalanceEntry> LeaveBalanceEntries { get; }
     DbSet<LeaveRequest> LeaveRequests { get; }
+    DbSet<OvertimeRateRule> OvertimeRateRules { get; }
+    DbSet<OvertimeRequest> OvertimeRequests { get; }
     DbSet<CustomerCreditRecord> CustomerCreditRecords { get; }
     DbSet<Company> Companies { get; }
     DbSet<Branch> Branches { get; }

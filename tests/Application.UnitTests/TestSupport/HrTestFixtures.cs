@@ -126,4 +126,34 @@ public static class HrTestFixtures
         Days = days,
         Status = status
     };
+
+    public static OvertimeRateRule OvertimeRateRule(
+        string otType = "ORDINARY",
+        decimal multiplier = 1.25m,
+        DateTimeOffset? effectiveDate = null,
+        string status = "active") => new()
+    {
+        OtType = otType,
+        Multiplier = multiplier,
+        EffectiveDate = effectiveDate ?? DateTimeOffset.UtcNow,
+        Status = status
+    };
+
+    public static OvertimeRequest OvertimeRequest(
+        string requestNo = "HQ-OT-000001",
+        Guid employeeId = default,
+        DateTimeOffset? date = null,
+        DateTimeOffset? plannedTimeFrom = null,
+        DateTimeOffset? plannedTimeTo = null,
+        string otType = "ORDINARY",
+        string status = "DRAFT") => new()
+    {
+        RequestNo = requestNo,
+        EmployeeId = employeeId,
+        Date = date ?? DateTimeOffset.UtcNow,
+        PlannedTimeFrom = plannedTimeFrom ?? DateTimeOffset.UtcNow,
+        PlannedTimeTo = plannedTimeTo ?? DateTimeOffset.UtcNow.AddHours(2),
+        OtType = otType,
+        Status = status
+    };
 }

@@ -45,6 +45,8 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<LeaveType> LeaveTypes => Set<LeaveType>();
     public DbSet<LeaveBalanceEntry> LeaveBalanceEntries => Set<LeaveBalanceEntry>();
     public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
+    public DbSet<OvertimeRateRule> OvertimeRateRules => Set<OvertimeRateRule>();
+    public DbSet<OvertimeRequest> OvertimeRequests => Set<OvertimeRequest>();
     public DbSet<CustomerCreditRecord> CustomerCreditRecords => Set<CustomerCreditRecord>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<Branch> Branches => Set<Branch>();

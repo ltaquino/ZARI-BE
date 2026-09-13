@@ -4246,6 +4246,108 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.ToTable("OutgoingPaymentLines");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.OvertimeRateRule", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset>("EffectiveDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("Multiplier")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("OtType")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("OtType", "EffectiveDate");
+
+                    b.ToTable("OvertimeRateRules");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.OvertimeRequest", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset>("Date")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("OtType")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<DateTimeOffset>("PlannedTimeFrom")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTimeOffset>("PlannedTimeTo")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<string>("RequestNo")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.HasIndex("RequestNo")
+                        .IsUnique();
+
+                    b.HasIndex("Status");
+
+                    b.ToTable("OvertimeRequests");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.PaymentMethod", b =>
                 {
                     b.Property<Guid>("Id")
@@ -7879,6 +7981,17 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Navigation("ApInvoice");
 
                     b.Navigation("OutgoingPayment");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.OvertimeRequest", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.PaymentMethod", b =>

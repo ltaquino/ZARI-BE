@@ -150,6 +150,8 @@ try
     app.MapLeaveTypeEndpoints();
     app.MapLeaveBalanceEntryEndpoints();
     app.MapLeaveRequestEndpoints();
+    app.MapOvertimeRateRuleEndpoints();
+    app.MapOvertimeRequestEndpoints();
     app.MapCompanyEndpoints();
     app.MapBranchEndpoints();
     app.MapFormEndpoints();
