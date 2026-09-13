@@ -4505,6 +4505,51 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.ToTable("OvertimeRequests");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.PagIbigContributionBracket", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset>("EffectiveDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("EmployeeShare")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("EmployerShare")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("SalaryFrom")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("SalaryTo")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EffectiveDate", "SalaryFrom");
+
+                    b.ToTable("PagIbigContributionBrackets");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.PaymentMethod", b =>
                 {
                     b.Property<Guid>("Id")

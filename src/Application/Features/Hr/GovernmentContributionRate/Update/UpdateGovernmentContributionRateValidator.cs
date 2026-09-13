@@ -5,7 +5,7 @@ using FluentValidation;
 public sealed class UpdateGovernmentContributionRateValidator : AbstractValidator<UpdateGovernmentContributionRateCommand>
 {
     private static readonly string[] ValidStatuses = ["active", "inactive"];
-    private static readonly string[] ValidContributionTypes = ["PHILHEALTH", "PAGIBIG"];
+    private static readonly string[] ValidContributionTypes = ["PHILHEALTH"];
 
     public UpdateGovernmentContributionRateValidator()
     {

@@ -13,7 +13,8 @@ using ZARI.Domain.Entities;
 ///   BasicPay = 20000 / 2 = 10000.00 (semi-monthly split — see the cadence note below)
 ///   SSS bracket [0, 25000): EmployeeShare 500/mo, EmployerShare 1000/mo -> this line: 250.00 / 500.00
 ///   PhilHealth [0, 100000): 2% / 2% -> monthly 400/400 -> this line: 200.00 / 200.00
-///   Pag-IBIG   [0, 100000): 1% / 2% -> monthly 200/400 -> this line: 100.00 / 200.00
+///   Pag-IBIG bracket [0, 100000): EmployeeShare 200/mo, EmployerShare 400/mo (fixed peso, same
+///     shape as SSS, not a percentage) -> this line: 100.00 / 200.00
 ///   GrossPay = 10000 + 0 + 0 = 10000.00
 ///   TaxableIncome = 10000 - 250 - 200 - 100 = 9450.00 -> below the sample bracket's SalaryFrom -> WithholdingTax = 0
 ///   NetPay = 10000 - 250 - 200 - 100 - 0 - 0 = 9450.00
@@ -74,7 +75,7 @@ public static class PayrollComputationService
 
         var (sssEe, sssEr) = await ComputeSssAsync(dbContext, employee, run, cancellationToken);
         var (phEe, phEr) = await ComputeGovernmentPctAsync(dbContext, employee, run, "PHILHEALTH", cancellationToken);
-        var (pgEe, pgEr) = await ComputeGovernmentPctAsync(dbContext, employee, run, "PAGIBIG", cancellationToken);
+        var (pgEe, pgEr) = await ComputePagIbigAsync(dbContext, employee, run, cancellationToken);
 
         var taxableIncome = grossPay - sssEe - phEe - pgEe;
         var withholdingTax = await ComputeWithholdingTaxAsync(dbContext, taxableIncome, run, cancellationToken);
@@ -159,6 +160,24 @@ public static class PayrollComputationService
     private static async Task<(decimal EmployeeShare, decimal EmployerShare)> ComputeSssAsync(IAppDbContext dbContext, Employee employee, PayrollRun run, CancellationToken cancellationToken)
     {
         var bracket = await dbContext.SssContributionBrackets
+            .Where(b => b.Status == "active" && b.EffectiveDate <= run.PayDate
+                && b.SalaryFrom <= employee.BasicSalary && employee.BasicSalary < b.SalaryTo)
+            .OrderByDescending(b => b.EffectiveDate)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (bracket is null)
+            return (0m, 0m);
+
+        return (Round(bracket.EmployeeShare / 2m), Round(bracket.EmployerShare / 2m));
+    }
+
+    /// <summary>
+    /// Fixed-peso amount per salary bracket, same shape and lookup as SSS — Pag-IBIG was originally
+    /// modeled as percentage-based alongside PhilHealth in GovernmentContributionRate; corrected
+    /// once the cooperative confirmed it's actually a fixed amount (see PagIbigContributionBracket).
+    /// </summary>
+    private static async Task<(decimal EmployeeShare, decimal EmployerShare)> ComputePagIbigAsync(IAppDbContext dbContext, Employee employee, PayrollRun run, CancellationToken cancellationToken)
+    {
+        var bracket = await dbContext.PagIbigContributionBrackets
             .Where(b => b.Status == "active" && b.EffectiveDate <= run.PayDate
                 && b.SalaryFrom <= employee.BasicSalary && employee.BasicSalary < b.SalaryTo)
             .OrderByDescending(b => b.EffectiveDate)

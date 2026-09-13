@@ -42,7 +42,7 @@ public sealed class PayrollComputationServiceTests
 
         db.SssContributionBrackets.Add(HrTestFixtures.SssContributionBracket(salaryFrom: 0m, salaryTo: 25000m, employeeShare: 500m, employerShare: 1000m, effectiveDate: PayrollTestHelpers.PayPeriodStart.AddYears(-1)));
         db.GovernmentContributionRates.Add(HrTestFixtures.GovernmentContributionRate(contributionType: "PHILHEALTH", salaryFrom: 0m, salaryTo: 100000m, employeeSharePct: 2m, employerSharePct: 2m, effectiveDate: PayrollTestHelpers.PayPeriodStart.AddYears(-1)));
-        db.GovernmentContributionRates.Add(HrTestFixtures.GovernmentContributionRate(contributionType: "PAGIBIG", salaryFrom: 0m, salaryTo: 100000m, employeeSharePct: 1m, employerSharePct: 2m, effectiveDate: PayrollTestHelpers.PayPeriodStart.AddYears(-1)));
+        db.PagIbigContributionBrackets.Add(HrTestFixtures.PagIbigContributionBracket(salaryFrom: 0m, salaryTo: 100000m, employeeShare: 200m, employerShare: 400m, effectiveDate: PayrollTestHelpers.PayPeriodStart.AddYears(-1)));
         db.WithholdingTaxBrackets.Add(HrTestFixtures.WithholdingTaxBracket(salaryFrom: 0m, salaryTo: 20833m, baseTax: 0m, rateOverExcess: 0m, effectiveDate: PayrollTestHelpers.PayPeriodStart.AddYears(-1)));
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 

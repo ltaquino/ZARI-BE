@@ -42,6 +42,7 @@ public static class AppDbSeeder
         await SeedWalkInCustomersAsync(context, logger);
         await SeedFormsAsync(context, logger);
         await SeedRolePermissionsAsync(context, roleManager, logger);
+        await SeedHrPayrollDummyDataAsync(context, logger);
     }
 
     private static async Task SeedRolesAsync(RoleManager<IdentityRole> roleManager, ILogger logger)
@@ -780,6 +781,7 @@ public static class AppDbSeeder
             ("EMPLOYEE_ALLOWANCES", "Employee Allowances", "HR"),
             ("EMPLOYEE_DEDUCTIONS", "Employee Deductions", "HR"),
             ("SSS_CONTRIBUTION_BRACKETS", "SSS Contribution Brackets", "HR"),
+            ("PAGIBIG_BRACKETS", "Pag-IBIG Contribution Brackets", "HR"),
             ("GOVT_CONTRIBUTION_RATES", "Government Contribution Rates", "HR"),
             ("WITHHOLDING_TAX_BRACKETS", "Withholding Tax Brackets", "HR"),
             ("PAYROLL_RUNS", "Payroll Runs", "HR"),
@@ -864,7 +866,7 @@ public static class AppDbSeeder
             "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES", "REPORT_DESIGNER",
             "DEPARTMENTS", "POSITIONS", "EMPLOYEES", "WORK_SCHEDULES", "EMPLOYEE_SCHEDULES", "DAILY_TIME_RECORDS",
             "LEAVE_TYPES", "LEAVE_BALANCE_ENTRIES", "OVERTIME_RATE_RULES",
-            "EMPLOYEE_ALLOWANCES", "EMPLOYEE_DEDUCTIONS", "SSS_CONTRIBUTION_BRACKETS",
+            "EMPLOYEE_ALLOWANCES", "EMPLOYEE_DEDUCTIONS", "SSS_CONTRIBUTION_BRACKETS", "PAGIBIG_BRACKETS",
             "GOVT_CONTRIBUTION_RATES", "WITHHOLDING_TAX_BRACKETS"
         ];
         string[] managerViewOnlyForms =
@@ -902,7 +904,7 @@ public static class AppDbSeeder
             "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES", "REPORT_DESIGNER",
             "DEPARTMENTS", "POSITIONS", "EMPLOYEES", "WORK_SCHEDULES", "EMPLOYEE_SCHEDULES", "DAILY_TIME_RECORDS",
             "LEAVE_TYPES", "LEAVE_BALANCE_ENTRIES", "OVERTIME_RATE_RULES",
-            "EMPLOYEE_ALLOWANCES", "EMPLOYEE_DEDUCTIONS", "SSS_CONTRIBUTION_BRACKETS",
+            "EMPLOYEE_ALLOWANCES", "EMPLOYEE_DEDUCTIONS", "SSS_CONTRIBUTION_BRACKETS", "PAGIBIG_BRACKETS",
             "GOVT_CONTRIBUTION_RATES", "WITHHOLDING_TAX_BRACKETS"
         ];
 
@@ -919,4 +921,61 @@ public static class AppDbSeeder
         logger.LogInformation("Seeded {Count} default role permissions", permissions.Count);
     }
 
+    /// <summary>
+    /// Placeholder/dummy government contribution and withholding-tax data (ZARI-FE/frs/human-
+    /// resource/HrModuleContext.md §3.12) — explicitly NOT the real, currently-published
+    /// SSS/PhilHealth/Pag-IBIG/BIR figures (per the cooperative's own instruction: "we can have
+    /// dummy data for these matrix... FE for us to change or manage"). Each table is seeded only if
+    /// completely empty, so editing/replacing these rows through the admin UI is never overwritten
+    /// on a later restart. Effective-dated 2025-01-01 so any real payroll run finds them.
+    ///
+    /// SSS and Pag-IBIG are both fixed-peso-per-salary-bracket schemes (confirmed with the
+    /// cooperative — Pag-IBIG is NOT percentage-based, unlike PhilHealth). BIR withholding uses the
+    /// cooperative's own stated rule: the first ₱240,000/year is exempt — converted here to this
+    /// module's semi-monthly-native bracket unit (₱240,000 / 24 pay periods = ₱10,000), then a
+    /// simplified progressive matrix above that, loosely shaped like the real TRAIN-law brackets
+    /// but with round dummy numbers, not the actual published table.
+    /// </summary>
+    private static async Task SeedHrPayrollDummyDataAsync(AppDbContext context, ILogger logger)
+    {
+        var effective = new DateTimeOffset(2025, 1, 1, 0, 0, 0, TimeSpan.Zero);
+
+        if (!await context.SssContributionBrackets.AnyAsync())
+        {
+            context.SssContributionBrackets.AddRange(
+                new SssContributionBracket { SalaryFrom = 0m, SalaryTo = 10000m, EmployeeShare = 200m, EmployerShare = 400m, EffectiveDate = effective, Status = "active" },
+                new SssContributionBracket { SalaryFrom = 10000m, SalaryTo = 20000m, EmployeeShare = 400m, EmployerShare = 800m, EffectiveDate = effective, Status = "active" },
+                new SssContributionBracket { SalaryFrom = 20000m, SalaryTo = 30000m, EmployeeShare = 600m, EmployerShare = 1200m, EffectiveDate = effective, Status = "active" },
+                new SssContributionBracket { SalaryFrom = 30000m, SalaryTo = 999999999m, EmployeeShare = 800m, EmployerShare = 1600m, EffectiveDate = effective, Status = "active" });
+            logger.LogInformation("Seeded 4 dummy SSS contribution brackets (placeholder — replace with the real published table)");
+        }
+
+        if (!await context.PagIbigContributionBrackets.AnyAsync())
+        {
+            context.PagIbigContributionBrackets.Add(
+                new PagIbigContributionBracket { SalaryFrom = 0m, SalaryTo = 999999999m, EmployeeShare = 200m, EmployerShare = 200m, EffectiveDate = effective, Status = "active" });
+            logger.LogInformation("Seeded 1 dummy Pag-IBIG contribution bracket (fixed amount, placeholder — replace with the real published rate)");
+        }
+
+        if (!await context.GovernmentContributionRates.AnyAsync())
+        {
+            context.GovernmentContributionRates.Add(
+                new GovernmentContributionRate { ContributionType = "PHILHEALTH", SalaryFrom = 0m, SalaryTo = 999999999m, EmployeeSharePct = 2m, EmployerSharePct = 2m, MaxContribution = null, EffectiveDate = effective, Status = "active" });
+            logger.LogInformation("Seeded 1 dummy PhilHealth contribution rate (placeholder — replace with the real published rate)");
+        }
+
+        if (!await context.WithholdingTaxBrackets.AnyAsync())
+        {
+            context.WithholdingTaxBrackets.AddRange(
+                new WithholdingTaxBracket { SalaryFrom = 0m, SalaryTo = 10000m, BaseTax = 0m, RateOverExcess = 0m, EffectiveDate = effective, Status = "active" },
+                new WithholdingTaxBracket { SalaryFrom = 10000m, SalaryTo = 15833m, BaseTax = 0m, RateOverExcess = 0.15m, EffectiveDate = effective, Status = "active" },
+                new WithholdingTaxBracket { SalaryFrom = 15833m, SalaryTo = 33333m, BaseTax = 875m, RateOverExcess = 0.20m, EffectiveDate = effective, Status = "active" },
+                new WithholdingTaxBracket { SalaryFrom = 33333m, SalaryTo = 66667m, BaseTax = 4375m, RateOverExcess = 0.25m, EffectiveDate = effective, Status = "active" },
+                new WithholdingTaxBracket { SalaryFrom = 66667m, SalaryTo = 166667m, BaseTax = 12708.33m, RateOverExcess = 0.30m, EffectiveDate = effective, Status = "active" },
+                new WithholdingTaxBracket { SalaryFrom = 166667m, SalaryTo = 999999999m, BaseTax = 42708.33m, RateOverExcess = 0.35m, EffectiveDate = effective, Status = "active" });
+            logger.LogInformation("Seeded 6 dummy withholding tax brackets (semi-monthly-equivalent of a ₱240,000/year exempt threshold, placeholder — replace with the real published BIR table)");
+        }
+
+        await context.SaveChangesAsync();
+    }
 }

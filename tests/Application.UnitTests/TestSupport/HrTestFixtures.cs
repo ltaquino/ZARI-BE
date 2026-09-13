@@ -210,6 +210,22 @@ public static class HrTestFixtures
         Status = status
     };
 
+    public static PagIbigContributionBracket PagIbigContributionBracket(
+        decimal salaryFrom = 0m,
+        decimal salaryTo = 100000m,
+        decimal employeeShare = 200m,
+        decimal employerShare = 400m,
+        DateTimeOffset? effectiveDate = null,
+        string status = "active") => new()
+    {
+        SalaryFrom = salaryFrom,
+        SalaryTo = salaryTo,
+        EmployeeShare = employeeShare,
+        EmployerShare = employerShare,
+        EffectiveDate = effectiveDate ?? DateTimeOffset.UtcNow,
+        Status = status
+    };
+
     public static GovernmentContributionRate GovernmentContributionRate(
         string contributionType = "PHILHEALTH",
         decimal salaryFrom = 0m,

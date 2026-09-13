@@ -53,6 +53,7 @@ public interface IAppDbContext
     DbSet<EmployeeAllowance> EmployeeAllowances { get; }
     DbSet<EmployeeDeduction> EmployeeDeductions { get; }
     DbSet<SssContributionBracket> SssContributionBrackets { get; }
+    DbSet<PagIbigContributionBracket> PagIbigContributionBrackets { get; }
     DbSet<GovernmentContributionRate> GovernmentContributionRates { get; }
     DbSet<WithholdingTaxBracket> WithholdingTaxBrackets { get; }
     DbSet<PayrollRun> PayrollRuns { get; }

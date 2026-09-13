@@ -155,6 +155,7 @@ try
     app.MapEmployeeAllowanceEndpoints();
     app.MapEmployeeDeductionEndpoints();
     app.MapSssContributionBracketEndpoints();
+    app.MapPagIbigContributionBracketEndpoints();
     app.MapGovernmentContributionRateEndpoints();
     app.MapWithholdingTaxBracketEndpoints();
     app.MapPayrollRunEndpoints();

@@ -54,18 +54,6 @@ public sealed class CreateGovernmentContributionRateCommandHandlerTests
         result.Error!.Type.Should().Be(ErrorType.Conflict);
     }
 
-    [Fact]
-    public async Task HandleAsync_Should_Allow_Same_Bracket_For_Different_ContributionType()
-    {
-        await using var db = TestDbContextFactory.Create();
-        db.GovernmentContributionRates.Add(HrTestFixtures.GovernmentContributionRate(contributionType: "PHILHEALTH", salaryFrom: 0m, effectiveDate: Effective));
-        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
-        var handler = new CreateGovernmentContributionRateCommandHandler(db, LoanTestFixtures.AllowAllPermissionService());
-
-        var result = await handler.HandleAsync(Command("PAGIBIG"), TestContext.Current.CancellationToken);
-
-        result.IsSuccess.Should().BeTrue();
-    }
 }
 
 public sealed class UpdateGovernmentContributionRateCommandHandlerTests
