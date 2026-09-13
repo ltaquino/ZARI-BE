@@ -764,6 +764,11 @@ public static class AppDbSeeder
             ("LEAVE_REQUESTS", "Leave Requests", "HR"),
             ("OVERTIME_RATE_RULES", "Overtime Rate Rules", "HR"),
             ("OVERTIME_REQUESTS", "Overtime Requests", "HR"),
+            ("EMPLOYEE_ALLOWANCES", "Employee Allowances", "HR"),
+            ("EMPLOYEE_DEDUCTIONS", "Employee Deductions", "HR"),
+            ("SSS_CONTRIBUTION_BRACKETS", "SSS Contribution Brackets", "HR"),
+            ("GOVT_CONTRIBUTION_RATES", "Government Contribution Rates", "HR"),
+            ("WITHHOLDING_TAX_BRACKETS", "Withholding Tax Brackets", "HR"),
         ];
 
         var existingCodes = await context.Forms.Select(f => f.Code).ToListAsync();
@@ -844,7 +849,9 @@ public static class AppDbSeeder
             "PURCHASE_RETURN_REASONS", "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES", "LOAN_PRODUCTS",
             "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES", "REPORT_DESIGNER",
             "DEPARTMENTS", "POSITIONS", "EMPLOYEES", "WORK_SCHEDULES", "EMPLOYEE_SCHEDULES", "DAILY_TIME_RECORDS",
-            "LEAVE_TYPES", "LEAVE_BALANCE_ENTRIES", "OVERTIME_RATE_RULES"
+            "LEAVE_TYPES", "LEAVE_BALANCE_ENTRIES", "OVERTIME_RATE_RULES",
+            "EMPLOYEE_ALLOWANCES", "EMPLOYEE_DEDUCTIONS", "SSS_CONTRIBUTION_BRACKETS",
+            "GOVT_CONTRIBUTION_RATES", "WITHHOLDING_TAX_BRACKETS"
         ];
         string[] managerViewOnlyForms =
         [
@@ -880,7 +887,9 @@ public static class AppDbSeeder
             "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES", "LOAN_PRODUCTS",
             "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES", "REPORT_DESIGNER",
             "DEPARTMENTS", "POSITIONS", "EMPLOYEES", "WORK_SCHEDULES", "EMPLOYEE_SCHEDULES", "DAILY_TIME_RECORDS",
-            "LEAVE_TYPES", "LEAVE_BALANCE_ENTRIES", "OVERTIME_RATE_RULES"
+            "LEAVE_TYPES", "LEAVE_BALANCE_ENTRIES", "OVERTIME_RATE_RULES",
+            "EMPLOYEE_ALLOWANCES", "EMPLOYEE_DEDUCTIONS", "SSS_CONTRIBUTION_BRACKETS",
+            "GOVT_CONTRIBUTION_RATES", "WITHHOLDING_TAX_BRACKETS"
         ];
 
         foreach (var formCode in staffTransactionalForms)

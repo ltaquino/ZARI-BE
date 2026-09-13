@@ -42,6 +42,14 @@ public sealed class DeleteEmployeeCommandHandler(IAppDbContext dbContext, IPermi
         if (overtimeRequestCount > 0)
             return Result.Failure(Error.Conflict("Employee.HasOvertimeRequests", $"Cannot delete this employee — they have {overtimeRequestCount} overtime request{(overtimeRequestCount == 1 ? "" : "s")}."));
 
+        var allowanceCount = await dbContext.EmployeeAllowances.CountAsync(a => a.EmployeeId == command.Id, cancellationToken);
+        if (allowanceCount > 0)
+            return Result.Failure(Error.Conflict("Employee.HasAllowances", $"Cannot delete this employee — they have {allowanceCount} allowance{(allowanceCount == 1 ? "" : "s")}."));
+
+        var deductionCount = await dbContext.EmployeeDeductions.CountAsync(d => d.EmployeeId == command.Id, cancellationToken);
+        if (deductionCount > 0)
+            return Result.Failure(Error.Conflict("Employee.HasDeductions", $"Cannot delete this employee — they have {deductionCount} deduction{(deductionCount == 1 ? "" : "s")}."));
+
         dbContext.Employees.Remove(employee);
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

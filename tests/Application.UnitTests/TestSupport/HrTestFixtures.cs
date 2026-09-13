@@ -156,4 +156,92 @@ public static class HrTestFixtures
         OtType = otType,
         Status = status
     };
+
+    public static EmployeeAllowance EmployeeAllowance(
+        Guid employeeId = default,
+        string code = "TRANSPO",
+        string name = "Transportation Allowance",
+        decimal amount = 1000m,
+        DateTimeOffset? effectiveDate = null,
+        DateTimeOffset? endDate = null,
+        string status = "active") => new()
+    {
+        EmployeeId = employeeId,
+        Code = code,
+        Name = name,
+        Amount = amount,
+        EffectiveDate = effectiveDate ?? DateTimeOffset.UtcNow,
+        EndDate = endDate,
+        Status = status
+    };
+
+    public static EmployeeDeduction EmployeeDeduction(
+        Guid employeeId = default,
+        string code = "CASH-ADV",
+        string name = "Cash Advance",
+        decimal amount = 500m,
+        DateTimeOffset? effectiveDate = null,
+        DateTimeOffset? endDate = null,
+        string status = "active") => new()
+    {
+        EmployeeId = employeeId,
+        Code = code,
+        Name = name,
+        Amount = amount,
+        EffectiveDate = effectiveDate ?? DateTimeOffset.UtcNow,
+        EndDate = endDate,
+        Status = status
+    };
+
+    public static SssContributionBracket SssContributionBracket(
+        decimal salaryFrom = 0m,
+        decimal salaryTo = 10000m,
+        decimal employeeShare = 200m,
+        decimal employerShare = 400m,
+        DateTimeOffset? effectiveDate = null,
+        string status = "active") => new()
+    {
+        SalaryFrom = salaryFrom,
+        SalaryTo = salaryTo,
+        EmployeeShare = employeeShare,
+        EmployerShare = employerShare,
+        EffectiveDate = effectiveDate ?? DateTimeOffset.UtcNow,
+        Status = status
+    };
+
+    public static GovernmentContributionRate GovernmentContributionRate(
+        string contributionType = "PHILHEALTH",
+        decimal salaryFrom = 0m,
+        decimal salaryTo = 100000m,
+        decimal employeeSharePct = 2m,
+        decimal employerSharePct = 2m,
+        decimal? maxContribution = null,
+        DateTimeOffset? effectiveDate = null,
+        string status = "active") => new()
+    {
+        ContributionType = contributionType,
+        SalaryFrom = salaryFrom,
+        SalaryTo = salaryTo,
+        EmployeeSharePct = employeeSharePct,
+        EmployerSharePct = employerSharePct,
+        MaxContribution = maxContribution,
+        EffectiveDate = effectiveDate ?? DateTimeOffset.UtcNow,
+        Status = status
+    };
+
+    public static WithholdingTaxBracket WithholdingTaxBracket(
+        decimal salaryFrom = 0m,
+        decimal salaryTo = 20000m,
+        decimal baseTax = 0m,
+        decimal rateOverExcess = 0m,
+        DateTimeOffset? effectiveDate = null,
+        string status = "active") => new()
+    {
+        SalaryFrom = salaryFrom,
+        SalaryTo = salaryTo,
+        BaseTax = baseTax,
+        RateOverExcess = rateOverExcess,
+        EffectiveDate = effectiveDate ?? DateTimeOffset.UtcNow,
+        Status = status
+    };
 }

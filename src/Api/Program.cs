@@ -152,6 +152,11 @@ try
     app.MapLeaveRequestEndpoints();
     app.MapOvertimeRateRuleEndpoints();
     app.MapOvertimeRequestEndpoints();
+    app.MapEmployeeAllowanceEndpoints();
+    app.MapEmployeeDeductionEndpoints();
+    app.MapSssContributionBracketEndpoints();
+    app.MapGovernmentContributionRateEndpoints();
+    app.MapWithholdingTaxBracketEndpoints();
     app.MapCompanyEndpoints();
     app.MapBranchEndpoints();
     app.MapFormEndpoints();

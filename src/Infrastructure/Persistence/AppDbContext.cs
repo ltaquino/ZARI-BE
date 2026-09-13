@@ -47,6 +47,11 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<LeaveRequest> LeaveRequests => Set<LeaveRequest>();
     public DbSet<OvertimeRateRule> OvertimeRateRules => Set<OvertimeRateRule>();
     public DbSet<OvertimeRequest> OvertimeRequests => Set<OvertimeRequest>();
+    public DbSet<EmployeeAllowance> EmployeeAllowances => Set<EmployeeAllowance>();
+    public DbSet<EmployeeDeduction> EmployeeDeductions => Set<EmployeeDeduction>();
+    public DbSet<SssContributionBracket> SssContributionBrackets => Set<SssContributionBracket>();
+    public DbSet<GovernmentContributionRate> GovernmentContributionRates => Set<GovernmentContributionRate>();
+    public DbSet<WithholdingTaxBracket> WithholdingTaxBrackets => Set<WithholdingTaxBracket>();
     public DbSet<CustomerCreditRecord> CustomerCreditRecords => Set<CustomerCreditRecord>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<Branch> Branches => Set<Branch>();

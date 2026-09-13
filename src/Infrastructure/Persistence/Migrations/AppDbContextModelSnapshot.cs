@@ -1836,6 +1836,110 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.ToTable("Employees");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.EmployeeAllowance", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset>("EffectiveDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset?>("EndDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.ToTable("EmployeeAllowances");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.EmployeeDeduction", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset>("EffectiveDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("EmployeeId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset?>("EndDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EmployeeId");
+
+                    b.ToTable("EmployeeDeductions");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.EmployeeScheduleAssignment", b =>
                 {
                     b.Property<Guid>("Id")
@@ -2689,6 +2793,59 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.HasIndex("UomId");
 
                     b.ToTable("GoodsReturnLines");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.GovernmentContributionRate", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("ContributionType")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset>("EffectiveDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("EmployeeSharePct")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("EmployerSharePct")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal?>("MaxContribution")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("SalaryFrom")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("SalaryTo")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ContributionType", "EffectiveDate", "SalaryFrom");
+
+                    b.ToTable("GovernmentContributionRates");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.Item", b =>
@@ -5391,6 +5548,51 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.ToTable("SerialNumbers");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.SssContributionBracket", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset>("EffectiveDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<decimal>("EmployeeShare")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("EmployerShare")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("SalaryFrom")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("SalaryTo")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EffectiveDate", "SalaryFrom");
+
+                    b.ToTable("SssContributionBrackets");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.StatutoryDiscountType", b =>
                 {
                     b.Property<Guid>("Id")
@@ -6481,6 +6683,51 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.ToTable("Warehouses");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.WithholdingTaxBracket", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("BaseTax")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset>("EffectiveDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("RateOverExcess")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("SalaryFrom")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("SalaryTo")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("EffectiveDate", "SalaryFrom");
+
+                    b.ToTable("WithholdingTaxBrackets");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.WorkSchedule", b =>
                 {
                     b.Property<Guid>("Id")
@@ -7112,6 +7359,28 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Navigation("Department");
 
                     b.Navigation("Position");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.EmployeeAllowance", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.EmployeeDeduction", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Employee", "Employee")
+                        .WithMany()
+                        .HasForeignKey("EmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Employee");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.EmployeeScheduleAssignment", b =>

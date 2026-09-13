@@ -50,6 +50,11 @@ public interface IAppDbContext
     DbSet<LeaveRequest> LeaveRequests { get; }
     DbSet<OvertimeRateRule> OvertimeRateRules { get; }
     DbSet<OvertimeRequest> OvertimeRequests { get; }
+    DbSet<EmployeeAllowance> EmployeeAllowances { get; }
+    DbSet<EmployeeDeduction> EmployeeDeductions { get; }
+    DbSet<SssContributionBracket> SssContributionBrackets { get; }
+    DbSet<GovernmentContributionRate> GovernmentContributionRates { get; }
+    DbSet<WithholdingTaxBracket> WithholdingTaxBrackets { get; }
     DbSet<CustomerCreditRecord> CustomerCreditRecords { get; }
     DbSet<Company> Companies { get; }
     DbSet<Branch> Branches { get; }

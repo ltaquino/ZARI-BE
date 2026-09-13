@@ -224,6 +224,40 @@ public sealed class DeleteEmployeeCommandHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error!.Code.Should().Be("Employee.HasOvertimeRequests");
     }
+
+    [Fact]
+    public async Task HandleAsync_Should_Fail_When_Has_Allowances()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var (branchId, positionId, departmentId) = await EmployeeTestHelpers.SeedMasterData(db);
+        var employee = HrTestFixtures.Employee(branchId: branchId, positionId: positionId, departmentId: departmentId);
+        db.Employees.Add(employee);
+        db.EmployeeAllowances.Add(HrTestFixtures.EmployeeAllowance(employeeId: employee.Id));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var handler = new DeleteEmployeeCommandHandler(db, LoanTestFixtures.AllowAllPermissionService());
+
+        var result = await handler.HandleAsync(new DeleteEmployeeCommand(employee.Id), TestContext.Current.CancellationToken);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("Employee.HasAllowances");
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Fail_When_Has_Deductions()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var (branchId, positionId, departmentId) = await EmployeeTestHelpers.SeedMasterData(db);
+        var employee = HrTestFixtures.Employee(branchId: branchId, positionId: positionId, departmentId: departmentId);
+        db.Employees.Add(employee);
+        db.EmployeeDeductions.Add(HrTestFixtures.EmployeeDeduction(employeeId: employee.Id));
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var handler = new DeleteEmployeeCommandHandler(db, LoanTestFixtures.AllowAllPermissionService());
+
+        var result = await handler.HandleAsync(new DeleteEmployeeCommand(employee.Id), TestContext.Current.CancellationToken);
+
+        result.IsFailure.Should().BeTrue();
+        result.Error!.Code.Should().Be("Employee.HasDeductions");
+    }
 }
 
 public sealed class GetEmployeeQueryHandlerTests
