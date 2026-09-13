@@ -10,14 +10,12 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi;
 using ZARI.Application.Abstractions.Data;
-using ZARI.Application.Abstractions.Data.Repositories.Todo;
 using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.DTOs.Swagger;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 using ZARI.Infrastructure.Identity;
 using ZARI.Infrastructure.Persistence;
-using ZARI.Infrastructure.Persistence.Repositories.Todo;
 
 namespace ZARI.Infrastructure;
 
@@ -106,8 +104,7 @@ public static class DependencyInjection
     private static void AddPersistence(this IServiceCollection services)
     {
         services.AddScoped<IAppDbContext>(sp => sp.GetRequiredService<AppDbContext>());
-        services.AddTransient<ITodoItemRepository, TodoItemRepository>();
-    }   
+    }
 
     public static void AddPersistenceContexts(this IServiceCollection services, IConfiguration configuration)
     {

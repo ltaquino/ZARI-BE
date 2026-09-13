@@ -12,7 +12,6 @@ public interface IAppDbContext
     // avoid an N+1 of UserManager.GetRolesAsync(user) calls) without depending on UserManager/RoleManager.
     DbSet<IdentityUserRole<string>> UserRoles { get; }
 
-    DbSet<TodoItem> Todos { get; }
     DbSet<Uom> Uoms { get; }
     DbSet<ItemCategory> ItemCategories { get; }
     DbSet<Warehouse> Warehouses { get; }

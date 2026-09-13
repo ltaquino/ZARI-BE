@@ -856,22 +856,4 @@ public static class AppDbSeeder
         logger.LogInformation("Seeded {Count} default role permissions", permissions.Count);
     }
 
-    //private static async Task SeedSampleTodosAsync(AppDbContext context, ILogger logger)
-    //{
-    //    if (await context.Todos.AnyAsync())
-    //        return;
-
-    //    var todos = new List<TodoItem>
-    //    {
-    //        new() { Title = "Explore the Clean Architecture template", Description = "Read through the layers: Domain → Application → Infrastructure → Api" },
-    //        new() { Title = "Run the API with Aspire", Description = "Use 'dotnet run' in the AppHost project to start PostgreSQL, Redis, and the API" },
-    //        new() { Title = "Try the Scalar API docs", Description = "Navigate to /scalar/v1 to explore and test the endpoints" },
-    //        new() { Title = "Add your first feature", Description = "Create a new entity, command/query handlers, and endpoint following the Todos pattern" },
-    //        new() { Title = "Check the architecture tests", Description = "Run 'dotnet test' to verify dependency rules are enforced" }
-    //    };
-
-    //    context.Todos.AddRange(todos);
-    //    await context.SaveChangesAsync();
-    //    logger.LogInformation("Seeded {Count} sample todos", todos.Count);
-    //}
 }

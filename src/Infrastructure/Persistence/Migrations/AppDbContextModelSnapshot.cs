@@ -5720,46 +5720,6 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.ToTable("TaxCodes");
                 });
 
-            modelBuilder.Entity("ZARI.Domain.Entities.TodoItem", b =>
-                {
-                    b.Property<Guid>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("char(36)");
-
-                    b.Property<DateTimeOffset?>("CompletedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<DateTimeOffset>("CreatedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("CreatedBy")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Description")
-                        .HasMaxLength(1000)
-                        .HasColumnType("varchar(1000)");
-
-                    b.Property<bool>("IsCompleted")
-                        .HasColumnType("tinyint(1)");
-
-                    b.Property<DateTimeOffset?>("LastModifiedAt")
-                        .HasColumnType("datetime(6)");
-
-                    b.Property<string>("LastModifiedBy")
-                        .HasColumnType("longtext");
-
-                    b.Property<string>("Title")
-                        .IsRequired()
-                        .HasMaxLength(200)
-                        .HasColumnType("varchar(200)");
-
-                    b.HasKey("Id");
-
-                    b.HasIndex("IsCompleted");
-
-                    b.ToTable("Todos");
-                });
-
             modelBuilder.Entity("ZARI.Domain.Entities.Uom", b =>
                 {
                     b.Property<Guid>("Id")

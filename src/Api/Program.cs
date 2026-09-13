@@ -115,7 +115,6 @@ try
 
     // Map endpoints
     app.MapIdentityEndpoints();
-    app.MapTodoEndpoints();
     app.MapUomEndpoints();
     app.MapItemCategoryEndpoints();
     app.MapWarehouseEndpoints();

@@ -9,7 +9,6 @@ using ZARI.Domain.Entities;
 
 public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : IdentityDbContext<ApplicationUser>(options), IAppDbContext
 {
-    public DbSet<TodoItem> Todos => Set<TodoItem>();
     public DbSet<Uom> Uoms => Set<Uom>();
     public DbSet<ItemCategory> ItemCategories => Set<ItemCategory>();
     public DbSet<Warehouse> Warehouses => Set<Warehouse>();
