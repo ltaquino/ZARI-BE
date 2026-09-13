@@ -335,6 +335,20 @@ public static class AppDbSeeder
             ("6900", "Other Operating Expense", "Expense", "Debit"),
             // Loan module — booked when a loan is written off (§4.10 of the context doc above).
             ("6910", "Loan Loss / Bad Debts Expense", "Expense", "Debit"),
+            // HR/Payroll module (ZARI-FE/frs/human-resource/HrModuleContext.md §5) — "6020 Salaries
+            // and Wages" above is reused as-is for gross pay; these cover the government-mandated
+            // withholdings/employer shares and other payroll-specific lines a PayrollRun posts.
+            ("2300", "SSS Payable", "Liability", "Credit"),
+            ("2310", "PhilHealth Payable", "Liability", "Credit"),
+            ("2320", "Pag-IBIG Payable", "Liability", "Credit"),
+            ("2330", "Withholding Tax Payable", "Liability", "Credit"),
+            ("2340", "Net Pay Payable", "Liability", "Credit"),
+            ("6021", "Employer SSS Share Expense", "Expense", "Debit"),
+            ("6022", "Employer PhilHealth Share Expense", "Expense", "Debit"),
+            ("6023", "Employer Pag-IBIG Share Expense", "Expense", "Debit"),
+            ("6024", "Overtime Pay Expense", "Expense", "Debit"),
+            ("6025", "Allowances Expense", "Expense", "Debit"),
+            ("6026", "13th Month Pay Expense", "Expense", "Debit"),
         ];
 
         var existingCodes = await context.GlAccounts.Select(a => a.Code).ToListAsync();
@@ -730,6 +744,13 @@ public static class AppDbSeeder
             ("LOAN_PAYMENTS", "Loan Payments", "Loan"),
             ("LOAN_RESTRUCTURINGS", "Loan Restructurings", "Loan"),
             ("LOAN_WRITE_OFFS", "Loan Write-offs", "Loan"),
+
+            // HR module (ZARI-FE/frs/human-resource/HrModuleContext.md) — build-order steps 2-3
+            // so far (Department/Position/Employee master data); the rest are added as each later
+            // step lands.
+            ("DEPARTMENTS", "Departments", "HR"),
+            ("POSITIONS", "Positions", "HR"),
+            ("EMPLOYEES", "Employees", "HR"),
         ];
 
         var existingCodes = await context.Forms.Select(f => f.Code).ToListAsync();
@@ -807,7 +828,8 @@ public static class AppDbSeeder
             "UOMS", "ITEM_CATEGORIES", "WAREHOUSES", "STORAGE_LOCATIONS", "ITEMS",
             "ADJUSTMENT_REASONS", "ITEM_BRANCH_SETTINGS", "STOCK_RESERVATIONS", "SERIAL_NUMBERS",
             "PURCHASE_RETURN_REASONS", "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES", "LOAN_PRODUCTS",
-            "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES", "REPORT_DESIGNER"
+            "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES", "REPORT_DESIGNER",
+            "DEPARTMENTS", "POSITIONS", "EMPLOYEES"
         ];
         string[] managerViewOnlyForms =
         [
@@ -840,7 +862,8 @@ public static class AppDbSeeder
             "ITEMS", "ADJUSTMENT_REASONS", "ITEM_BRANCH_SETTINGS", "STOCK_RESERVATIONS",
             "SERIAL_NUMBERS", "APPROVAL_REQUESTS", "NOTIFICATIONS", "SUPPLIERS", "PURCHASE_RETURN_REASONS",
             "DISCOUNT_RULES", "STATUTORY_DISCOUNT_TYPES", "LOAN_PRODUCTS",
-            "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES", "REPORT_DESIGNER"
+            "POS_TERMINALS", "PAYMENT_METHODS", "POS_PROMO_SLIDES", "REPORT_DESIGNER",
+            "DEPARTMENTS", "POSITIONS", "EMPLOYEES"
         ];
 
         foreach (var formCode in staffTransactionalForms)

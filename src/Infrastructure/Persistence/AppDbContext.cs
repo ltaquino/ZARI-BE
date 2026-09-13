@@ -36,6 +36,9 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<StockLocationTransfer> StockLocationTransfers => Set<StockLocationTransfer>();
     public DbSet<StockLocationTransferLine> StockLocationTransferLines => Set<StockLocationTransferLine>();
     public DbSet<Customer> Customers => Set<Customer>();
+    public DbSet<Department> Departments => Set<Department>();
+    public DbSet<Position> Positions => Set<Position>();
+    public DbSet<Employee> Employees => Set<Employee>();
     public DbSet<CustomerCreditRecord> CustomerCreditRecords => Set<CustomerCreditRecord>();
     public DbSet<Company> Companies => Set<Company>();
     public DbSet<Branch> Branches => Set<Branch>();

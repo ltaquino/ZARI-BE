@@ -39,6 +39,9 @@ public interface IAppDbContext
     DbSet<StockLocationTransfer> StockLocationTransfers { get; }
     DbSet<StockLocationTransferLine> StockLocationTransferLines { get; }
     DbSet<Customer> Customers { get; }
+    DbSet<Department> Departments { get; }
+    DbSet<Position> Positions { get; }
+    DbSet<Employee> Employees { get; }
     DbSet<CustomerCreditRecord> CustomerCreditRecords { get; }
     DbSet<Company> Companies { get; }
     DbSet<Branch> Branches { get; }

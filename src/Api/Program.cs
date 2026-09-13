@@ -141,6 +141,9 @@ try
     app.MapStockLocationTransferEndpoints();
     app.MapCustomerEndpoints();
     app.MapCustomerCreditRecordEndpoints();
+    app.MapDepartmentEndpoints();
+    app.MapPositionEndpoints();
+    app.MapEmployeeEndpoints();
     app.MapCompanyEndpoints();
     app.MapBranchEndpoints();
     app.MapFormEndpoints();
