@@ -36,4 +36,10 @@ public sealed record CreateSalesInvoiceCommand(
     // Company.SalesInvoiceQuickPostEnabled (a checkout counter can't wait for a setting toggle),
     // but the MaxUnapprovedDiscountPct threshold check below still applies unchanged either way.
     bool ForceQuickPost = false,
-    Guid? PosTerminalId = null) : ICommand<Result<SalesInvoiceResponse>>;
+    Guid? PosTerminalId = null,
+    // Route Sales (RouteSalesContext.md §3): the BIR number the truck handheld already printed on
+    // the customer's invoice, offline. Must be that terminal's exact next number (or a manual
+    // booklet number when no terminal series applies) — SalesInvoicePostingService claims it
+    // instead of allocating one. Requires an immediate post: a numbered paper invoice can't sit
+    // as a DRAFT waiting for approval.
+    string? PresetBirOrSeriesNumber = null) : ICommand<Result<SalesInvoiceResponse>>;

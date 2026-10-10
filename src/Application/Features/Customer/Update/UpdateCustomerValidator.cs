@@ -20,6 +20,7 @@ public sealed class UpdateCustomerValidator : AbstractValidator<UpdateCustomerCo
         RuleFor(x => x.Notes).MaximumLength(300);
         RuleFor(x => x.PaymentTermsDays).GreaterThanOrEqualTo(0).When(x => x.PaymentTermsDays.HasValue);
         RuleFor(x => x.StandingDiscountPct).InclusiveBetween(0, 100).When(x => x.StandingDiscountPct.HasValue);
+        RuleFor(x => x.CreditLimit).GreaterThanOrEqualTo(0).When(x => x.CreditLimit.HasValue);
 
         RuleFor(x => x.Tin).MaximumLength(100);
         RuleFor(x => x.SssOrGsisNo).MaximumLength(100);

@@ -21,8 +21,17 @@ public sealed class ZReadingConfiguration : BaseModelConfig, IEntityTypeConfigur
         builder.Property(z => z.ZeroRatedSales).HasColumnType(DefaultDecimal);
         builder.Property(z => z.NetSales).HasColumnType(DefaultDecimal);
 
-        // One ZReading per (branch, counter value) — the permanent, unbroken sequence.
-        builder.HasIndex(z => new { z.BranchId, z.ZCounterValue }).IsUnique();
+        builder.Property(z => z.CounterScope).IsRequired().HasMaxLength(50).HasDefaultValue(ZReading.BranchScope);
+
+        // One ZReading per (branch, counter, counter value) — each counter (the branch's shared one,
+        // or an own-series truck terminal's) is a permanent, unbroken sequence.
+        builder.HasIndex(z => new { z.BranchId, z.CounterScope, z.ZCounterValue }).IsUnique();
+
+        builder.HasOne(z => z.PosTerminal)
+            .WithMany()
+            .HasForeignKey(z => z.PosTerminalId)
+            .OnDelete(DeleteBehavior.Restrict)
+            .IsRequired(false);
 
         builder.HasOne(z => z.Branch)
             .WithMany()

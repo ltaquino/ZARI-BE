@@ -32,15 +32,27 @@ public sealed class RunZReadingCommandHandler(
         if (branch is null)
             return Result.Failure<ZReadingResponse>(Error.NotFound("Branch.NotFound", $"Branch '{command.BranchId}' was not found."));
 
-        var runAt = DateTimeOffset.UtcNow;
-        var agg = await PosClosingAggregator.AggregateAsync(dbContext, command.BranchId, runAt, cancellationToken);
+        var scope = await ClosingScope.ResolveAsync(dbContext, command.BranchId, command.PosTerminalId, track: true, cancellationToken);
+        if (!scope.IsSuccess)
+            return Result.Failure<ZReadingResponse>(scope.Error!);
+        var terminal = scope.Value;
 
-        branch.ZCounter += 1;
+        var runAt = DateTimeOffset.UtcNow;
+        var agg = await PosClosingAggregator.AggregateAsync(dbContext, command.BranchId, runAt, cancellationToken, command.PosTerminalId);
+
+        // An own-series terminal (Route Sales truck) advances its own Z-Counter, never the branch's.
+        int counterValue;
+        if (terminal is not null)
+            counterValue = ++terminal.ZCounter;
+        else
+            counterValue = ++branch.ZCounter;
 
         var zReading = new ZReading
         {
             BranchId = command.BranchId,
-            ZCounterValue = branch.ZCounter,
+            PosTerminalId = terminal?.Id,
+            CounterScope = PosClosingAggregator.ScopeOf(terminal?.Id),
+            ZCounterValue = counterValue,
             FirstOrNumber = agg.FirstOrNumber,
             LastOrNumber = agg.LastOrNumber,
             PeriodStart = agg.PeriodStart,
@@ -83,6 +95,7 @@ public sealed class RunZReadingCommandHandler(
             zReading.ZeroRatedSales,
             zReading.NetSales,
             zReading.CreatedAt,
-            zReading.CreatedBy));
+            zReading.CreatedBy,
+            zReading.PosTerminalId));
     }
 }

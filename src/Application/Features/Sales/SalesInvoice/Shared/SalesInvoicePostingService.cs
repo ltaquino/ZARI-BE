@@ -2,6 +2,7 @@ namespace ZARI.Application.Features.Sales.SalesInvoices.Shared;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Application.Features.Sales.PosTerminals.Shared;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Accounting.GlJournals.GetAll;
 using ZARI.Application.Features.Accounting.GlJournals.Post;
@@ -27,11 +28,38 @@ internal static class SalesInvoicePostingService
         SalesInvoice invoice,
         CancellationToken cancellationToken)
     {
-        var numberResult = await nextDocumentNumberHandler.HandleAsync(new GetNextDocumentNumberCommand(invoice.BranchId, "BIR-OR"), cancellationToken);
-        if (!numberResult.IsSuccess)
-            return Result.Failure(numberResult.Error!);
+        // A Route Sales truck terminal issues from its own BIR series (see PosTerminal); every other
+        // invoice — store tills included — keeps the branch's shared "BIR-OR" series.
+        var ownSeriesTerminal = invoice.PosTerminalId is { } terminalId
+            && await dbContext.PosTerminals.AnyAsync(t => t.Id == terminalId && t.HasOwnSeries, cancellationToken);
 
-        invoice.BirOrSeriesNumber = numberResult.Value!.DocumentNumber;
+        if (invoice.BirOrSeriesNumber is { } preset)
+        {
+            // Already numbered on a Route Sales handheld (CreateSalesInvoiceCommand.PresetBirOrSeriesNumber).
+            // From the truck's own series it must be exactly the next number; anything else (a manual
+            // backup-booklet number) consumes no series at all — uniqueness is the DB's unique index.
+            if (ownSeriesTerminal)
+            {
+                var claim = await PosTerminalSeries.ClaimAsync(dbContext, invoice.PosTerminalId!.Value, preset, cancellationToken);
+                if (!claim.IsSuccess)
+                    return Result.Failure(claim.Error!);
+            }
+        }
+        else if (ownSeriesTerminal)
+        {
+            var terminalNumber = await PosTerminalSeries.NextAsync(dbContext, invoice.PosTerminalId!.Value, cancellationToken);
+            if (!terminalNumber.IsSuccess)
+                return Result.Failure(terminalNumber.Error!);
+            invoice.BirOrSeriesNumber = terminalNumber.Value;
+        }
+        else
+        {
+            var numberResult = await nextDocumentNumberHandler.HandleAsync(new GetNextDocumentNumberCommand(invoice.BranchId, "BIR-OR"), cancellationToken);
+            if (!numberResult.IsSuccess)
+                return Result.Failure(numberResult.Error!);
+
+            invoice.BirOrSeriesNumber = numberResult.Value!.DocumentNumber;
+        }
 
         return await PostInvoiceJournalAsync(dbContext, postGlJournalHandler, invoice, cancellationToken);
     }

@@ -37,5 +37,6 @@ internal static class PayrollRunMapper
         line.PagIbigEmployerShare,
         line.WithholdingTax,
         line.DeductionTotal,
-        line.NetPay);
+        line.NetPay,
+        line.ReceivableRecoveryDeduction);
 }

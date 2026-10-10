@@ -13,6 +13,10 @@ public sealed class DeleteEmployeeDeductionCommandHandler(IAppDbContext dbContex
         var deduction = await dbContext.EmployeeDeductions.FindAsync([command.Id], cancellationToken);
         if (deduction is null)
             return Result.Failure(Error.NotFound("EmployeeDeduction.NotFound", $"Employee deduction with ID '{command.Id}' was not found."));
+        // Its amount is already booked to 1220 Due from Employees by the trip close; payroll clears it from there.
+        if (ZARI.Domain.Entities.EmployeeDeduction.IsSystemCode(deduction.Code))
+            return Result.Failure(Error.Validation("EmployeeDeduction.TripShortage",
+                "This deduction is a trip shortage charged at a route-sales trip close — it can't be deleted here." ));
 
         var employee = await dbContext.Employees.FindAsync([deduction.EmployeeId], cancellationToken);
         if (!await permissionService.HasPermissionOnBranchAsync("EMPLOYEE_DEDUCTIONS", FormAction.Delete, employee!.BranchId, cancellationToken))

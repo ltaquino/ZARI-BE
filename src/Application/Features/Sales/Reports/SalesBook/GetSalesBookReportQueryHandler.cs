@@ -26,7 +26,8 @@ public sealed class GetSalesBookReportQueryHandler(IAppDbContext dbContext, IPer
             .Include(i => i.Customer)
             .Include(i => i.Lines).ThenInclude(l => l.StatutoryDiscountType)
             .Where(i => i.Status != "DRAFT" && i.Status != "CANCELLED"
-                && (query.BranchId == null || i.BranchId == query.BranchId))
+                && (query.BranchId == null || i.BranchId == query.BranchId)
+                && (query.PosTerminalId == null || i.PosTerminalId == query.PosTerminalId))
             .OrderBy(i => i.InvoiceDate)
             .ToListAsync(cancellationToken);
 

@@ -5,6 +5,7 @@ using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Sales.PosClosing.RunZReading;
+using ZARI.Application.Features.Sales.PosClosing.Shared;
 using ZARI.Domain.Common;
 
 public sealed class GetAllZReadingsQueryHandler(IAppDbContext dbContext, IPermissionService permissionService)
@@ -15,8 +16,9 @@ public sealed class GetAllZReadingsQueryHandler(IAppDbContext dbContext, IPermis
         if (!await permissionService.HasPermissionOnBranchAsync("POS_CLOSING", FormAction.View, query.BranchId, cancellationToken))
             return Result.Failure<List<ZReadingResponse>>(Error.Forbidden("PosClosing.Forbidden", "You do not have permission to view POS closing for this branch."));
 
+        var scope = PosClosingAggregator.ScopeOf(query.PosTerminalId);
         var readings = await dbContext.ZReadings.AsNoTracking()
-            .Where(z => z.BranchId == query.BranchId)
+            .Where(z => z.BranchId == query.BranchId && z.CounterScope == scope)
             .OrderByDescending(z => z.ZCounterValue)
             .ToListAsync(cancellationToken);
 
@@ -37,6 +39,7 @@ public sealed class GetAllZReadingsQueryHandler(IAppDbContext dbContext, IPermis
             z.ZeroRatedSales,
             z.NetSales,
             z.CreatedAt,
-            z.CreatedBy)).ToList());
+            z.CreatedBy,
+            z.PosTerminalId)).ToList());
     }
 }

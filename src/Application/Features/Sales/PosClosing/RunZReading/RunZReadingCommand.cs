@@ -6,7 +6,7 @@ using ZARI.Domain.Common;
 /// <summary>End-of-day BIR close. Runs the same aggregation as X-Reading, but persists a permanent
 /// ZReading row and increments Branch.ZCounter by exactly 1. No workflow/ApprovalRequest — this is
 /// a direct operational action, not a Draft/Approve document; once run, it is permanent.</summary>
-public sealed record RunZReadingCommand(string BranchId, string RunBy) : ICommand<Result<ZReadingResponse>>;
+public sealed record RunZReadingCommand(string BranchId, string RunBy, Guid? PosTerminalId = null) : ICommand<Result<ZReadingResponse>>;
 
 public sealed record ZReadingResponse(
     Guid Id,
@@ -25,4 +25,5 @@ public sealed record ZReadingResponse(
     decimal ZeroRatedSales,
     decimal NetSales,
     DateTimeOffset RunAt,
-    string? RunBy);
+    string? RunBy,
+    Guid? PosTerminalId = null);

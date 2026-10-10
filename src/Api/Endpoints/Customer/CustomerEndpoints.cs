@@ -86,7 +86,8 @@ public static class CustomerEndpoints
             request.Title, request.FirstName, request.MiddleName, request.LastName, request.Suffix,
             request.PlaceOfBirth, request.CountryOfBirthCode, request.NationalityCode, request.Resident,
             request.AddressSubdivision, request.AddressBarangay, request.AddressCity, request.AddressProvince,
-            request.AddressPostalCode, request.AddressCountryCode, request.AddressHouseOwnerOrLessee, request.AddressOccupiedSince);
+            request.AddressPostalCode, request.AddressCountryCode, request.AddressHouseOwnerOrLessee, request.AddressOccupiedSince,
+            request.CreditLimit);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
         var result = await handler.HandleAsync(command, cancellationToken);
@@ -152,4 +153,5 @@ public sealed record UpdateCustomerRequest(
     string? AddressPostalCode,
     string? AddressCountryCode,
     string? AddressHouseOwnerOrLessee,
-    DateTimeOffset? AddressOccupiedSince);
+    DateTimeOffset? AddressOccupiedSince,
+    decimal? CreditLimit = null);

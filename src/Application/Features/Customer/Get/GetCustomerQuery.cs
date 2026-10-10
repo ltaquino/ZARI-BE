@@ -56,4 +56,5 @@ public sealed record CustomerResponse(
     string? AddressCountryCode,
     string? AddressHouseOwnerOrLessee,
     DateTimeOffset? AddressOccupiedSince,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    decimal? CreditLimit = null);

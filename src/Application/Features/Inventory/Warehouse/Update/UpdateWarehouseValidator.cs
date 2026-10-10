@@ -4,7 +4,9 @@ using FluentValidation;
 
 public sealed class UpdateWarehouseValidator : AbstractValidator<UpdateWarehouseCommand>
 {
-    private static readonly string[] ValidTypes = ["Main", "Transit", "Damaged", "Consignment"];
+    // "Vehicle" is accepted here only so a truck's own warehouse (created by CreateVehicleCommandHandler)
+    // can still be edited — UpdateWarehouseCommandHandler blocks switching any warehouse to/from it.
+    private static readonly string[] ValidTypes = ["Main", "Transit", "Damaged", "Consignment", "Vehicle"];
     private static readonly string[] ValidStatuses = ["active", "inactive"];
 
     public UpdateWarehouseValidator()

@@ -5,6 +5,7 @@ using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Sales.PosTerminals.Get;
+using ZARI.Application.Features.Sales.PosTerminals.Shared;
 using ZARI.Domain.Common;
 
 public sealed class GetAllPosTerminalsQueryHandler(IAppDbContext dbContext, IPermissionService permissionService) : IQueryHandler<GetAllPosTerminalsQuery, Result<List<PosTerminalResponse>>>
@@ -22,7 +23,7 @@ public sealed class GetAllPosTerminalsQueryHandler(IAppDbContext dbContext, IPer
             if (!await permissionService.HasPermissionOnBranchAsync("POS_TERMINALS", FormAction.View, terminal.BranchId, cancellationToken))
                 continue;
 
-            results.Add(new PosTerminalResponse(terminal.Id, terminal.BranchId, terminal.Code, terminal.Name, terminal.MachineIdentificationNumber, terminal.MachineSerialNumber, terminal.PosPermitNumber, terminal.PosPermitDateIssued, terminal.Status, terminal.CreatedAt));
+            results.Add(PosTerminalMapper.ToResponse(terminal));
         }
 
         return Result.Success(results);

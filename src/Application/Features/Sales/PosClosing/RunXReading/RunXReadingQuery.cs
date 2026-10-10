@@ -5,7 +5,7 @@ using ZARI.Domain.Common;
 
 /// <summary>Read-only snapshot of sales since the last Z-Reading, up to right now. Can be run any
 /// number of times a day — never writes anything.</summary>
-public sealed record RunXReadingQuery(string BranchId) : IQuery<Result<XReadingResponse>>;
+public sealed record RunXReadingQuery(string BranchId, Guid? PosTerminalId = null) : IQuery<Result<XReadingResponse>>;
 
 public sealed record XReadingResponse(
     string BranchId,
@@ -20,4 +20,5 @@ public sealed record XReadingResponse(
     decimal VatAmount,
     decimal VatExemptSales,
     decimal ZeroRatedSales,
-    decimal NetSales);
+    decimal NetSales,
+    Guid? PosTerminalId = null);

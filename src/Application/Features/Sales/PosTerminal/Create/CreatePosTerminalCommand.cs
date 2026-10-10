@@ -12,4 +12,10 @@ public sealed record CreatePosTerminalCommand(
     string? MachineSerialNumber,
     string? PosPermitNumber,
     DateTime? PosPermitDateIssued,
-    string Status) : ICommand<Result<PosTerminalResponse>>;
+    string Status,
+    // Own BIR invoice series — Route Sales truck handhelds only (see PosTerminal). Normally set by
+    // CreateVehicleCommandHandler rather than directly.
+    bool HasOwnSeries = false,
+    string? OrPrefix = null,
+    int? OrNextNumber = null,
+    int? OrPaddingLength = null) : ICommand<Result<PosTerminalResponse>>;

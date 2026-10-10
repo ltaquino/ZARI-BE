@@ -4,6 +4,7 @@ using FluentValidation;
 
 public sealed class CreateWarehouseValidator : AbstractValidator<CreateWarehouseCommand>
 {
+    // No "Vehicle": a truck's warehouse is only ever created together with its Vehicle (Route Sales).
     private static readonly string[] ValidTypes = ["Main", "Transit", "Damaged", "Consignment"];
     private static readonly string[] ValidStatuses = ["active", "inactive"];
 

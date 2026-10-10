@@ -53,4 +53,5 @@ public sealed record CreateCustomerCommand(
     string? AddressPostalCode = null,
     string? AddressCountryCode = null,
     string? AddressHouseOwnerOrLessee = null,
-    DateTimeOffset? AddressOccupiedSince = null) : ICommand<Result<CustomerResponse>>;
+    DateTimeOffset? AddressOccupiedSince = null,
+    decimal? CreditLimit = null) : ICommand<Result<CustomerResponse>>;

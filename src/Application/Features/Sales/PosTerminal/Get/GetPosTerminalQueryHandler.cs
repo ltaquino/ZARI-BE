@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
+using ZARI.Application.Features.Sales.PosTerminals.Shared;
 using ZARI.Domain.Common;
 
 public sealed class GetPosTerminalQueryHandler(IAppDbContext dbContext, IPermissionService permissionService) : IQueryHandler<GetPosTerminalQuery, Result<PosTerminalResponse>>
@@ -17,7 +18,7 @@ public sealed class GetPosTerminalQueryHandler(IAppDbContext dbContext, IPermiss
         if (!await permissionService.HasPermissionOnBranchAsync("POS_TERMINALS", FormAction.View, terminal.BranchId, cancellationToken))
             return Result.Failure<PosTerminalResponse>(Error.Forbidden("PosTerminal.Forbidden", "You do not have permission to view POS terminals for this branch."));
 
-        var response = new PosTerminalResponse(terminal.Id, terminal.BranchId, terminal.Code, terminal.Name, terminal.MachineIdentificationNumber, terminal.MachineSerialNumber, terminal.PosPermitNumber, terminal.PosPermitDateIssued, terminal.Status, terminal.CreatedAt);
+        var response = PosTerminalMapper.ToResponse(terminal);
         return Result.Success(response);
     }
 }

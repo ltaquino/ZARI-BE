@@ -24,5 +24,5 @@ internal static class CustomerMapper
         customer.PlaceOfBirth, customer.CountryOfBirthCode, customer.NationalityCode, customer.Resident,
         customer.AddressSubdivision, customer.AddressBarangay, customer.AddressCity, customer.AddressProvince,
         customer.AddressPostalCode, customer.AddressCountryCode, customer.AddressHouseOwnerOrLessee, customer.AddressOccupiedSince,
-        customer.CreatedAt);
+        customer.CreatedAt, customer.CreditLimit);
 }

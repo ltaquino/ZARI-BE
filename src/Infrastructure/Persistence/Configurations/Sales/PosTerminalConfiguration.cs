@@ -18,6 +18,10 @@ public sealed class PosTerminalConfiguration : BaseModelConfig, IEntityTypeConfi
         builder.Property(t => t.PosPermitNumber).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_150);
         builder.Property(t => t.Status).IsRequired().HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
 
+        builder.Property(t => t.OrPrefix).HasMaxLength((int)EnumColumnLength.VARCHARDEFAULT);
+        // See PosTerminalSeries: guarantees an own-series invoice number is never handed out twice.
+        builder.Property(t => t.OrNextNumber).IsConcurrencyToken();
+
         builder.HasIndex(t => new { t.BranchId, t.Code }).IsUnique();
 
         builder.HasOne(t => t.Branch)

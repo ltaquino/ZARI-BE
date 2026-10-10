@@ -9,7 +9,9 @@ public sealed class CreateEmployeeDeductionValidator : AbstractValidator<CreateE
     public CreateEmployeeDeductionValidator()
     {
         RuleFor(x => x.EmployeeId).NotEmpty();
-        RuleFor(x => x.Code).NotEmpty().MaximumLength(25);
+        RuleFor(x => x.Code).NotEmpty().MaximumLength(25)
+            .Must(c => !ZARI.Domain.Entities.EmployeeDeduction.IsSystemCode(c))
+            .WithMessage($"Code '{ZARI.Domain.Entities.EmployeeDeduction.TripShortageCode}' is reserved for trip shortages charged at a route-sales trip close.");
         RuleFor(x => x.Name).NotEmpty().MaximumLength(150);
         RuleFor(x => x.Amount).GreaterThan(0);
         RuleFor(x => x.EndDate).GreaterThanOrEqualTo(x => x.EffectiveDate).When(x => x.EndDate is not null);

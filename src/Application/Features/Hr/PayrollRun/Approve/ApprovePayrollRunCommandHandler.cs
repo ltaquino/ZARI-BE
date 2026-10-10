@@ -21,8 +21,10 @@ using ZARI.Domain.Entities;
 /// per-employee) — see HrModuleContext.md §3.13. Beyond the doc's own posting skeleton, this also
 /// credits a "2350 Other Payroll Deductions Payable" clearing line for SUM(DeductionTotal) — the
 /// skeleton's Dr/Cr set didn't otherwise balance once EmployeeDeduction amounts are non-zero, since
-/// NetPay already nets them out but nothing credited the other side. Lines with a zero amount are
-/// omitted entirely (PostGlJournalCommand rejects a 0/0 line as malformed).
+/// NetPay already nets them out but nothing credited the other side. The part that recovers money the
+/// employee already owes (PayrollLine.ReceivableRecoveryDeduction — e.g. a route-sales trip shortage, which
+/// the trip close debited to 1220) credits "1220 Due from Employees" instead, clearing that receivable.
+/// Lines with a zero amount are omitted entirely (PostGlJournalCommand rejects a 0/0 line as malformed).
 /// </summary>
 public sealed class ApprovePayrollRunCommandHandler(
     IAppDbContext dbContext,
@@ -96,7 +98,8 @@ public sealed class ApprovePayrollRunCommandHandler(
         var totalPhilHealthPayable = run.Lines.Sum(l => l.PhilHealthEmployeeShare + l.PhilHealthEmployerShare);
         var totalPagIbigPayable = run.Lines.Sum(l => l.PagIbigEmployeeShare + l.PagIbigEmployerShare);
         var totalWithholdingTax = run.Lines.Sum(l => l.WithholdingTax);
-        var totalDeductions = run.Lines.Sum(l => l.DeductionTotal);
+        var totalReceivableRecovery = run.Lines.Sum(l => l.ReceivableRecoveryDeduction);
+        var totalDeductions = run.Lines.Sum(l => l.DeductionTotal) - totalReceivableRecovery;
         var totalNetPay = run.Lines.Sum(l => l.NetPay);
 
         var lines = new List<PostGlJournalLineInput>();
@@ -143,6 +146,8 @@ public sealed class ApprovePayrollRunCommandHandler(
         creditResult = await AddCreditAsync("2330", "Withholding Tax Payable", totalWithholdingTax);
         if (!creditResult.IsSuccess) return creditResult;
         creditResult = await AddCreditAsync("2350", "Other Payroll Deductions Payable", totalDeductions);
+        if (!creditResult.IsSuccess) return creditResult;
+        creditResult = await AddCreditAsync("1220", "Due from Employees", totalReceivableRecovery);
         if (!creditResult.IsSuccess) return creditResult;
         creditResult = await AddCreditAsync("2340", "Net Pay Payable", totalNetPay);
         if (!creditResult.IsSuccess) return creditResult;

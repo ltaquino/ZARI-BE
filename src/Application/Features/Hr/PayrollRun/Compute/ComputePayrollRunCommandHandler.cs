@@ -62,6 +62,7 @@ public sealed class ComputePayrollRunCommandHandler(IAppDbContext dbContext, IPe
                 PagIbigEmployerShare = draft.PagIbigEmployerShare,
                 WithholdingTax = draft.WithholdingTax,
                 DeductionTotal = draft.DeductionTotal,
+                ReceivableRecoveryDeduction = draft.ReceivableRecoveryDeduction,
                 NetPay = draft.NetPay
             });
         }

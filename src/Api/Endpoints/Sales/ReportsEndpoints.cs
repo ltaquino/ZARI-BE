@@ -23,7 +23,7 @@ public static class SalesReportsEndpoints
 
         group.MapGet("/sales-book", GetSalesBook)
             .WithName("GetSalesBookReport")
-            .WithSummary("The BIR Sales Book — every non-draft, non-cancelled Sales Invoice, VAT-split");
+            .WithSummary("The BIR Sales Book — every non-draft, non-cancelled Sales Invoice, VAT-split; posTerminalId narrows to one terminal (e.g. a truck)");
 
         group.MapGet("/sales-book/pdf", GetSalesBookPdf)
             .WithName("GetSalesBookReportPdf")
@@ -40,19 +40,21 @@ public static class SalesReportsEndpoints
 
     private static async Task<IResult> GetSalesBook(
         string? branchId,
+        Guid? posTerminalId,
         IQueryHandler<GetSalesBookReportQuery, Result<SalesBookReportResponse>> handler,
         CancellationToken cancellationToken)
     {
-        var result = await handler.HandleAsync(new GetSalesBookReportQuery(branchId), cancellationToken);
+        var result = await handler.HandleAsync(new GetSalesBookReportQuery(branchId, posTerminalId), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 
     private static async Task<IResult> GetSalesBookPdf(
         string? branchId,
+        Guid? posTerminalId,
         IQueryHandler<GetSalesBookReportQuery, Result<SalesBookReportResponse>> handler,
         CancellationToken cancellationToken)
     {
-        var result = await handler.HandleAsync(new GetSalesBookReportQuery(branchId), cancellationToken);
+        var result = await handler.HandleAsync(new GetSalesBookReportQuery(branchId, posTerminalId), cancellationToken);
         if (!result.IsSuccess) return result.ToProblemDetails();
 
         var bytes = new SalesBookDocument(result.Value!).GeneratePdf();

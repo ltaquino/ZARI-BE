@@ -41,7 +41,9 @@ public sealed class CreateSalesInvoiceCommandHandler(
         // are genuine permission lookups against the authenticated caller, not a client-suppliable
         // flag, so this only ever widens who counts as authorized — never who the caller can claim to be.
         var canCreate = await permissionService.HasPermissionOnBranchAsync("SALES_INVOICES", FormAction.Create, command.BranchId, cancellationToken)
-            || await permissionService.HasPermissionOnBranchAsync("POS_MODE", FormAction.Create, command.BranchId, cancellationToken);
+            || await permissionService.HasPermissionOnBranchAsync("POS_MODE", FormAction.Create, command.BranchId, cancellationToken)
+            // Same reasoning for a Route Sales driver's handheld (RecordRouteSaleCommandHandler).
+            || await permissionService.HasPermissionOnBranchAsync("ROUTE_SALES", FormAction.Create, command.BranchId, cancellationToken);
         if (!canCreate)
             return Result.Failure<SalesInvoiceResponse>(Error.Forbidden("SalesInvoice.Forbidden", "You do not have permission to create sales invoices for this branch."));
 
@@ -131,8 +133,24 @@ public sealed class CreateSalesInvoiceCommandHandler(
             command.Lines.Select(l => l.StatutoryDiscountTypeId.HasValue ? 0 : l.DiscountPct));
         var quickPost = (company is { SalesInvoiceQuickPostEnabled: true } || command.ForceQuickPost) && !exceedsThreshold;
 
+        if (command.PresetBirOrSeriesNumber is not null)
+        {
+            if (!quickPost)
+                return Result.Failure<SalesInvoiceResponse>(Error.Validation("SalesInvoice.PresetNumberRequiresQuickPost",
+                    "An invoice already numbered on a handheld must post immediately — its discount needs approval, so it can't be recorded this way."));
+            if (await dbContext.SalesInvoices.AnyAsync(x => x.BirOrSeriesNumber == command.PresetBirOrSeriesNumber, cancellationToken))
+                return Result.Failure<SalesInvoiceResponse>(Error.Conflict("SalesInvoice.DuplicateBirOrSeriesNumber",
+                    $"Invoice number '{command.PresetBirOrSeriesNumber}' has already been recorded."));
+        }
+
         if (command.PosTerminalId.HasValue && !await dbContext.PosTerminals.AnyAsync(t => t.Id == command.PosTerminalId.Value && t.BranchId == command.BranchId, cancellationToken))
             return Result.Failure<SalesInvoiceResponse>(Error.NotFound("SalesInvoice.PosTerminalNotFound", "The selected POS terminal was not found at this branch."));
+        // A truck's terminal carries that truck's own BIR series; its numbers are issued only by the
+        // truck's handheld (a route sale, which presets the number) — never by the counter or back office.
+        if (command.PosTerminalId.HasValue && command.PresetBirOrSeriesNumber is null
+            && await dbContext.Vehicles.AnyAsync(v => v.PosTerminalId == command.PosTerminalId.Value, cancellationToken))
+            return Result.Failure<SalesInvoiceResponse>(Error.Validation("SalesInvoice.TruckTerminal",
+                "That terminal belongs to a delivery truck — its invoices can only be issued from the truck's handheld."));
 
         var invoice = new SalesInvoice
         {
@@ -181,6 +199,7 @@ public sealed class CreateSalesInvoiceCommandHandler(
 
         if (quickPost)
         {
+            invoice.BirOrSeriesNumber = command.PresetBirOrSeriesNumber;
             var postResult = await SalesInvoicePostingService.PostAsync(dbContext, nextDocumentNumberHandler, postGlJournalHandler, invoice, cancellationToken);
             if (!postResult.IsSuccess)
                 return Result.Failure<SalesInvoiceResponse>(postResult.Error!);

@@ -20,7 +20,7 @@ public sealed class GetCustomerQueryHandler(IAppDbContext dbContext, IPermission
                 c.Title, c.FirstName, c.MiddleName, c.LastName, c.Suffix, c.PlaceOfBirth, c.CountryOfBirthCode, c.NationalityCode, c.Resident,
                 c.AddressSubdivision, c.AddressBarangay, c.AddressCity, c.AddressProvince, c.AddressPostalCode, c.AddressCountryCode,
                 c.AddressHouseOwnerOrLessee, c.AddressOccupiedSince,
-                c.CreatedAt))
+                c.CreatedAt, c.CreditLimit))
             .FirstOrDefaultAsync(cancellationToken);
 
         if (customer is null)

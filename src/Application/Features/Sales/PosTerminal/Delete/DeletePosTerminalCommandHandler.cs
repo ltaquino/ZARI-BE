@@ -21,6 +21,9 @@ public sealed class DeletePosTerminalCommandHandler(IAppDbContext dbContext, IPe
         if (inUse)
             return Result.Failure(Error.Conflict("PosTerminal.InUse", "This terminal has been used on at least one sale and cannot be deleted — set it to inactive instead."));
 
+        if (await dbContext.Vehicles.AnyAsync(v => v.PosTerminalId == command.Id, cancellationToken))
+            return Result.Failure(Error.Conflict("PosTerminal.BelongsToVehicle", "This terminal belongs to a vehicle — delete the vehicle instead."));
+
         dbContext.PosTerminals.Remove(terminal);
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

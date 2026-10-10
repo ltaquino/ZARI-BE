@@ -21,6 +21,19 @@ public sealed class ZReading : AuditableEntity
     public string BranchId { get; set; } = default!;
     public Branch Branch { get; set; } = default!;
 
+    /// <summary>Set only for an own-series terminal's closing (a Route Sales truck); null = the
+    /// branch-wide closing over the shared branch series.</summary>
+    public Guid? PosTerminalId { get; set; }
+    public PosTerminal? PosTerminal { get; set; }
+
+    /// <summary>"BRANCH", or the own-series terminal's id — which counter ZCounterValue belongs to.
+    /// A non-null discriminator (rather than relying on PosTerminalId) because MySQL unique indexes
+    /// treat NULLs as distinct, so (BranchId, PosTerminalId, ZCounterValue) would stop enforcing the
+    /// branch's own unbroken sequence.</summary>
+    public string CounterScope { get; set; } = BranchScope;
+
+    public const string BranchScope = "BRANCH";
+
     /// <summary>The Branch.ZCounter value this reading produced (post-increment) — the number printed on the Z-Reading tape.</summary>
     public int ZCounterValue { get; set; }
 

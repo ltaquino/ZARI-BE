@@ -37,7 +37,8 @@ public sealed class CreateSalesReturnCommandHandler(
 {
     public async Task<Result<SalesReturnResponse>> HandleAsync(CreateSalesReturnCommand command, CancellationToken cancellationToken = default)
     {
-        if (!await permissionService.HasPermissionOnBranchAsync("SALES_RETURNS", FormAction.Create, command.BranchId, cancellationToken))
+        if (!await permissionService.HasPermissionOnBranchAsync("SALES_RETURNS", FormAction.Create, command.BranchId, cancellationToken)
+            && !(command.ForceQuickPost && await permissionService.HasPermissionOnBranchAsync("ROUTE_SALES", FormAction.Create, command.BranchId, cancellationToken)))
             return Result.Failure<SalesReturnResponse>(Error.Forbidden("SalesReturn.Forbidden", "You do not have permission to create sales returns for this branch."));
 
         var branchExists = await dbContext.Branches.AnyAsync(b => b.Id == command.BranchId, cancellationToken);
@@ -137,7 +138,7 @@ public sealed class CreateSalesReturnCommandHandler(
         }
 
         var company = await dbContext.Companies.FirstOrDefaultAsync(cancellationToken);
-        var quickPost = company?.SalesReturnQuickPostEnabled == true;
+        var quickPost = company?.SalesReturnQuickPostEnabled == true || command.ForceQuickPost;
 
         if (quickPost)
         {

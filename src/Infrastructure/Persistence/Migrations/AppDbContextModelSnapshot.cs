@@ -740,6 +740,9 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasMaxLength(300)
                         .HasColumnType("varchar(300)");
 
+                    b.Property<bool>("RouteShortagePayrollDeductionEnabled")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<bool>("SalesInvoiceQuickPostEnabled")
                         .HasColumnType("tinyint(1)");
 
@@ -975,6 +978,9 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.Property<string>("CreatedBy")
                         .HasColumnType("longtext");
+
+                    b.Property<decimal?>("CreditLimit")
+                        .HasColumnType("DECIMAL(14,4)");
 
                     b.Property<bool>("DataSharingConsent")
                         .HasColumnType("tinyint(1)");
@@ -1490,6 +1496,93 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.HasIndex("UomId");
 
                     b.ToTable("DeliveryOrderLines");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.DeliveryRoute", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid?>("DefaultVehicleId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Name")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DefaultVehicleId");
+
+                    b.HasIndex("BranchId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("DeliveryRoutes", (string)null);
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.DeliveryRouteStop", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<Guid>("RouteId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<int>("Sequence")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("RouteId", "CustomerId")
+                        .IsUnique();
+
+                    b.HasIndex("RouteId", "Sequence")
+                        .IsUnique();
+
+                    b.ToTable("DeliveryRouteStops", (string)null);
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.Department", b =>
@@ -4672,6 +4765,9 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Property<decimal>("PhilHealthEmployerShare")
                         .HasColumnType("DECIMAL(14,4)");
 
+                    b.Property<decimal>("ReceivableRecoveryDeduction")
+                        .HasColumnType("DECIMAL(14,4)");
+
                     b.Property<decimal>("SssEmployeeShare")
                         .HasColumnType("DECIMAL(14,4)");
 
@@ -4813,6 +4909,9 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Property<string>("CreatedBy")
                         .HasColumnType("longtext");
 
+                    b.Property<bool>("HasOwnSeries")
+                        .HasColumnType("tinyint(1)");
+
                     b.Property<DateTimeOffset?>("LastModifiedAt")
                         .HasColumnType("datetime(6)");
 
@@ -4832,6 +4931,17 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
 
+                    b.Property<int>("OrNextNumber")
+                        .IsConcurrencyToken()
+                        .HasColumnType("int");
+
+                    b.Property<int>("OrPaddingLength")
+                        .HasColumnType("int");
+
+                    b.Property<string>("OrPrefix")
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
                     b.Property<DateTime?>("PosPermitDateIssued")
                         .HasColumnType("datetime(6)");
 
@@ -4843,6 +4953,9 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .IsRequired()
                         .HasMaxLength(25)
                         .HasColumnType("varchar(25)");
+
+                    b.Property<int>("ZCounter")
+                        .HasColumnType("int");
 
                     b.HasKey("Id");
 
@@ -5272,6 +5385,115 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.HasIndex("FormCode");
 
                     b.ToTable("RolePermissions");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.RouteSale", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("AmountPaid")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("BirOrSeriesNumber")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<decimal>("CashCollected")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<DateTimeOffset?>("CompletedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid?>("CustomerId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("CustomerPaymentId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("DeliveryOrderId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("InvoiceTotal")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<bool>("IsManualInvoice")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<string>("LastError")
+                        .HasMaxLength(1000)
+                        .HasColumnType("varchar(1000)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal?>("Latitude")
+                        .HasColumnType("DECIMAL(10,7)");
+
+                    b.Property<decimal?>("Longitude")
+                        .HasColumnType("DECIMAL(10,7)");
+
+                    b.Property<string>("PhotoFilePath")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<Guid>("PosTerminalId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("ReceivedByName")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("RequestJson")
+                        .IsRequired()
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid?>("SalesInvoiceId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("SalesOrderId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("SignatureFilePath")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTimeOffset>("SoldAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<Guid>("TripId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("VoidReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("PosTerminalId", "BirOrSeriesNumber")
+                        .IsUnique();
+
+                    b.HasIndex("TripId", "Status");
+
+                    b.ToTable("RouteSales");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.SalesInvoice", b =>
@@ -6819,6 +7041,563 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.ToTable("ThirteenthMonthPayRuns");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.Trip", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("CancelReason")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTimeOffset?>("CancelledAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CancelledBy")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<decimal>("CashExpected")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal?>("CashRemitted")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<DateTimeOffset?>("ClosedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid?>("DriverEmployeeId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("DriverUserId")
+                        .IsRequired()
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<Guid?>("EmployeeDeductionId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset?>("EndedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("HelperNames")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset?>("LoadAcceptedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<Guid?>("RouteId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("ShortageAmount")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("ShortageCharged")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("ShortagePaid")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("ShortageSettlement")
+                        .HasMaxLength(20)
+                        .HasColumnType("varchar(20)");
+
+                    b.Property<Guid>("SourceWarehouseId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<DateTimeOffset>("TripDate")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("TripNo")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<Guid>("VehicleId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("DriverEmployeeId");
+
+                    b.HasIndex("RouteId");
+
+                    b.HasIndex("SourceWarehouseId");
+
+                    b.HasIndex("TripNo")
+                        .IsUnique();
+
+                    b.HasIndex("BranchId", "TripDate");
+
+                    b.HasIndex("DriverUserId", "Status");
+
+                    b.HasIndex("VehicleId", "Status");
+
+                    b.ToTable("Trips");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripCollection", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("CashAmount")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<Guid>("ClientRef")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset>("CollectedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid?>("CustomerPaymentId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<Guid>("TripId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientRef")
+                        .IsUnique();
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("TripId");
+
+                    b.ToTable("TripCollections");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal?>("QtyCountedAtEnd")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("QtyDamagedOut")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("QtyDelivered")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("QtyExtra")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal?>("QtyLoadCheck")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("QtyLoaded")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("QtyLoadedBack")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("QtyOrdered")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("QtyRefused")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("QtyReturnedDamaged")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("QtyReturnedGood")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("QtyVanSold")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<decimal>("QtyVariance")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<Guid>("TripId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("UomId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("TripId", "ItemId")
+                        .IsUnique();
+
+                    b.ToTable("TripLines");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripRefusal", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("ClientRef")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset>("RefusedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid?>("RouteSaleId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("SalesOrderId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("TripId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientRef")
+                        .IsUnique();
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("SalesOrderId");
+
+                    b.HasIndex("TripId", "SalesOrderId");
+
+                    b.ToTable("TripRefusals");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripRefusalLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<decimal>("Qty")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<string>("ReasonCode")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("varchar(30)");
+
+                    b.Property<Guid>("SalesOrderLineId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("TripRefusalId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("SalesOrderLineId");
+
+                    b.HasIndex("TripRefusalId");
+
+                    b.ToTable("TripRefusalLines");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripReturn", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("ClientRef")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid>("CustomerId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Reason")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<DateTimeOffset>("ReturnedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid?>("SalesReturnId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<Guid>("TripId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ClientRef")
+                        .IsUnique();
+
+                    b.HasIndex("CustomerId");
+
+                    b.HasIndex("TripId");
+
+                    b.ToTable("TripReturns");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripReturnLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<bool>("IsDamaged")
+                        .HasColumnType("tinyint(1)");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("Qty")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<Guid>("TripReturnId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("UnitPrice")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TripReturnId");
+
+                    b.ToTable("TripReturnLines");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripSalesOrder", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("SalesOrderId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("TripId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("SalesOrderId");
+
+                    b.HasIndex("TripId", "SalesOrderId")
+                        .IsUnique();
+
+                    b.ToTable("TripSalesOrders");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripShortagePayment", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("Amount")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<DateTimeOffset>("PaidAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<Guid>("PaymentMethodId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("ReferenceNo")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<string>("Remarks")
+                        .HasMaxLength(300)
+                        .HasColumnType("varchar(300)");
+
+                    b.Property<Guid>("TripId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PaymentMethodId");
+
+                    b.HasIndex("TripId");
+
+                    b.ToTable("TripShortagePayments");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripStockMove", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<Guid?>("FromWarehouseId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("MoveType")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<DateTimeOffset?>("PostedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<Guid?>("ToWarehouseId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("TripId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("TripId", "MoveType")
+                        .IsUnique();
+
+                    b.ToTable("TripStockMoves");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripStockMoveLine", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("Qty")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.Property<Guid>("TripStockMoveId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<decimal>("UnitCost")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ItemId");
+
+                    b.HasIndex("TripStockMoveId");
+
+                    b.ToTable("TripStockMoveLines");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.Uom", b =>
                 {
                     b.Property<Guid>("Id")
@@ -6903,6 +7682,71 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.HasIndex("FormCode");
 
                     b.ToTable("UserFormPermissionOverrides");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.Vehicle", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("BranchId")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<string>("Code")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(150)
+                        .HasColumnType("varchar(150)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("PlateNo")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<Guid>("PosTerminalId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(25)
+                        .HasColumnType("varchar(25)");
+
+                    b.Property<Guid>("WarehouseId")
+                        .HasColumnType("char(36)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("PlateNo")
+                        .IsUnique();
+
+                    b.HasIndex("PosTerminalId")
+                        .IsUnique();
+
+                    b.HasIndex("WarehouseId")
+                        .IsUnique();
+
+                    b.HasIndex("BranchId", "Code")
+                        .IsUnique();
+
+                    b.ToTable("Vehicles");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.Warehouse", b =>
@@ -7072,6 +7916,13 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasMaxLength(25)
                         .HasColumnType("varchar(25)");
 
+                    b.Property<string>("CounterScope")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)")
+                        .HasDefaultValue("BRANCH");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -7107,6 +7958,9 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Property<DateTimeOffset>("PeriodStart")
                         .HasColumnType("datetime(6)");
 
+                    b.Property<Guid?>("PosTerminalId")
+                        .HasColumnType("char(36)");
+
                     b.Property<decimal>("TotalDiscounts")
                         .HasColumnType("DECIMAL(14,4)");
 
@@ -7127,7 +7981,9 @@ namespace ZARI.Infrastructure.Persistence.Migrations
 
                     b.HasKey("Id");
 
-                    b.HasIndex("BranchId", "ZCounterValue")
+                    b.HasIndex("PosTerminalId");
+
+                    b.HasIndex("BranchId", "CounterScope", "ZCounterValue")
                         .IsUnique();
 
                     b.ToTable("ZReadings");
@@ -7543,6 +8399,43 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Navigation("SalesOrderLine");
 
                     b.Navigation("Uom");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.DeliveryRoute", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Vehicle", "DefaultVehicle")
+                        .WithMany()
+                        .HasForeignKey("DefaultVehicleId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("DefaultVehicle");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.DeliveryRouteStop", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.DeliveryRoute", "Route")
+                        .WithMany("Stops")
+                        .HasForeignKey("RouteId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Route");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.Department", b =>
@@ -8721,6 +9614,24 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.RouteSale", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ZARI.Domain.Entities.Trip", "Trip")
+                        .WithMany()
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Trip");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.SalesInvoice", b =>
                 {
                     b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
@@ -9323,6 +10234,229 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Navigation("Branch");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.Trip", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Employee", "DriverEmployee")
+                        .WithMany()
+                        .HasForeignKey("DriverEmployeeId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ZARI.Domain.Entities.DeliveryRoute", "Route")
+                        .WithMany()
+                        .HasForeignKey("RouteId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
+                    b.HasOne("ZARI.Domain.Entities.Warehouse", "SourceWarehouse")
+                        .WithMany()
+                        .HasForeignKey("SourceWarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Vehicle", "Vehicle")
+                        .WithMany()
+                        .HasForeignKey("VehicleId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("DriverEmployee");
+
+                    b.Navigation("Route");
+
+                    b.Navigation("SourceWarehouse");
+
+                    b.Navigation("Vehicle");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripCollection", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Trip", "Trip")
+                        .WithMany()
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Trip");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripLine", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Item", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Trip", "Trip")
+                        .WithMany("Lines")
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+
+                    b.Navigation("Trip");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripRefusal", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.SalesOrder", "SalesOrder")
+                        .WithMany()
+                        .HasForeignKey("SalesOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Trip", "Trip")
+                        .WithMany()
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("SalesOrder");
+
+                    b.Navigation("Trip");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripRefusalLine", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Item", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.TripRefusal", "TripRefusal")
+                        .WithMany("Lines")
+                        .HasForeignKey("TripRefusalId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+
+                    b.Navigation("TripRefusal");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripReturn", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Customer", "Customer")
+                        .WithMany()
+                        .HasForeignKey("CustomerId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Trip", "Trip")
+                        .WithMany()
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Customer");
+
+                    b.Navigation("Trip");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripReturnLine", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.TripReturn", "TripReturn")
+                        .WithMany("Lines")
+                        .HasForeignKey("TripReturnId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("TripReturn");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripSalesOrder", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.SalesOrder", "SalesOrder")
+                        .WithMany()
+                        .HasForeignKey("SalesOrderId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Trip", "Trip")
+                        .WithMany("SalesOrders")
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("SalesOrder");
+
+                    b.Navigation("Trip");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripShortagePayment", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.PaymentMethod", "PaymentMethod")
+                        .WithMany()
+                        .HasForeignKey("PaymentMethodId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Trip", "Trip")
+                        .WithMany()
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("PaymentMethod");
+
+                    b.Navigation("Trip");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripStockMove", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Trip", "Trip")
+                        .WithMany()
+                        .HasForeignKey("TripId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Trip");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripStockMoveLine", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Item", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.TripStockMove", "TripStockMove")
+                        .WithMany("Lines")
+                        .HasForeignKey("TripStockMoveId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
+
+                    b.Navigation("TripStockMove");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.UserBranch", b =>
                 {
                     b.HasOne("ZARI.Domain.Entities.Branch", null)
@@ -9353,6 +10487,33 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .IsRequired();
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.Vehicle", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
+                        .WithMany()
+                        .HasForeignKey("BranchId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.PosTerminal", "PosTerminal")
+                        .WithMany()
+                        .HasForeignKey("PosTerminalId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.HasOne("ZARI.Domain.Entities.Warehouse", "Warehouse")
+                        .WithMany()
+                        .HasForeignKey("WarehouseId")
+                        .OnDelete(DeleteBehavior.Restrict)
+                        .IsRequired();
+
+                    b.Navigation("Branch");
+
+                    b.Navigation("PosTerminal");
+
+                    b.Navigation("Warehouse");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.Warehouse", b =>
                 {
                     b.HasOne("ZARI.Domain.Entities.Branch", "Branch")
@@ -9372,7 +10533,14 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
 
+                    b.HasOne("ZARI.Domain.Entities.PosTerminal", "PosTerminal")
+                        .WithMany()
+                        .HasForeignKey("PosTerminalId")
+                        .OnDelete(DeleteBehavior.Restrict);
+
                     b.Navigation("Branch");
+
+                    b.Navigation("PosTerminal");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.ApInvoice", b =>
@@ -9397,6 +10565,11 @@ namespace ZARI.Infrastructure.Persistence.Migrations
             modelBuilder.Entity("ZARI.Domain.Entities.DeliveryOrder", b =>
                 {
                     b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.DeliveryRoute", b =>
+                {
+                    b.Navigation("Stops");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.DiscountRule", b =>
@@ -9512,6 +10685,28 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.ThirteenthMonthPayRun", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.Trip", b =>
+                {
+                    b.Navigation("Lines");
+
+                    b.Navigation("SalesOrders");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripRefusal", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripReturn", b =>
+                {
+                    b.Navigation("Lines");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.TripStockMove", b =>
                 {
                     b.Navigation("Lines");
                 });

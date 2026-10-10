@@ -19,7 +19,11 @@ public sealed class RunXReadingQueryHandler(IAppDbContext dbContext, IPermission
         if (!branchExists)
             return Result.Failure<XReadingResponse>(Error.NotFound("Branch.NotFound", $"Branch '{query.BranchId}' was not found."));
 
-        var agg = await PosClosingAggregator.AggregateAsync(dbContext, query.BranchId, DateTimeOffset.UtcNow, cancellationToken);
+        var scope = await ClosingScope.ResolveAsync(dbContext, query.BranchId, query.PosTerminalId, track: false, cancellationToken);
+        if (!scope.IsSuccess)
+            return Result.Failure<XReadingResponse>(scope.Error!);
+
+        var agg = await PosClosingAggregator.AggregateAsync(dbContext, query.BranchId, DateTimeOffset.UtcNow, cancellationToken, query.PosTerminalId);
 
         return Result.Success(new XReadingResponse(
             query.BranchId,
@@ -34,6 +38,7 @@ public sealed class RunXReadingQueryHandler(IAppDbContext dbContext, IPermission
             agg.VatAmount,
             agg.VatExemptSales,
             agg.ZeroRatedSales,
-            agg.NetSales));
+            agg.NetSales,
+            query.PosTerminalId));
     }
 }

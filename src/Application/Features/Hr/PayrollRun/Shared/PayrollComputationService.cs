@@ -67,7 +67,8 @@ public static class PayrollComputationService
         decimal PagIbigEmployerShare,
         decimal WithholdingTax,
         decimal DeductionTotal,
-        decimal NetPay);
+        decimal NetPay,
+        decimal ReceivableRecoveryDeduction = 0);
 
     public static async Task<PayrollLineDraft> ComputeForEmployeeAsync(IAppDbContext dbContext, Employee employee, PayrollRun run, CancellationToken cancellationToken)
     {
@@ -89,15 +90,18 @@ public static class PayrollComputationService
         var taxableIncome = grossPay - sssEe - phEe - pgEe;
         var withholdingTax = await ComputeWithholdingTaxAsync(dbContext, taxableIncome, run, cancellationToken);
 
-        var deductionTotal = await dbContext.EmployeeDeductions
+        var deductions = await dbContext.EmployeeDeductions
             .Where(d => d.EmployeeId == employee.Id && d.Status == "active"
                 && d.EffectiveDate <= run.PayPeriodEnd && (d.EndDate == null || d.EndDate >= run.PayPeriodStart))
-            .SumAsync(d => (decimal?)d.Amount, cancellationToken) ?? 0m;
+            .Select(d => new { d.Code, d.Amount })
+            .ToListAsync(cancellationToken);
+        var deductionTotal = deductions.Sum(d => d.Amount);
+        var receivableRecovery = deductions.Where(d => EmployeeDeduction.ReceivableRecoveryCodes.Contains(d.Code)).Sum(d => d.Amount);
 
         var netPay = grossPay - sssEe - phEe - pgEe - withholdingTax - deductionTotal;
 
         return new PayrollLineDraft(employee.Id, basicPay, overtimePay, allowanceTotal, leaveDaysConsumed, leaveTypeConsumedId, absenceDeduction, grossPay,
-            sssEe, sssEr, phEe, phEr, pgEe, pgEr, withholdingTax, deductionTotal, netPay);
+            sssEe, sssEr, phEe, phEr, pgEe, pgEr, withholdingTax, deductionTotal, netPay, receivableRecovery);
     }
 
     /// <summary>

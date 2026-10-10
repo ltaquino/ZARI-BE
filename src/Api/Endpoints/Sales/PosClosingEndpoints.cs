@@ -31,10 +31,11 @@ public static class PosClosingEndpoints
 
     private static async Task<IResult> GetXReading(
         string branchId,
+        Guid? posTerminalId,
         IQueryHandler<RunXReadingQuery, Result<XReadingResponse>> handler,
         CancellationToken cancellationToken)
     {
-        var result = await handler.HandleAsync(new RunXReadingQuery(branchId), cancellationToken);
+        var result = await handler.HandleAsync(new RunXReadingQuery(branchId, posTerminalId), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 
@@ -43,19 +44,21 @@ public static class PosClosingEndpoints
         ICommandHandler<RunZReadingCommand, Result<ZReadingResponse>> handler,
         CancellationToken cancellationToken)
     {
-        var command = new RunZReadingCommand(request.BranchId, request.RunBy);
+        var command = new RunZReadingCommand(request.BranchId, request.RunBy, request.PosTerminalId);
         var result = await handler.HandleAsync(command, cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 
     private static async Task<IResult> GetAllZReadings(
         string branchId,
+        Guid? posTerminalId,
         IQueryHandler<GetAllZReadingsQuery, Result<List<ZReadingResponse>>> handler,
         CancellationToken cancellationToken)
     {
-        var result = await handler.HandleAsync(new GetAllZReadingsQuery(branchId), cancellationToken);
+        var result = await handler.HandleAsync(new GetAllZReadingsQuery(branchId, posTerminalId), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 }
 
-public sealed record RunZReadingRequest(string BranchId, string RunBy);
+/// <summary>PosTerminalId set = close an own-series (Route Sales truck) terminal; omitted = the branch.</summary>
+public sealed record RunZReadingRequest(string BranchId, string RunBy, Guid? PosTerminalId = null);

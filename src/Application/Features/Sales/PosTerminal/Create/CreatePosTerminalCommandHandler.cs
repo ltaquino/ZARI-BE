@@ -5,6 +5,7 @@ using ZARI.Application.Abstractions.Data;
 using ZARI.Application.Abstractions.Identity;
 using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Sales.PosTerminals.Get;
+using ZARI.Application.Features.Sales.PosTerminals.Shared;
 using ZARI.Domain.Common;
 using ZARI.Domain.Entities;
 
@@ -23,6 +24,9 @@ public sealed class CreatePosTerminalCommandHandler(IAppDbContext dbContext, IPe
         if (codeExists)
             return Result.Failure<PosTerminalResponse>(Error.Conflict("PosTerminal.DuplicateCode", $"A POS terminal with code '{command.Code}' already exists at this branch."));
 
+        if (command.HasOwnSeries && await PosTerminalSeriesRules.CheckPrefixUniqueAsync(dbContext, null, command.OrPrefix!, cancellationToken) is { } prefixError)
+            return Result.Failure<PosTerminalResponse>(prefixError);
+
         var terminal = new PosTerminal
         {
             BranchId = command.BranchId,
@@ -32,13 +36,17 @@ public sealed class CreatePosTerminalCommandHandler(IAppDbContext dbContext, IPe
             MachineSerialNumber = command.MachineSerialNumber,
             PosPermitNumber = command.PosPermitNumber,
             PosPermitDateIssued = command.PosPermitDateIssued,
-            Status = command.Status
+            Status = command.Status,
+            HasOwnSeries = command.HasOwnSeries,
+            OrPrefix = command.HasOwnSeries ? command.OrPrefix : null,
+            OrNextNumber = command.OrNextNumber ?? 1,
+            OrPaddingLength = command.OrPaddingLength ?? 6,
         };
 
         dbContext.PosTerminals.Add(terminal);
         await dbContext.SaveChangesAsync(cancellationToken);
 
-        var response = new PosTerminalResponse(terminal.Id, terminal.BranchId, terminal.Code, terminal.Name, terminal.MachineIdentificationNumber, terminal.MachineSerialNumber, terminal.PosPermitNumber, terminal.PosPermitDateIssued, terminal.Status, terminal.CreatedAt);
+        var response = PosTerminalMapper.ToResponse(terminal);
         return Result.Success(response);
     }
 }

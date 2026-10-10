@@ -21,6 +21,20 @@ public sealed class CreateDocumentSequenceCommandHandler(IAppDbContext dbContext
         if (clashExists)
             return Result.Failure<DocumentSequenceResponse>(Error.Conflict("DocumentSequence.Duplicate", "A sequence for this branch and document type already exists — edit it instead."));
 
+        // The generated document number is only ever "{Prefix}{NextNumber}" (GetNextDocumentNumberCommandHandler)
+        // -- each branch's own NextNumber increments independently and safely, but if two branches share the
+        // same Prefix for the same DocType, their counters WILL eventually produce the identical formatted
+        // number. For a doc type whose number feeds a globally-unique column (e.g. BIR-OR -> SalesInvoice.
+        // BirOrSeriesNumber has a DB-level unique index), that collision surfaces as an unhandled 500 on
+        // whichever branch loses the race, not a clean validation error. Guard it here instead.
+        var prefixClashBranchId = await dbContext.DocumentSequences
+            .Where(s => s.DocType == command.DocType && s.Prefix == command.Prefix && s.BranchId != command.BranchId)
+            .Select(s => s.BranchId)
+            .FirstOrDefaultAsync(cancellationToken);
+        if (prefixClashBranchId is not null)
+            return Result.Failure<DocumentSequenceResponse>(Error.Conflict("DocumentSequence.DuplicatePrefix",
+                $"Branch '{prefixClashBranchId}' already uses prefix '{command.Prefix}' for {command.DocType} — document numbers must stay unique across branches. Choose a different prefix."));
+
         var branchExists = await dbContext.Branches.AnyAsync(b => b.Id == command.BranchId, cancellationToken);
         if (!branchExists)
             return Result.Failure<DocumentSequenceResponse>(Error.NotFound("Branch.NotFound", $"Branch with ID '{command.BranchId}' was not found."));

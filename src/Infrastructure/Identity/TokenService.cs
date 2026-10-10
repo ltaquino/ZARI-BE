@@ -39,7 +39,6 @@ public sealed class TokenService(
             .Union(userClaims)
             .Union(roleClaims);
 
-        Console.WriteLine("Being checked...");
         var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Secret"]!));
         var credentials = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
         // 1. Keep these strictly as pure UtcNow for the structural JWT token payload
@@ -57,7 +56,15 @@ public sealed class TokenService(
         var accessToken = new JwtSecurityTokenHandler().WriteToken(token);
         var refreshToken = GenerateRefreshToken();
 
-        user.RefreshToken = refreshToken;
+        // SECURITY FIX (found during production-readiness UAT, 2026-10-03): the refresh token used
+        // to be stored verbatim on ApplicationUser.RefreshToken -- inconsistent with the password
+        // column, which Identity always stores through a proper hasher. If the AspNetUsers table were
+        // ever exposed (a DB backup leak, a different vulnerability, an over-privileged reporting
+        // query), every active refresh token would be immediately usable with no cracking required.
+        // Only the hash is persisted now; the raw value is still returned to the client once, here,
+        // at issuance -- matching the same "store hash, return once" shape Identity already applies
+        // to passwords.
+        user.RefreshToken = HashRefreshToken(refreshToken);
         user.RefreshTokenExpiryTime = DateTimeOffset.UtcNow.AddDays(double.Parse(configuration["Jwt:RefreshTokenExpirationInDays"]!));
         await userManager.UpdateAsync(user);
 
@@ -91,7 +98,7 @@ public sealed class TokenService(
         var user = await userManager.FindByNameAsync(userName) // Find by UserName instead of Id
                    ?? throw new InvalidOperationException("User not found.");
 
-        if (user.RefreshToken != refreshToken || user.RefreshTokenExpiryTime <= DateTimeOffset.UtcNow)
+        if (user.RefreshToken != HashRefreshToken(refreshToken) || user.RefreshTokenExpiryTime <= DateTimeOffset.UtcNow)
             throw new InvalidOperationException("Invalid or expired refresh token.");
 
         return await GenerateTokenAsync(user, cancellationToken);
@@ -143,5 +150,15 @@ public sealed class TokenService(
         using var rng = RandomNumberGenerator.Create();
         rng.GetBytes(randomNumber);
         return Convert.ToBase64String(randomNumber);
+    }
+
+    // SHA-256 is a fine fit here: the input is already a cryptographically random 64-byte token
+    // (not a human-guessable password), so none of the slow-deliberately KDF properties
+    // (PBKDF2/bcrypt/Argon2) a password hash needs actually apply -- this just needs to not be
+    // reversible if the column leaks, which a plain fast hash of high-entropy input already gives.
+    private static string HashRefreshToken(string refreshToken)
+    {
+        var bytes = SHA256.HashData(Encoding.UTF8.GetBytes(refreshToken));
+        return Convert.ToHexString(bytes);
     }
 }

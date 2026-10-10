@@ -26,7 +26,9 @@ public sealed record PayrollLineResponse(
     decimal PagIbigEmployerShare,
     decimal WithholdingTax,
     decimal DeductionTotal,
-    decimal NetPay);
+    decimal NetPay,
+    /// <summary>Part of DeductionTotal recovering money owed (e.g. a trip shortage) — credited to 1220.</summary>
+    decimal ReceivableRecoveryDeduction);
 
 public sealed record PayrollRunResponse(
     Guid Id,

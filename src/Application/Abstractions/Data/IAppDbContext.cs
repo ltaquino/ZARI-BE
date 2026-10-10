@@ -113,6 +113,21 @@ public interface IAppDbContext
     DbSet<PaymentMethod> PaymentMethods { get; }
     DbSet<CustomerPaymentTender> CustomerPaymentTenders { get; }
     DbSet<PosTerminal> PosTerminals { get; }
+    DbSet<Vehicle> Vehicles { get; }
+    DbSet<DeliveryRoute> DeliveryRoutes { get; }
+    DbSet<DeliveryRouteStop> DeliveryRouteStops { get; }
+    DbSet<Trip> Trips { get; }
+    DbSet<TripLine> TripLines { get; }
+    DbSet<TripSalesOrder> TripSalesOrders { get; }
+    DbSet<TripStockMove> TripStockMoves { get; }
+    DbSet<TripStockMoveLine> TripStockMoveLines { get; }
+    DbSet<RouteSale> RouteSales { get; }
+    DbSet<TripReturn> TripReturns { get; }
+    DbSet<TripReturnLine> TripReturnLines { get; }
+    DbSet<TripCollection> TripCollections { get; }
+    DbSet<TripRefusal> TripRefusals { get; }
+    DbSet<TripRefusalLine> TripRefusalLines { get; }
+    DbSet<TripShortagePayment> TripShortagePayments { get; }
     DbSet<PosPromoSlide> PosPromoSlides { get; }
     DbSet<ReportTemplate> ReportTemplates { get; }
     DbSet<LoanProduct> LoanProducts { get; }

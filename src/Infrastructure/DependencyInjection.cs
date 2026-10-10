@@ -154,27 +154,17 @@ public static class DependencyInjection
                         Encoding.UTF8.GetBytes(configuration["Jwt:Secret"]!)),
                     ClockSkew = TimeSpan.Zero,                    
                 };
+                // HYGIENE FIX (found during production-readiness UAT, 2026-10-03): OnMessageReceived/
+                // OnTokenValidated/OnAuthenticationFailed/OnChallenge/OnForbidden each used to
+                // Console.WriteLine a fixed marker string (and, for auth failures, the raw exception
+                // message) on EVERY single request — unbounded stdout noise in Production with no
+                // actual diagnostic value over normal Serilog request logging. No secrets were ever
+                // printed here, just removed as log-hygiene; the real response-shaping logic for
+                // OnChallenge/OnForbidden is unchanged.
                 options.Events = new JwtBearerEvents
                 {
-                    OnMessageReceived = ctx =>
-                    {
-                        Console.WriteLine("JWT RECEIVED");
-                        return Task.CompletedTask;
-                    },
-                    OnTokenValidated = ctx =>
-                    {
-                        Console.WriteLine("TOKEN VALIDATED SUCCESSFULLY");
-                        return Task.CompletedTask;
-                    },
-                    OnAuthenticationFailed = ctx =>
-                    {
-                        Console.WriteLine("AUTH FAILED");
-                        Console.WriteLine(ctx.Exception.Message);
-                        return Task.CompletedTask;
-                    },
                     OnChallenge = context =>
                     {
-                        Console.WriteLine("AUTH ON CHALLENGE");
                         context.HandleResponse();
                         context.Response.StatusCode = 401;
                         context.Response.ContentType = "application/json";
@@ -183,7 +173,6 @@ public static class DependencyInjection
                     },
                     OnForbidden = context =>
                     {
-                        Console.WriteLine("AUTH FORBIDDEN");
                         context.Response.StatusCode = 403;
                         context.Response.ContentType = "application/json";
                         var result = JsonSerializer.Serialize(FluentResults.Result.Fail("You are not authorized to access this resource"));

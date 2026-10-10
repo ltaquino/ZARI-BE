@@ -2,6 +2,7 @@ namespace ZARI.Application.Features.Sales.PosClosing.Shared;
 
 using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Abstractions.Data;
+using ZARI.Domain.Entities;
 using ZARI.Application.Features.Sales.SalesInvoices.Shared;
 
 /// <summary>
@@ -24,6 +25,8 @@ using ZARI.Application.Features.Sales.SalesInvoices.Shared;
 /// </summary>
 internal static class PosClosingAggregator
 {
+    public static string ScopeOf(Guid? posTerminalId) => posTerminalId?.ToString() ?? ZReading.BranchScope;
+
     public sealed record AggregationResult(
         DateTimeOffset PeriodStart,
         DateTimeOffset PeriodEnd,
@@ -38,13 +41,23 @@ internal static class PosClosingAggregator
         decimal ZeroRatedSales,
         decimal NetSales);
 
+    /// <param name="posTerminalId">Null = the branch-wide closing over the shared branch BIR-OR series,
+    /// which excludes every own-series terminal's invoices (they're a different series — see
+    /// PosTerminal). Set = that own-series terminal's closing: only its invoices, cut off by its own
+    /// last ZReading.</param>
     public static async Task<AggregationResult> AggregateAsync(
-        IAppDbContext dbContext, string branchId, DateTimeOffset periodEnd, CancellationToken cancellationToken)
+        IAppDbContext dbContext, string branchId, DateTimeOffset periodEnd, CancellationToken cancellationToken, Guid? posTerminalId = null)
     {
+        var scope = ScopeOf(posTerminalId);
         var lastZReading = await dbContext.ZReadings
-            .Where(z => z.BranchId == branchId)
+            .Where(z => z.BranchId == branchId && z.CounterScope == scope)
             .OrderByDescending(z => z.ZCounterValue)
             .FirstOrDefaultAsync(cancellationToken);
+
+        var ownSeriesTerminalIds = await dbContext.PosTerminals
+            .Where(t => t.BranchId == branchId && t.HasOwnSeries)
+            .Select(t => (Guid?)t.Id)
+            .ToListAsync(cancellationToken);
 
         var floorOrNumber = lastZReading?.LastOrNumber;
 
@@ -65,7 +78,10 @@ internal static class PosClosingAggregator
         var candidates = await dbContext.SalesInvoices
             .Where(i => i.BranchId == branchId
                 && (i.Status == "POSTED" || i.Status == "PARTIALLY_PAID" || i.Status == "PAID" || i.Status == "PENDING_CANCELLATION")
-                && i.BirOrSeriesNumber != null)
+                && i.BirOrSeriesNumber != null
+                && (posTerminalId == null
+                    ? i.PosTerminalId == null || !ownSeriesTerminalIds.Contains(i.PosTerminalId)
+                    : i.PosTerminalId == posTerminalId))
             .Include(i => i.Lines).ThenInclude(l => l.StatutoryDiscountType)
             .ToListAsync(cancellationToken);
 

@@ -52,4 +52,5 @@ public sealed record UpdateCustomerCommand(
     string? AddressPostalCode = null,
     string? AddressCountryCode = null,
     string? AddressHouseOwnerOrLessee = null,
-    DateTimeOffset? AddressOccupiedSince = null) : ICommand;
+    DateTimeOffset? AddressOccupiedSince = null,
+    decimal? CreditLimit = null) : ICommand;

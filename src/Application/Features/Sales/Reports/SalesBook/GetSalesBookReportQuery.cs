@@ -4,8 +4,9 @@ using ZARI.Application.Abstractions.Messaging;
 using ZARI.Domain.Common;
 
 /// <summary>The BIR Sales Book: every non-DRAFT, non-CANCELLED Sales Invoice, VAT-split into
-/// VATABLE/ZERO_RATED/VAT_EXEMPT. BranchId narrows to one branch; omitted, returns every branch's.</summary>
-public sealed record GetSalesBookReportQuery(string? BranchId) : IQuery<Result<SalesBookReportResponse>>;
+/// VATABLE/ZERO_RATED/VAT_EXEMPT. BranchId narrows to one branch; omitted, returns every branch's.
+/// PosTerminalId narrows to one terminal — a truck's own BIR series (route sales).</summary>
+public sealed record GetSalesBookReportQuery(string? BranchId, Guid? PosTerminalId = null) : IQuery<Result<SalesBookReportResponse>>;
 
 public sealed record SalesBookReportResponse(
     List<SalesBookRow> Rows,

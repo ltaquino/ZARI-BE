@@ -24,6 +24,7 @@ public sealed class PayrollLineConfiguration : BaseModelConfig, IEntityTypeConfi
         builder.Property(l => l.PagIbigEmployerShare).HasColumnType(DefaultDecimal);
         builder.Property(l => l.WithholdingTax).HasColumnType(DefaultDecimal);
         builder.Property(l => l.DeductionTotal).HasColumnType(DefaultDecimal);
+        builder.Property(l => l.ReceivableRecoveryDeduction).HasColumnType(DefaultDecimal);
         builder.Property(l => l.NetPay).HasColumnType(DefaultDecimal);
 
         builder.HasIndex(l => new { l.PayrollRunId, l.EmployeeId }).IsUnique();

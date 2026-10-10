@@ -24,7 +24,7 @@ public sealed class GetAllCustomersQueryHandler(IAppDbContext dbContext, IPermis
                 c.Title, c.FirstName, c.MiddleName, c.LastName, c.Suffix, c.PlaceOfBirth, c.CountryOfBirthCode, c.NationalityCode, c.Resident,
                 c.AddressSubdivision, c.AddressBarangay, c.AddressCity, c.AddressProvince, c.AddressPostalCode, c.AddressCountryCode,
                 c.AddressHouseOwnerOrLessee, c.AddressOccupiedSince,
-                c.CreatedAt))
+                c.CreatedAt, c.CreditLimit))
             .ToListAsync(cancellationToken);
 
         return Result.Success(customers);

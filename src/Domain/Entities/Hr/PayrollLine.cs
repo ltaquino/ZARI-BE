@@ -45,5 +45,9 @@ public sealed class PayrollLine : AuditableEntity
 
     public decimal WithholdingTax { get; set; }
     public decimal DeductionTotal { get; set; }
+
+    /// <summary>The part of DeductionTotal recovering money the employee owes (EmployeeDeduction.ReceivableRecoveryCodes,
+    /// e.g. a trip shortage) — credited to 1220 Due from Employees on approve; the rest goes to 2350.</summary>
+    public decimal ReceivableRecoveryDeduction { get; set; }
     public decimal NetPay { get; set; }
 }

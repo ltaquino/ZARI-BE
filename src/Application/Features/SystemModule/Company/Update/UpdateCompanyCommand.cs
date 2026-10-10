@@ -16,4 +16,6 @@ public sealed record UpdateCompanyCommand(
     bool SalesInvoiceQuickPostEnabled,
     bool CustomerPaymentQuickPostEnabled,
     bool SalesReturnQuickPostEnabled,
-    string? CicProviderCode) : ICommand;
+    string? CicProviderCode,
+    // Trailing + defaulted so a client that doesn't send it keeps payroll deduction on.
+    bool RouteShortagePayrollDeductionEnabled = true) : ICommand;

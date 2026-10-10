@@ -59,6 +59,7 @@ public sealed class CreateSalesInvoiceCommandHandlerTests
         var permissions = LoanTestFixtures.AllowAllPermissionService();
         permissions.HasPermissionOnBranchAsync("SALES_INVOICES", FormAction.Create, branchId, Arg.Any<CancellationToken>()).Returns(false);
         permissions.HasPermissionOnBranchAsync("POS_MODE", FormAction.Create, branchId, Arg.Any<CancellationToken>()).Returns(false);
+        permissions.HasPermissionOnBranchAsync("ROUTE_SALES", FormAction.Create, branchId, Arg.Any<CancellationToken>()).Returns(false);
 
         var result = await Handler(db, permissions).HandleAsync(Command(branchId, customerId, itemId, uomId), TestContext.Current.CancellationToken);
 

@@ -77,7 +77,8 @@ public static class PosTerminalEndpoints
         ICommandHandler<UpdatePosTerminalCommand, Result> handler,
         CancellationToken cancellationToken)
     {
-        var command = new UpdatePosTerminalCommand(id, request.Code, request.Name, request.MachineIdentificationNumber, request.MachineSerialNumber, request.PosPermitNumber, request.PosPermitDateIssued, request.Status);
+        var command = new UpdatePosTerminalCommand(id, request.Code, request.Name, request.MachineIdentificationNumber, request.MachineSerialNumber, request.PosPermitNumber, request.PosPermitDateIssued, request.Status,
+            request.HasOwnSeries, request.OrPrefix, request.OrNextNumber, request.OrPaddingLength);
         if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
 
         var result = await handler.HandleAsync(command, cancellationToken);
@@ -94,4 +95,5 @@ public static class PosTerminalEndpoints
     }
 }
 
-public sealed record UpdatePosTerminalRequest(string Code, string Name, string? MachineIdentificationNumber, string? MachineSerialNumber, string? PosPermitNumber, DateTime? PosPermitDateIssued, string Status);
+public sealed record UpdatePosTerminalRequest(string Code, string Name, string? MachineIdentificationNumber, string? MachineSerialNumber, string? PosPermitNumber, DateTime? PosPermitDateIssued, string Status,
+    bool HasOwnSeries = false, string? OrPrefix = null, int? OrNextNumber = null, int? OrPaddingLength = null);

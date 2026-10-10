@@ -41,6 +41,11 @@ public sealed class Company : AuditableEntity
     public bool CustomerPaymentQuickPostEnabled { get; set; }
     public bool SalesReturnQuickPostEnabled { get; set; }
 
+    // Route Sales: whether a trip shortage may be charged to the driver through payroll (a one-payroll
+    // EmployeeDeduction). Off = shortages are only recorded and reported (written off at close unless the
+    // manager picks "driver pays" for that trip). Default on.
+    public bool RouteShortagePayrollDeductionEnabled { get; set; } = true;
+
     // Credit Information Corporation (RA 9510)'s 8-alphanumeric code assigned to this cooperative
     // as a submitting entity — stamped into every ID/CI record and the output filename of a CIC
     // CSDF v1.4 submission file (see GetCicCsdfExportQueryHandler, ZARI-FE/frs/loan-cic/LoanCicContext.md

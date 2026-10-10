@@ -27,6 +27,13 @@ public sealed class UpdateWarehouseCommandHandler(IAppDbContext dbContext, IPerm
         if (!branchExists)
             return Result.Failure(Error.NotFound("Branch.NotFound", $"Branch with ID '{command.BranchId}' was not found."));
 
+        // A truck's warehouse belongs to its Vehicle: it can't be turned into an ordinary warehouse or
+        // moved to another branch, and an ordinary warehouse can't become a truck's.
+        var touchesVehicleType = warehouse.WarehouseType == "Vehicle" || command.WarehouseType == "Vehicle";
+        if (touchesVehicleType && (warehouse.WarehouseType != command.WarehouseType || warehouse.BranchId != command.BranchId))
+            return Result.Failure(Error.Validation("Warehouse.VehicleTypeLocked",
+                "A truck's warehouse is managed from its Vehicle — its type and branch can't be changed here."));
+
         warehouse.BranchId = command.BranchId;
         warehouse.Code = command.Code;
         warehouse.Name = command.Name;

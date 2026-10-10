@@ -35,6 +35,11 @@ public sealed class Customer : AuditableEntity
     // freely overridable, never enforced.
     public decimal? StandingDiscountPct { get; set; }
 
+    // Route Sales (ZARI-FE/frs/route-sales/RouteSalesContext.md §0 row 4): the most this customer may
+    // owe on open invoices. Null = no limit. Enforced by the route-sales device offline against the
+    // AR balance downloaded at trip start, and re-checked server-side when the sale syncs.
+    public decimal? CreditLimit { get; set; }
+
     // "Basic Credit Data" fields required by RA 9510 (the Credit Information System Act) as
     // implemented for cooperatives by CDA Memorandum Circular 2019-01 — captured here so a
     // compliance officer can produce the CIC submission extract (see

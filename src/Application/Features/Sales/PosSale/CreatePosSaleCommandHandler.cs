@@ -51,6 +51,9 @@ public sealed class CreatePosSaleCommandHandler(
             return Result.Failure<PosSaleResponse>(Error.NotFound("PosSale.TerminalNotFound", "The selected POS terminal was not found at this branch."));
         if (terminal.Status != "active")
             return Result.Failure<PosSaleResponse>(Error.Validation("PosSale.TerminalInactive", "This POS terminal is not active."));
+        if (await dbContext.Vehicles.AnyAsync(v => v.PosTerminalId == terminal.Id, cancellationToken))
+            return Result.Failure<PosSaleResponse>(Error.Validation("PosSale.TruckTerminal",
+                "That terminal belongs to a delivery truck — its invoices can only be issued from the truck's handheld."));
 
         // POS is branch-scoped, not just branch-defaulted: an item can only be sold at a branch it
         // has an active ItemBranchSetting for (that's also where its POS price comes from) — a bare

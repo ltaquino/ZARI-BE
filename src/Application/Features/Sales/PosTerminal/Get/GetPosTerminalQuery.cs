@@ -15,4 +15,9 @@ public sealed record PosTerminalResponse(
     string? PosPermitNumber,
     DateTime? PosPermitDateIssued,
     string Status,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    bool HasOwnSeries = false,
+    string? OrPrefix = null,
+    int OrNextNumber = 1,
+    int OrPaddingLength = 6,
+    int ZCounter = 0);

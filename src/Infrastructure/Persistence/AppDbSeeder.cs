@@ -254,12 +254,25 @@ public static class AppDbSeeder
             // BIR-compliant "OR/SI No." series (SalesModuleContext.md §3.7) — per-branch, active,
             // actually printed on the receipt. Format ("000-000000") is a print-template concern;
             // this just tracks the running number.
-            ("br-hq", "BIR-OR", "000-", 1),
-            ("br-north", "BIR-OR", "000-", 1),
+            //
+            // BUG FIX (found via UAT 3-month/5-branch simulation, 2026-10-03): both branches were
+            // previously seeded with the IDENTICAL prefix "000-". GetNextDocumentNumberCommandHandler
+            // formats a document number as "{Prefix}{NextNumber}" and each branch's own NextNumber
+            // increments independently and safely -- but with the SAME prefix, two branches'
+            // independently-incrementing counters eventually produce the IDENTICAL formatted number
+            // (e.g. both reaching "000-000032"). SalesInvoice.BirOrSeriesNumber has a DB-level
+            // *global* unique index, so the second branch's otherwise-legitimate POS sale blew up
+            // with an unhandled 500 (MySqlException: Duplicate entry) instead of a clean error.
+            // Every other doc type in this exact seed list already used a distinct branch prefix
+            // (HQ-PR- vs NB-PR-, etc.) -- BIR-OR was the one exception. CreateDocumentSequence/
+            // UpdateDocumentSequenceCommandHandler now also reject a same-DocType cross-branch
+            // prefix clash going forward, so this can't be reintroduced via the API either.
+            ("br-hq", "BIR-OR", "HQ-OR-", 1),
+            ("br-north", "BIR-OR", "NB-OR-", 1),
             // Company-wide "overall" series — reserved for future use, modeled here (parked on the
             // head-office branch row since DocumentSequence requires a branch FK) but never surfaced
             // in the UI or on a printed receipt until asked for.
-            ("br-hq", "BIR-OR-OVERALL", "000-", 1),
+            ("br-hq", "BIR-OR-OVERALL", "OVERALL-", 1),
             // HR module (ZARI-FE/frs/human-resource/HrModuleContext.md) — Leave Request numbering.
             ("br-hq", "LEAVE-REQ", "HQ-LR-", 1),
             ("br-north", "LEAVE-REQ", "NB-LR-", 1),
@@ -272,6 +285,9 @@ public static class AppDbSeeder
             ("br-north", "PAYROLL-RUN", "NB-PAY-", 1),
             ("br-hq", "13TH-PAY", "HQ-13P-", 1),
             ("br-north", "13TH-PAY", "NB-13P-", 1),
+            // Route Sales (RouteSalesContext.md) — Trip numbering.
+            ("br-hq", "TRIP", "HQ-TRP-", 1),
+            ("br-north", "TRIP", "NB-TRP-", 1),
         ];
 
         var existingPairs = (await context.DocumentSequences.Select(s => new { s.BranchId, s.DocType }).ToListAsync())
@@ -311,6 +327,9 @@ public static class AppDbSeeder
             ("1010", "Card Clearing", "Asset", "Debit"),
             ("1020", "Gift Check Clearing", "Asset", "Debit"),
             ("1200", "Accounts Receivable", "Asset", "Debit"),
+            // Route Sales trip close: stock/cash shortages charged to the driver (recovered through
+            // payroll via EmployeeDeduction).
+            ("1220", "Due from Employees", "Asset", "Debit"),
             ("1400", "Inventory Asset", "Asset", "Debit"),
             ("1450", "Inventory In-Transit", "Asset", "Debit"),
             ("2000", "Accounts Payable", "Liability", "Credit"),
@@ -754,6 +773,14 @@ public static class AppDbSeeder
             ("PAYMENT_METHODS", "Payment Methods", "Sales"),
             ("POS_PROMO_SLIDES", "POS Promo Slides", "Sales"),
 
+            // Route Sales (ZARI-FE/frs/route-sales/RouteSalesContext.md) — build step 1 masters.
+            ("VEHICLES", "Vehicles", "Route Sales"),
+            ("ROUTES", "Delivery Routes", "Route Sales"),
+            // Build step 2: TRIPS = dispatcher plans / manager approves load-out and close;
+            // ROUTE_SALES = the driver's handheld (record sales, returns, collections on own trip).
+            ("TRIPS", "Trips", "Route Sales"),
+            ("ROUTE_SALES", "Route Sales (Handheld)", "Route Sales"),
+
             ("REPORT_DESIGNER", "Report Designer", "Reporting"),
 
             // Loan module (ZARI-FE/frs/loan/LoanModuleContext.md) — build-order steps 2-9 so far;
@@ -859,7 +886,8 @@ public static class AppDbSeeder
             "MANUAL_JOURNAL_ENTRIES",
             "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING", "POS_MODE",
             "LOAN_APPLICATIONS", "LOAN_ACCOUNTS", "LOAN_DISBURSEMENTS", "LOAN_PAYMENTS", "LOAN_RESTRUCTURINGS", "LOAN_WRITE_OFFS",
-            "LEAVE_REQUESTS", "OVERTIME_REQUESTS", "PAYROLL_RUNS", "13TH_MONTH_PAY_RUNS"
+            "LEAVE_REQUESTS", "OVERTIME_REQUESTS", "PAYROLL_RUNS", "13TH_MONTH_PAY_RUNS",
+            "TRIPS", "ROUTE_SALES"
         ];
         string[] managerMasterDataForms =
         [
@@ -870,7 +898,8 @@ public static class AppDbSeeder
             "DEPARTMENTS", "POSITIONS", "EMPLOYEES", "WORK_SCHEDULES", "EMPLOYEE_SCHEDULES", "DAILY_TIME_RECORDS",
             "LEAVE_TYPES", "LEAVE_BALANCE_ENTRIES", "OVERTIME_RATE_RULES",
             "EMPLOYEE_ALLOWANCES", "EMPLOYEE_DEDUCTIONS", "SSS_CONTRIBUTION_BRACKETS", "PAGIBIG_BRACKETS",
-            "GOVT_CONTRIBUTION_RATES", "WITHHOLDING_TAX_BRACKETS"
+            "GOVT_CONTRIBUTION_RATES", "WITHHOLDING_TAX_BRACKETS",
+            "VEHICLES", "ROUTES"
         ];
         string[] managerViewOnlyForms =
         [
@@ -896,7 +925,8 @@ public static class AppDbSeeder
             "MANUAL_JOURNAL_ENTRIES",
             "SALES_ORDERS", "DELIVERIES", "SALES_INVOICES", "CUSTOMER_PAYMENTS", "SALES_RETURNS", "POS_CLOSING", "POS_MODE",
             "LOAN_APPLICATIONS", "LOAN_ACCOUNTS", "LOAN_DISBURSEMENTS", "LOAN_PAYMENTS", "LOAN_RESTRUCTURINGS", "LOAN_WRITE_OFFS",
-            "LEAVE_REQUESTS", "OVERTIME_REQUESTS", "PAYROLL_RUNS", "13TH_MONTH_PAY_RUNS"
+            "LEAVE_REQUESTS", "OVERTIME_REQUESTS", "PAYROLL_RUNS", "13TH_MONTH_PAY_RUNS",
+            "TRIPS", "ROUTE_SALES"
         ];
         string[] staffViewOnlyForms =
         [
@@ -908,7 +938,8 @@ public static class AppDbSeeder
             "DEPARTMENTS", "POSITIONS", "EMPLOYEES", "WORK_SCHEDULES", "EMPLOYEE_SCHEDULES", "DAILY_TIME_RECORDS",
             "LEAVE_TYPES", "LEAVE_BALANCE_ENTRIES", "OVERTIME_RATE_RULES",
             "EMPLOYEE_ALLOWANCES", "EMPLOYEE_DEDUCTIONS", "SSS_CONTRIBUTION_BRACKETS", "PAGIBIG_BRACKETS",
-            "GOVT_CONTRIBUTION_RATES", "WITHHOLDING_TAX_BRACKETS"
+            "GOVT_CONTRIBUTION_RATES", "WITHHOLDING_TAX_BRACKETS",
+            "VEHICLES", "ROUTES"
         ];
 
         foreach (var formCode in staffTransactionalForms)

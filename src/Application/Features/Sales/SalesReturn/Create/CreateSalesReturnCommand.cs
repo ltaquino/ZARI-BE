@@ -32,4 +32,7 @@ public sealed record CreateSalesReturnCommand(
     string? Remarks,
     Guid? CostCenterId,
     string? CreatedBy,
-    List<SalesReturnLineInput> Lines) : ICommand<Result<SalesReturnResponse>>;
+    List<SalesReturnLineInput> Lines,
+    // A Route Sales truck return (RecordTripReturnCommandHandler) posts immediately — the goods are
+    // physically on the truck now — regardless of Company.SalesReturnQuickPostEnabled.
+    bool ForceQuickPost = false) : ICommand<Result<SalesReturnResponse>>;

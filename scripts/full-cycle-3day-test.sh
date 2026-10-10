@@ -71,7 +71,7 @@ BRANCH_ID="br-hq"
 WAREHOUSE_ID=$($CURL "$BASE_URL/api/warehouses" "${ADM_AUTH[@]}" | grep -o '{"id":"[^}]*"code":"HQ-MAIN"[^}]*}' | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//;s/"//')
 SUPPLIER_ID=$($CURL "$BASE_URL/api/suppliers" "${ADM_AUTH[@]}" | grep -o '{"id":"[^}]*"code":"SUP-001"[^}]*}' | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//;s/"//')
 BANK_ACCOUNT_ID=$($CURL "$BASE_URL/api/bank-accounts" "${ADM_AUTH[@]}" | grep -o '{"id":"[^}]*"branchId":"br-hq"[^}]*}' | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//;s/"//')
-TERMINAL_ID=$($CURL "$BASE_URL/api/pos-terminals" "${ADM_AUTH[@]}" | grep -o '{"id":"[^}]*"branchId":"br-hq"[^}]*}' | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//;s/"//')
+TERMINAL_ID=$($CURL "$BASE_URL/api/pos-terminals" "${ADM_AUTH[@]}" | grep -o '{"id":"[^}]*"branchId":"br-hq"[^}]*}' | grep '"hasOwnSeries":false' | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//;s/"//')
 CASH_METHOD_ID=$($CURL "$BASE_URL/api/payment-methods" "${ADM_AUTH[@]}" | grep -o '{"id":"[^}]*"code":"CASH"[^}]*}' | grep -o '"id":"[^"]*"' | head -1 | sed 's/"id":"//;s/"//')
 # Sales Return's CustomerId is a non-nullable Guid (unlike POS checkout's, which defaults to the
 # branch's Walk-in Customer when omitted) -- has to be supplied explicitly here.

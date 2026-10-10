@@ -21,4 +21,5 @@ public sealed record CompanyResponse(
     bool SalesInvoiceQuickPostEnabled,
     bool CustomerPaymentQuickPostEnabled,
     bool SalesReturnQuickPostEnabled,
-    string? CicProviderCode);
+    string? CicProviderCode,
+    bool RouteShortagePayrollDeductionEnabled);

@@ -21,6 +21,7 @@ public sealed class CustomerConfiguration : BaseModelConfig, IEntityTypeConfigur
         builder.Property(c => c.Notes).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
         builder.Property(c => c.MemberNo).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_100);
         builder.Property(c => c.StandingDiscountPct).HasColumnType(DefaultDecimal);
+        builder.Property(c => c.CreditLimit).HasColumnType(DefaultDecimal);
 
         // CISA (RA 9510 / CDA MC 2019-01) Basic Credit Data fields — see Customer.cs doc comment.
         builder.Property(c => c.Tin).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_100);

@@ -10,4 +10,8 @@ public sealed record UpdatePosTerminalCommand(
     string? MachineSerialNumber,
     string? PosPermitNumber,
     DateTime? PosPermitDateIssued,
-    string Status) : ICommand;
+    string Status,
+    bool HasOwnSeries = false,
+    string? OrPrefix = null,
+    int? OrNextNumber = null,
+    int? OrPaddingLength = null) : ICommand;

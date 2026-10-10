@@ -37,7 +37,8 @@ public sealed class CreateCustomerPaymentCommandHandler(
         // full back-office CUSTOMER_PAYMENTS access, and both checks are real permission lookups
         // against the authenticated caller, never a client-suppliable flag.
         var canCreate = await permissionService.HasPermissionOnBranchAsync("CUSTOMER_PAYMENTS", FormAction.Create, command.BranchId, cancellationToken)
-            || await permissionService.HasPermissionOnBranchAsync("POS_MODE", FormAction.Create, command.BranchId, cancellationToken);
+            || await permissionService.HasPermissionOnBranchAsync("POS_MODE", FormAction.Create, command.BranchId, cancellationToken)
+            || await permissionService.HasPermissionOnBranchAsync("ROUTE_SALES", FormAction.Create, command.BranchId, cancellationToken);
         if (!canCreate)
             return Result.Failure<CustomerPaymentResponse>(Error.Forbidden("CustomerPayment.Forbidden", "You do not have permission to create customer payments for this branch."));
 

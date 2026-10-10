@@ -8,6 +8,7 @@ using ZARI.Application.Features.Identity.Users.Get;
 using ZARI.Application.Features.Identity.Users.GetAll;
 using ZARI.Application.Features.Identity.Users.Permissions.GetEffective;
 using ZARI.Application.Features.Identity.Users.Permissions.SetOverrides;
+using ZARI.Application.Features.Identity.Users.ResetPassword;
 using ZARI.Application.Features.Identity.Users.Shared;
 using ZARI.Application.Features.Identity.Users.Update;
 using ZARI.Domain.Common;
@@ -51,6 +52,13 @@ public static class UserEndpoints
         group.MapPut("/{id}/permissions", SetPermissionOverrides)
             .WithName("SetUserPermissionOverrides")
             .WithSummary("Replace a user's per-form permission overrides");
+
+        // PRODUCTION-READINESS FIX (found during UAT, 2026-10-03): there was previously no path at
+        // all -- self-service or admin -- to change or reset a user's password. See
+        // ResetUserPasswordCommandHandler's doc comment.
+        group.MapPost("/{id}/reset-password", ResetPassword)
+            .WithName("ResetUserPassword")
+            .WithSummary("Admin-reset a user's password (requires USERS:Edit)");
     }
 
     private static async Task<IResult> GetAll(
@@ -126,6 +134,21 @@ public static class UserEndpoints
         var result = await handler.HandleAsync(command, cancellationToken);
         return result.IsSuccess ? TypedResults.NoContent() : result.ToProblemDetails();
     }
+
+    private static async Task<IResult> ResetPassword(
+        string id,
+        ResetUserPasswordRequest request,
+        IValidator<ResetUserPasswordCommand> validator,
+        ICommandHandler<ResetUserPasswordCommand, Result> handler,
+        CancellationToken cancellationToken)
+    {
+        var command = new ResetUserPasswordCommand(id, request.NewPassword);
+        if (await validator.ValidateOrProblemAsync(command) is { } problem) return problem;
+
+        var result = await handler.HandleAsync(command, cancellationToken);
+        return result.IsSuccess ? TypedResults.NoContent() : result.ToProblemDetails();
+    }
 }
 
 public sealed record UpdateUserRequest(string Email, string FirstName, string LastName, string? Phone, string Status, List<string> RoleIds, List<string> BranchIds);
+public sealed record ResetUserPasswordRequest(string NewPassword);

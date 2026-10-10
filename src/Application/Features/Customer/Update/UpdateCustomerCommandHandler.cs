@@ -81,6 +81,7 @@ public sealed class UpdateCustomerCommandHandler(IAppDbContext dbContext, IPermi
         customer.AddressCountryCode = command.AddressCountryCode;
         customer.AddressHouseOwnerOrLessee = command.AddressHouseOwnerOrLessee;
         customer.AddressOccupiedSince = command.AddressOccupiedSince;
+        customer.CreditLimit = command.CreditLimit;
 
         await dbContext.SaveChangesAsync(cancellationToken);
         return Result.Success();

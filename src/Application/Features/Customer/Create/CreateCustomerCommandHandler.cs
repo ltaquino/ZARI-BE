@@ -77,7 +77,8 @@ public sealed class CreateCustomerCommandHandler(IAppDbContext dbContext, IPermi
             AddressPostalCode = command.AddressPostalCode,
             AddressCountryCode = command.AddressCountryCode,
             AddressHouseOwnerOrLessee = command.AddressHouseOwnerOrLessee,
-            AddressOccupiedSince = command.AddressOccupiedSince
+            AddressOccupiedSince = command.AddressOccupiedSince,
+            CreditLimit = command.CreditLimit
         };
 
         dbContext.Customers.Add(customer);
