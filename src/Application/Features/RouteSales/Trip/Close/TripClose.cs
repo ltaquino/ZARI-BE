@@ -306,6 +306,7 @@ public sealed record RejectTripCloseCommand(Guid Id, string ApproverUserId, stri
 public sealed class RejectTripCloseCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<DecideApprovalRequestCommand, Result<ApprovalRequestResponse>> decideHandler,
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
     IPermissionService permissionService) : ICommandHandler<RejectTripCloseCommand, Result<TripResponse>>
 {
     public async Task<Result<TripResponse>> HandleAsync(RejectTripCloseCommand command, CancellationToken cancellationToken = default)
@@ -329,6 +330,8 @@ public sealed class RejectTripCloseCommandHandler(
         trip.EndedAt = null;
         trip.ShortageSettlement = null;
         await dbContext.SaveChangesAsync(cancellationToken);
+        await createNotificationHandler.HandleAsync(new CreateNotificationCommand("TRIP", trip.Id.ToString(), trip.BranchId, "REJECTED",
+            "ACTIVITY", TripShared.NotificationMessage($"sent this trip back to the driver to recount: {command.Comments}"), command.ApproverUserId), cancellationToken);
         return Result.Success(await TripShared.LoadResponseAsync(dbContext, trip.Id, cancellationToken));
     }
 }

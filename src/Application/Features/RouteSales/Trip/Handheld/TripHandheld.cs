@@ -167,8 +167,8 @@ public sealed class AcceptTripLoadCommandHandler(
         if (discrepancies.Count > 0)
         {
             await createNotificationHandler.HandleAsync(new CreateNotificationCommand("TRIP", trip.Id.ToString(), trip.BranchId, "LOAD_DISCREPANCY",
-                "ACTIVITY", $"accepted the load with {discrepancies.Count} count discrepancy(ies): "
-                    + string.Join(", ", discrepancies.Select(d => $"{d.ItemCode} loaded {d.Expected}, counted {d.Counted}")), currentUser.UserId), cancellationToken);
+                "ACTIVITY", TripShared.NotificationMessage($"accepted the load with {discrepancies.Count} count discrepancy(ies): "
+                    + string.Join(", ", discrepancies.Select(d => $"{d.ItemCode} loaded {d.Expected}, counted {d.Counted}"))), currentUser.UserId), cancellationToken);
         }
         return Result.Success(new AcceptTripLoadResponse(await TripShared.LoadResponseAsync(dbContext, trip.Id, cancellationToken), discrepancies));
     }
@@ -322,7 +322,12 @@ public sealed class RecordTripReturnCommandHandler(
 
 // ================================================================ Collection of an open balance
 
-public sealed record TripCollectionAllocation(Guid SalesInvoiceId, decimal Amount);
+/// <summary>
+/// One invoice a collection pays: either by its ZARI id (an invoice that was open when the trip was downloaded), or by
+/// the handheld number of an invoice issued earlier on this same trip — the device has no ZARI id for that one until
+/// its sale syncs, and the outbox always sends the sale first.
+/// </summary>
+public sealed record TripCollectionAllocation(Guid? SalesInvoiceId, decimal Amount, string? InvoiceNumber = null);
 
 /// <summary>Payment collected on the road against the customer's open invoices. Idempotent on ClientRef.</summary>
 public sealed record RecordTripCollectionCommand(Guid TripId, Guid ClientRef, Guid CustomerId, DateTimeOffset CollectedAt,
@@ -335,7 +340,12 @@ public sealed class RecordTripCollectionValidator : AbstractValidator<RecordTrip
         RuleFor(x => x.ClientRef).NotEmpty();
         RuleFor(x => x.Allocations).NotEmpty();
         RuleFor(x => x.Tenders).NotEmpty();
-        RuleForEach(x => x.Allocations).ChildRules(a => a.RuleFor(x => x.Amount).GreaterThan(0));
+        RuleForEach(x => x.Allocations).ChildRules(a =>
+        {
+            a.RuleFor(x => x.Amount).GreaterThan(0);
+            a.RuleFor(x => x).Must(x => x.SalesInvoiceId.HasValue != !string.IsNullOrWhiteSpace(x.InvoiceNumber))
+                .WithName("Allocation").WithMessage("Each allocation names an invoice by its id or by its number on this trip, not both.");
+        });
         RuleForEach(x => x.Tenders).ChildRules(t => t.RuleFor(x => x.Amount).GreaterThan(0));
         RuleFor(x => x).Must(x => x.Allocations == null || x.Tenders == null || x.Allocations.Sum(a => a.Amount) == x.Tenders.Sum(t => t.Amount))
             .WithName("Tenders").WithMessage("The amounts tendered must equal the amounts applied to invoices.");
@@ -367,6 +377,17 @@ public sealed class RecordTripCollectionCommandHandler(
             return Result.Failure<Guid>(Error.NotFound("PaymentMethod.NotFound", "One or more payment methods were not found."));
         var cash = command.Tenders.Where(t => methods[t.PaymentMethodId].Code == "CASH").Sum(t => t.Amount);
 
+        // Invoices issued on this trip are named by their handheld number; resolve them to ZARI's invoices.
+        var numbers = command.Allocations.Where(a => a.SalesInvoiceId is null).Select(a => a.InvoiceNumber!.Trim()).Distinct().ToList();
+        var issuedHere = numbers.Count == 0 ? [] : await dbContext.RouteSales.AsNoTracking()
+            .Where(r => r.TripId == trip.Id && numbers.Contains(r.BirOrSeriesNumber) && r.Status == "COMPLETED" && r.SalesInvoiceId != null)
+            .ToDictionaryAsync(r => r.BirOrSeriesNumber, r => r.SalesInvoiceId!.Value, cancellationToken);
+        if (numbers.FirstOrDefault(n => !issuedHere.ContainsKey(n)) is { } unknown)
+            return Result.Failure<Guid>(Error.Validation("TripCollection.InvoiceNotOnTrip",
+                $"Invoice {unknown} hasn't been recorded on this trip — its sale must reach ZARI before a collection against it."));
+        var allocations = command.Allocations
+            .Select(a => new CustomerPaymentLineInput(a.SalesInvoiceId ?? issuedHere[a.InvoiceNumber!.Trim()], a.Amount)).ToList();
+
         if (record is null)
         {
             if (trip.Status != TripStatus.InTransit)
@@ -388,8 +409,7 @@ public sealed class RecordTripCollectionCommandHandler(
         {
             var payment = await createCustomerPaymentHandler.HandleAsync(new CreateCustomerPaymentCommand(
                 trip.BranchId, command.CustomerId, command.CollectedAt, $"Trip collection {tag}", null, currentUser.UserId,
-                command.Allocations.Select(a => new CustomerPaymentLineInput(a.SalesInvoiceId, a.Amount)).ToList(),
-                Tenders: command.Tenders, ForceQuickPost: true), cancellationToken);
+                allocations, Tenders: command.Tenders, ForceQuickPost: true), cancellationToken);
             if (!payment.IsSuccess)
                 return Result.Failure<Guid>(payment.Error!);
             paymentId = payment.Value!.Id;

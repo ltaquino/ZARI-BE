@@ -200,10 +200,18 @@ assert_eq "Sale $N3 charged to account (balance due)" 50 "$(jget "$RS2" balanceD
 OVER=$(post "$D" "/api/trips/$TRIP_ID/route-sales" "$(echo "$SALE2" | sed "s/$N3/$N4/")")
 assert_has "Another charge sale over the 60 credit limit is refused" "$OVER" 'CreditLimitExceeded'
 assert_has "...and uses no number ($N4 is still next)" "$(get "$D" "/api/trips/mine")" "\"nextInvoiceNumber\":\"$N4\""
-COLL=$(post "$D" "/api/trips/$TRIP_ID/collections" "{\"clientRef\":\"$(printf '%08x-0000-4000-8000-%012x' "$RUN" "$RUN")\",\"customerId\":\"$CUST_ID\",
-  \"collectedAt\":\"$NOW\",\"allocations\":[{\"salesInvoiceId\":\"$INV2\",\"amount\":50}],
-  \"tenders\":[{\"paymentMethodId\":\"$CASH\",\"amount\":50,\"referenceNo\":null,\"bankOrPartnerName\":null}]}")
-is_guid "$COLL" && ok "Collected the 50 charge on the road" || bad "Collection -- $COLL"
+# The handheld names an invoice issued on this trip by its number (it has no ZARI id offline); older ones by id.
+collect() { # $1=clientRef suffix $2=allocation json $3=amount
+  post "$D" "/api/trips/$TRIP_ID/collections" "{\"clientRef\":\"$(printf '%08x-0000-4000-8%03d-%012x' "$RUN" "$1" "$RUN")\",\"customerId\":\"$CUST_ID\",
+    \"collectedAt\":\"$NOW\",\"allocations\":[$2],
+    \"tenders\":[{\"paymentMethodId\":\"$CASH\",\"amount\":$3,\"referenceNo\":null,\"bankOrPartnerName\":null}]}"
+}
+assert_has "Collecting against a number not issued on this trip is refused" "$(collect 0 "{\"salesInvoiceId\":null,\"invoiceNumber\":\"$N4\",\"amount\":20}" 20)" 'InvoiceNotOnTrip'
+COLL=$(collect 1 "{\"salesInvoiceId\":null,\"invoiceNumber\":\"$N3\",\"amount\":20}" 20)
+is_guid "$COLL" && ok "Collected 20 of the charge by its invoice number $N3" || bad "Collection by number -- $COLL"
+COLL2=$(collect 2 "{\"salesInvoiceId\":\"$INV2\",\"amount\":30}" 30)
+is_guid "$COLL2" && ok "Collected the other 30 by the invoice's ZARI id" || bad "Collection by id -- $COLL2"
+assert_eq "...the charge invoice is paid off" 0 "$(jget "$(get "$A" "/api/sales-invoices/$INV2")" balance)"
 RET=$(post "$D" "/api/trips/$TRIP_ID/returns" "{\"clientRef\":\"$(printf '%08x-0000-4000-9000-%012x' "$RUN" "$RUN")\",\"customerId\":\"$CUST_ID\",
   \"returnedAt\":\"$NOW\",\"reason\":\"Regression\",\"lines\":[{\"itemId\":\"$ITEM_ID\",\"qty\":1,\"unitPrice\":50,\"isDamaged\":false},
   {\"itemId\":\"$ITEM_ID\",\"qty\":1,\"unitPrice\":50,\"isDamaged\":true}]}")
@@ -249,6 +257,12 @@ assert_has "Overpaying the rest is refused" "$(post "$M" "/api/trips/$TRIP_ID/sh
 PAY_J=$(journal_window "$(get "$A" "/api/gl-journals")" "TripShortagePayment" "$PAY_ID")
 assert_eq "Payment journal balanced (debit)" 20 "$(sum_field "$PAY_J" debitAmount)"
 assert_eq "Payment journal balanced (credit)" 20 "$(sum_field "$PAY_J" creditAmount)"
+
+NOTES=$(get "$M" "/api/notifications" | tr -d '
+' | grep -o "{[^{}]*\"entityType\":\"TRIP\",\"entityId\":\"$TRIP_ID\"[^{}]*}")
+for t in SUBMITTED APPROVED ENDED CLOSED; do
+  echo "$NOTES" | grep -q "\"type\":\"$t\"" && ok "Trip notification $t sent" || bad "Trip notification $t missing"
+done
 
 echo ""
 echo "--- Reports, Sales Book, X/Z-Reading ---"

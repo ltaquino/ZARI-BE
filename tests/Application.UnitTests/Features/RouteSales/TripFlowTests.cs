@@ -320,6 +320,49 @@ public sealed class TripReturnCollectionAndCloseTests
     }
 
     [Fact]
+    public async Task A_Collection_Can_Name_An_Invoice_Issued_On_This_Trip_By_Its_Number()
+    {
+        await using var bed = await TripTestBed.CreateAsync();
+        var ct = TestContext.Current.CancellationToken;
+        var tripId = await bed.TripOnTheRoadAsync();
+        await bed.RecordSale().HandleAsync(bed.Sale(tripId, cash: 0), ct); // charge sale T1-000501: 672 on account
+        var invoiceId = (await bed.Db.SalesInvoices.SingleAsync(i => i.Status == "POSTED", ct)).Id;
+
+        var result = await bed.RecordCollection().HandleAsync(new RecordTripCollectionCommand(tripId, Guid.NewGuid(), bed.Customer.Id, DateTimeOffset.UtcNow,
+            [new TripCollectionAllocation(null, 300, "T1-000501")], [new CustomerPaymentTenderInput(bed.Cash.Id, 300, null, null)]), ct);
+
+        result.IsSuccess.Should().BeTrue(result.Error?.Message);
+        var payment = await bed.Db.CustomerPayments.Include(p => p.Lines).SingleAsync(ct);
+        payment.Lines.Single().SalesInvoiceId.Should().Be(invoiceId);
+    }
+
+    [Fact]
+    public async Task A_Collection_Against_A_Number_Not_Yet_Recorded_On_The_Trip_Is_Refused()
+    {
+        await using var bed = await TripTestBed.CreateAsync();
+        var ct = TestContext.Current.CancellationToken;
+        var tripId = await bed.TripOnTheRoadAsync();
+
+        var result = await bed.RecordCollection().HandleAsync(new RecordTripCollectionCommand(tripId, Guid.NewGuid(), bed.Customer.Id, DateTimeOffset.UtcNow,
+            [new TripCollectionAllocation(null, 300, "T1-000501")], [new CustomerPaymentTenderInput(bed.Cash.Id, 300, null, null)]), ct);
+
+        result.Error!.Code.Should().Be("TripCollection.InvoiceNotOnTrip");
+        (await bed.Db.TripCollections.CountAsync(ct)).Should().Be(0);
+    }
+
+    [Theory]
+    [InlineData(true, "T1-000501")]
+    [InlineData(false, null)]
+    public void A_Collection_Allocation_Names_Its_Invoice_One_Way(bool withId, string? number)
+    {
+        var allocation = new TripCollectionAllocation(withId ? Guid.NewGuid() : null, 10, number);
+        var command = new RecordTripCollectionCommand(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), DateTimeOffset.UtcNow,
+            [allocation], [new CustomerPaymentTenderInput(Guid.NewGuid(), 10, null, null)]);
+
+        new RecordTripCollectionValidator().Validate(command).IsValid.Should().BeFalse();
+    }
+
+    [Fact]
     public async Task Ending_Requires_Every_Item_On_The_Truck_To_Be_Counted()
     {
         await using var bed = await TripTestBed.CreateAsync();

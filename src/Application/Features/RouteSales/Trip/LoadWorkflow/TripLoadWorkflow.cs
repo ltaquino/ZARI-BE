@@ -168,6 +168,7 @@ public sealed record RejectTripLoadCommand(Guid Id, string ApproverUserId, strin
 public sealed class RejectTripLoadCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<DecideApprovalRequestCommand, Result<ApprovalRequestResponse>> decideHandler,
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
     IPermissionService permissionService) : ICommandHandler<RejectTripLoadCommand, Result<TripResponse>>
 {
     public async Task<Result<TripResponse>> HandleAsync(RejectTripLoadCommand command, CancellationToken cancellationToken = default)
@@ -190,6 +191,8 @@ public sealed class RejectTripLoadCommandHandler(
 
         trip.Status = TripStatus.Draft;
         await dbContext.SaveChangesAsync(cancellationToken);
+        await createNotificationHandler.HandleAsync(new CreateNotificationCommand("TRIP", trip.Id.ToString(), trip.BranchId, "REJECTED",
+            "ACTIVITY", TripShared.NotificationMessage($"sent this trip's load-out back for re-planning: {command.Comments}"), command.ApproverUserId), cancellationToken);
         return Result.Success(await TripShared.LoadResponseAsync(dbContext, trip.Id, cancellationToken));
     }
 }
@@ -201,6 +204,7 @@ public sealed record CancelTripCommand(Guid Id, string CancelledBy, string Reaso
 public sealed class CancelTripCommandHandler(
     IAppDbContext dbContext,
     ICommandHandler<DecideApprovalRequestCommand, Result<ApprovalRequestResponse>> decideHandler,
+    ICommandHandler<CreateNotificationCommand, Result<NotificationResponse>> createNotificationHandler,
     IPermissionService permissionService) : ICommandHandler<CancelTripCommand, Result<TripResponse>>
 {
     public async Task<Result<TripResponse>> HandleAsync(CancelTripCommand command, CancellationToken cancellationToken = default)
@@ -229,6 +233,8 @@ public sealed class CancelTripCommandHandler(
         trip.CancelledAt = DateTimeOffset.UtcNow;
         trip.CancelReason = command.Reason.Trim();
         await dbContext.SaveChangesAsync(cancellationToken);
+        await createNotificationHandler.HandleAsync(new CreateNotificationCommand("TRIP", trip.Id.ToString(), trip.BranchId, "CANCELLED",
+            "ACTIVITY", TripShared.NotificationMessage($"cancelled this trip: {trip.CancelReason}"), command.CancelledBy), cancellationToken);
         return Result.Success(await TripShared.LoadResponseAsync(dbContext, trip.Id, cancellationToken));
     }
 }

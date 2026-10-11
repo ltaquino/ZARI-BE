@@ -126,6 +126,9 @@ internal static class TripShared
     public static IQueryable<Trip> WithDetails(this IQueryable<Trip> query) =>
         query.Include(t => t.Vehicle).Include(t => t.Lines).ThenInclude(l => l.Item).Include(t => t.SalesOrders);
 
+    /// <summary>Notification messages are capped at 300 characters; ones built from comments or item lists are cut to fit.</summary>
+    public static string NotificationMessage(string message) => message.Length <= 300 ? message : message[..297] + "...";
+
     public static decimal ExpectedGoodOnTruck(TripLine l) =>
         l.QtyLoaded + l.QtyReturnedGood - l.QtyDelivered - l.QtyVanSold - l.QtyLoadedBack;
 
