@@ -19,6 +19,7 @@ public interface IAppDbContext
     DbSet<Item> Items { get; }
     DbSet<AdjustmentReason> AdjustmentReasons { get; }
     DbSet<ItemBranchSetting> ItemBranchSettings { get; }
+    DbSet<ItemBarcode> ItemBarcodes { get; }
     DbSet<StockReservation> StockReservations { get; }
     DbSet<DocumentSequence> DocumentSequences { get; }
     DbSet<StockBalance> StockBalances { get; }

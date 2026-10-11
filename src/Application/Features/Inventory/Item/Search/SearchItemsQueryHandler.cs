@@ -27,9 +27,12 @@ public sealed class SearchItemsQueryHandler(IAppDbContext dbContext, IPermission
 
         var limit = query.Limit is > 0 and <= 50 ? query.Limit : 8;
 
+        // A scanned barcode (exact match on one of the item's barcodes) comes first, then code/name matches.
+        var barcodeItemIds = dbContext.ItemBarcodes.Where(b => b.Barcode == q).Select(b => b.ItemId);
         var items = await dbContext.Items.AsNoTracking()
-            .Where(i => i.Status == "active" && (i.Code.Contains(q) || i.Name.Contains(q)))
-            .OrderByDescending(i => i.Code.StartsWith(q))
+            .Where(i => i.Status == "active" && (i.Code.Contains(q) || i.Name.Contains(q) || barcodeItemIds.Contains(i.Id)))
+            .OrderByDescending(i => barcodeItemIds.Contains(i.Id))
+            .ThenByDescending(i => i.Code.StartsWith(q))
             .ThenBy(i => i.Code)
             .Take(limit)
             .Select(i => new ItemResponse(

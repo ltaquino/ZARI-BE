@@ -3054,6 +3054,49 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.ToTable("Items");
                 });
 
+            modelBuilder.Entity("ZARI.Domain.Entities.ItemBarcode", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("char(36)");
+
+                    b.Property<string>("Barcode")
+                        .IsRequired()
+                        .HasMaxLength(50)
+                        .HasColumnType("varchar(50)");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("CreatedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<string>("Description")
+                        .HasMaxLength(100)
+                        .HasColumnType("varchar(100)");
+
+                    b.Property<Guid>("ItemId")
+                        .HasColumnType("char(36)");
+
+                    b.Property<DateTimeOffset?>("LastModifiedAt")
+                        .HasColumnType("datetime(6)");
+
+                    b.Property<string>("LastModifiedBy")
+                        .HasColumnType("longtext");
+
+                    b.Property<decimal>("PackQty")
+                        .HasColumnType("DECIMAL(14,4)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("Barcode")
+                        .IsUnique();
+
+                    b.HasIndex("ItemId");
+
+                    b.ToTable("ItemBarcodes");
+                });
+
             modelBuilder.Entity("ZARI.Domain.Entities.ItemBranchSetting", b =>
                 {
                     b.Property<Guid>("Id")
@@ -8959,6 +9002,17 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.Navigation("BaseUom");
 
                     b.Navigation("Category");
+                });
+
+            modelBuilder.Entity("ZARI.Domain.Entities.ItemBarcode", b =>
+                {
+                    b.HasOne("ZARI.Domain.Entities.Item", "Item")
+                        .WithMany()
+                        .HasForeignKey("ItemId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Item");
                 });
 
             modelBuilder.Entity("ZARI.Domain.Entities.ItemBranchSetting", b =>

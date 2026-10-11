@@ -16,6 +16,7 @@ public sealed class AppDbContext(DbContextOptions<AppDbContext> options) : Ident
     public DbSet<Item> Items => Set<Item>();
     public DbSet<AdjustmentReason> AdjustmentReasons => Set<AdjustmentReason>();
     public DbSet<ItemBranchSetting> ItemBranchSettings => Set<ItemBranchSetting>();
+    public DbSet<ItemBarcode> ItemBarcodes => Set<ItemBarcode>();
     public DbSet<StockReservation> StockReservations => Set<StockReservation>();
     public DbSet<DocumentSequence> DocumentSequences => Set<DocumentSequence>();
     public DbSet<StockBalance> StockBalances => Set<StockBalance>();

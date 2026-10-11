@@ -194,6 +194,7 @@ try
     app.MapItemEndpoints();
     app.MapAdjustmentReasonEndpoints();
     app.MapItemBranchSettingEndpoints();
+    app.MapItemBarcodeEndpoints();
     app.MapStockReservationEndpoints();
     app.MapDocumentSequenceEndpoints();
     app.MapStockLedgerEndpoints();
