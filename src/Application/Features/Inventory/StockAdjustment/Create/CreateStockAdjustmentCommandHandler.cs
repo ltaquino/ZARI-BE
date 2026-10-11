@@ -24,6 +24,14 @@ public sealed class CreateStockAdjustmentCommandHandler(
         if (!await permissionService.HasPermissionOnBranchAsync("STOCK_ADJUSTMENTS", FormAction.Create, command.BranchId, cancellationToken))
             return Result.Failure<StockAdjustmentResponse>(Error.Forbidden("StockAdjustment.Forbidden", "You do not have permission to create stock adjustments for this branch."));
 
+        // A resend from an offline client: hand back the stock adjustment the first send created.
+        if (command.ClientReferenceId is { } clientReferenceId
+            && await dbContext.StockAdjustments.AsNoTracking().Include(a => a.Lines).ThenInclude(l => l.Item).ThenInclude(i => i.BaseUom)
+                .FirstOrDefaultAsync(x => x.ClientReferenceId == clientReferenceId, cancellationToken) is { } existing)
+            return existing.BranchId == command.BranchId
+                ? Result.Success(StockAdjustmentMapper.ToResponse(existing))
+                : Result.Failure<StockAdjustmentResponse>(Error.Conflict("StockAdjustment.ClientReferenceReused", "That client reference was already used for another branch's stock adjustment."));
+
         var warehouseExists = await dbContext.Warehouses.AnyAsync(w => w.Id == command.WarehouseId, cancellationToken);
         if (!warehouseExists)
             return Result.Failure<StockAdjustmentResponse>(Error.NotFound("Warehouse.NotFound", $"Warehouse with ID '{command.WarehouseId}' was not found."));
@@ -55,6 +63,7 @@ public sealed class CreateStockAdjustmentCommandHandler(
             Remarks = command.Remarks,
             CostCenterId = command.CostCenterId,
             CreatedBy = command.CreatedBy,
+            ClientReferenceId = command.ClientReferenceId,
             Lines = command.Lines.Select(l => new StockAdjustmentLine
             {
                 ItemId = l.ItemId,

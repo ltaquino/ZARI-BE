@@ -42,10 +42,11 @@ public static class CustomerEndpoints
     }
 
     private static async Task<IResult> GetAll(
+        DateTimeOffset? updatedSince,
         IQueryHandler<GetAllCustomersQuery, Result<List<CustomerResponse>>> handler,
         CancellationToken cancellationToken)
     {
-        var result = await handler.HandleAsync(new GetAllCustomersQuery(), cancellationToken);
+        var result = await handler.HandleAsync(new GetAllCustomersQuery(updatedSince), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 

@@ -54,10 +54,12 @@ public static class StockLedgerEndpoints
     }
 
     private static async Task<IResult> GetBalances(
+        string? branchId,
+        DateTimeOffset? updatedSince,
         IQueryHandler<ListStockBalancesQuery, Result<List<StockBalanceResponse>>> handler,
         CancellationToken cancellationToken)
     {
-        var result = await handler.HandleAsync(new ListStockBalancesQuery(), cancellationToken);
+        var result = await handler.HandleAsync(new ListStockBalancesQuery(branchId, updatedSince), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 

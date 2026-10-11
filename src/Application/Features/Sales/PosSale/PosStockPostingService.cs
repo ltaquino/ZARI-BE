@@ -66,6 +66,9 @@ internal static class PosStockPostingService
         foreach (var line in invoice.Lines)
         {
             if (!line.Item.IsSerialized || string.IsNullOrWhiteSpace(line.SerialNo)) continue;
+            // A resumed checkout (CreatePosSaleCommand.ClientReferenceId) may already have marked it on the first attempt.
+            if (await dbContext.SerialNumbers.AnyAsync(s => s.ItemId == line.ItemId && s.SerialNo == line.SerialNo && s.Status == "SOLD", cancellationToken))
+                continue;
 
             var serialResult = await issueSerialHandler.HandleAsync(new IssueSerialCommand(line.ItemId, line.SerialNo, "SOLD"), cancellationToken);
             if (!serialResult.IsSuccess)
@@ -122,6 +125,11 @@ internal static class PosStockPostingService
         // constraint, so two journals sharing it (distinguished by description) is an accepted,
         // pre-existing pattern (e.g. a cancellation reversal journal does the same).
         var description = $"POS Sale {invoice.InvoiceNo} — Cost of Goods Sold";
+        // Already posted by an earlier attempt of the same checkout (a resumed POS sale) — don't book COGS twice.
+        var sourceId = invoice.Id.ToString();
+        if (await dbContext.GlJournals.AnyAsync(j => j.SourceReferenceTable == "SalesInvoice" && j.SourceReferenceId == sourceId
+                && j.Description == description, cancellationToken))
+            return Result.Success();
         var postResult = await postGlJournalHandler.HandleAsync(
             new PostGlJournalCommand(invoice.BranchId, invoice.InvoiceDate, "SALES", "SalesInvoice", invoice.Id.ToString(), description, lines), cancellationToken);
         return postResult.IsSuccess ? Result.Success() : Result.Failure(postResult.Error!);

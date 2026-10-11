@@ -165,6 +165,7 @@ public sealed class CreateSalesInvoiceCommandHandler(
             DiscountPct = command.DiscountPct,
             CostCenterId = command.CostCenterId,
             PosTerminalId = command.PosTerminalId,
+            ClientReferenceId = command.ClientReferenceId,
             CreatedBy = command.CreatedBy,
             Lines = command.Lines.Select(l => new SalesInvoiceLine
             {

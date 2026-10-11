@@ -327,4 +327,61 @@ public sealed class CreatePosSaleCommandHandlerTests
         result.Error!.Code.Should().Be("PosSale.RequiresApproval");
         await db.DisposeAsync();
     }
+
+    [Fact]
+    public async Task HandleAsync_Should_Return_The_Same_Sale_When_The_Same_Checkout_Is_Resent()
+    {
+        var (db, branchId, terminalId, customerId, itemId, uomId, _, paymentMethodId) = await Seed();
+        var command = Command(branchId, terminalId, itemId, uomId, paymentMethodId, customerId, tenderAmount: 150) with { ClientReferenceId = Guid.NewGuid() };
+
+        var first = await Handler(db).HandleAsync(command, TestContext.Current.CancellationToken);
+        var second = await Handler(db).HandleAsync(command, TestContext.Current.CancellationToken);
+
+        first.IsSuccess.Should().BeTrue(first.Error?.Message);
+        second.IsSuccess.Should().BeTrue(second.Error?.Message);
+        second.Value.Should().BeEquivalentTo(first.Value);
+        (await db.SalesInvoices.CountAsync(TestContext.Current.CancellationToken)).Should().Be(1);
+        (await db.CustomerPayments.CountAsync(TestContext.Current.CancellationToken)).Should().Be(1);
+        await db.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Finish_The_Payment_When_A_Resent_Checkout_Stopped_Before_It()
+    {
+        var (db, branchId, terminalId, customerId, itemId, uomId, _, paymentMethodId) = await Seed();
+        var command = Command(branchId, terminalId, itemId, uomId, paymentMethodId, customerId) with { ClientReferenceId = Guid.NewGuid() };
+        var first = await Handler(db).HandleAsync(command, TestContext.Current.CancellationToken);
+        // As if the first attempt had failed after posting the invoice and stock, before the payment.
+        db.CustomerPayments.RemoveRange(db.CustomerPayments);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var invoice = await db.SalesInvoices.SingleAsync(TestContext.Current.CancellationToken);
+        invoice.Status = "POSTED";
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        db.ChangeTracker.Clear();
+
+        var resumed = await Handler(db).HandleAsync(command, TestContext.Current.CancellationToken);
+
+        resumed.IsSuccess.Should().BeTrue(resumed.Error?.Message);
+        resumed.Value!.SalesInvoiceId.Should().Be(first.Value!.SalesInvoiceId);
+        resumed.Value.InvoiceTotal.Should().Be(100);
+        (await db.SalesInvoices.CountAsync(TestContext.Current.CancellationToken)).Should().Be(1);
+        (await db.CustomerPayments.SingleAsync(TestContext.Current.CancellationToken)).Status.Should().Be("POSTED");
+        await db.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Refuse_A_Checkout_Id_Already_Used_On_Another_Terminal()
+    {
+        var (db, branchId, terminalId, customerId, itemId, uomId, _, paymentMethodId) = await Seed();
+        var other = SalesTestFixtures.PosTerminal(branchId);
+        db.PosTerminals.Add(other);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var command = Command(branchId, terminalId, itemId, uomId, paymentMethodId, customerId) with { ClientReferenceId = Guid.NewGuid() };
+        await Handler(db).HandleAsync(command, TestContext.Current.CancellationToken);
+
+        var result = await Handler(db).HandleAsync(command with { PosTerminalId = other.Id }, TestContext.Current.CancellationToken);
+
+        result.Error!.Code.Should().Be("PosSale.ClientReferenceReused");
+        await db.DisposeAsync();
+    }
 }

@@ -14,4 +14,6 @@ public sealed record CreateStockAdjustmentCommand(
     string? Remarks,
     Guid? CostCenterId,
     string? CreatedBy,
-    List<StockAdjustmentLineInput> Lines) : ICommand<Result<StockAdjustmentResponse>>;
+    List<StockAdjustmentLineInput> Lines,
+    // Idempotency key from an offline client (ZARI Mobile): a repeat with the same key returns the first one's document.
+    Guid? ClientReferenceId = null) : ICommand<Result<StockAdjustmentResponse>>;

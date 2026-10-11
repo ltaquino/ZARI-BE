@@ -42,4 +42,6 @@ public sealed record CreateSalesInvoiceCommand(
     // booklet number when no terminal series applies) — SalesInvoicePostingService claims it
     // instead of allocating one. Requires an immediate post: a numbered paper invoice can't sit
     // as a DRAFT waiting for approval.
-    string? PresetBirOrSeriesNumber = null) : ICommand<Result<SalesInvoiceResponse>>;
+    string? PresetBirOrSeriesNumber = null,
+    // POS checkout's idempotency key, stored on the invoice so a resent checkout finds it (CreatePosSaleCommand).
+    Guid? ClientReferenceId = null) : ICommand<Result<SalesInvoiceResponse>>;

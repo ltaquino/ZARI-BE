@@ -21,6 +21,7 @@ public sealed class SalesInvoiceConfiguration : BaseModelConfig, IEntityTypeConf
         builder.Property(i => i.CancelReason).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
 
         builder.HasIndex(i => i.InvoiceNo).IsUnique();
+        builder.HasIndex(i => i.ClientReferenceId).IsUnique();
         builder.HasIndex(i => i.BirOrSeriesNumber).IsUnique();
         builder.HasIndex(i => new { i.BranchId, i.InvoiceDate });
         builder.HasIndex(i => i.Status);

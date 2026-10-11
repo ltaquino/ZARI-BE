@@ -24,6 +24,14 @@ public sealed class CreateStockOpnameCommandHandler(
         if (!await permissionService.HasPermissionOnBranchAsync("STOCK_OPNAMES", FormAction.Create, command.BranchId, cancellationToken))
             return Result.Failure<StockOpnameResponse>(Error.Forbidden("StockOpname.Forbidden", "You do not have permission to create stock counts for this branch."));
 
+        // A resend from an offline client: hand back the stock count the first send created.
+        if (command.ClientReferenceId is { } clientReferenceId
+            && await dbContext.StockOpnames.AsNoTracking().Include(o => o.Lines).ThenInclude(l => l.Item).ThenInclude(i => i.BaseUom)
+                .FirstOrDefaultAsync(x => x.ClientReferenceId == clientReferenceId, cancellationToken) is { } existing)
+            return existing.BranchId == command.BranchId
+                ? Result.Success(StockOpnameMapper.ToResponse(existing))
+                : Result.Failure<StockOpnameResponse>(Error.Conflict("StockOpname.ClientReferenceReused", "That client reference was already used for another branch's stock count."));
+
         var warehouseExists = await dbContext.Warehouses.AnyAsync(w => w.Id == command.WarehouseId, cancellationToken);
         if (!warehouseExists)
             return Result.Failure<StockOpnameResponse>(Error.NotFound("Warehouse.NotFound", $"Warehouse with ID '{command.WarehouseId}' was not found."));
@@ -54,6 +62,7 @@ public sealed class CreateStockOpnameCommandHandler(
             Remarks = command.Remarks,
             CostCenterId = command.CostCenterId,
             CreatedBy = command.CreatedBy,
+            ClientReferenceId = command.ClientReferenceId,
             Lines = command.Lines.Select(l => new StockOpnameLine
             {
                 ItemId = l.ItemId,

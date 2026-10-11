@@ -73,10 +73,11 @@ public static class ItemEndpoints
         int? page,
         int? pageSize,
         string? search,
+        DateTimeOffset? updatedSince,
         IQueryHandler<GetAllItemsPagedQuery, Result<PagedResult<ItemResponse>>> handler,
         CancellationToken cancellationToken)
     {
-        var result = await handler.HandleAsync(new GetAllItemsPagedQuery(page ?? 1, pageSize ?? 20, search), cancellationToken);
+        var result = await handler.HandleAsync(new GetAllItemsPagedQuery(page ?? 1, pageSize ?? 20, search, updatedSince), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 

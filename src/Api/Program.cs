@@ -233,6 +233,7 @@ try
     app.MapPayrollRunEndpoints();
     app.MapThirteenthMonthPayRunEndpoints();
     app.MapCompanyEndpoints();
+    app.MapDeviceSettingsEndpoints();
     app.MapBranchEndpoints();
     app.MapFormEndpoints();
     app.MapUserEndpoints();

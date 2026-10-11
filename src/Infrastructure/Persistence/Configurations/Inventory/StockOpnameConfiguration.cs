@@ -19,6 +19,7 @@ public sealed class StockOpnameConfiguration : BaseModelConfig, IEntityTypeConfi
         builder.Property(o => o.CancelReason).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
 
         builder.HasIndex(o => o.OpnameNo).IsUnique();
+        builder.HasIndex(o => o.ClientReferenceId).IsUnique();
         builder.HasIndex(o => new { o.BranchId, o.CountDate });
         builder.HasIndex(o => o.Status);
 

@@ -13,4 +13,6 @@ public sealed record CreateStockOpnameCommand(
     string? Remarks,
     Guid? CostCenterId,
     string? CreatedBy,
-    List<StockOpnameLineInput> Lines) : ICommand<Result<StockOpnameResponse>>;
+    List<StockOpnameLineInput> Lines,
+    // Idempotency key from an offline client (ZARI Mobile): a repeat with the same key returns the first one's document.
+    Guid? ClientReferenceId = null) : ICommand<Result<StockOpnameResponse>>;

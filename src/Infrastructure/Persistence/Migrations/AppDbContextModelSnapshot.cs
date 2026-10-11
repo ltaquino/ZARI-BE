@@ -5522,6 +5522,9 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
 
+                    b.Property<Guid?>("ClientReferenceId")
+                        .HasColumnType("char(36)");
+
                     b.Property<Guid?>("CostCenterId")
                         .HasColumnType("char(36)");
 
@@ -5584,6 +5587,9 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("BirOrSeriesNumber")
+                        .IsUnique();
+
+                    b.HasIndex("ClientReferenceId")
                         .IsUnique();
 
                     b.HasIndex("CostCenterId");
@@ -5691,6 +5697,9 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
 
+                    b.Property<Guid?>("ClientReferenceId")
+                        .HasColumnType("char(36)");
+
                     b.Property<DateTimeOffset>("CreatedAt")
                         .HasColumnType("datetime(6)");
 
@@ -5730,6 +5739,9 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasColumnType("varchar(25)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ClientReferenceId")
+                        .IsUnique();
 
                     b.HasIndex("CustomerId");
 
@@ -6080,6 +6092,9 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
 
+                    b.Property<Guid?>("ClientReferenceId")
+                        .HasColumnType("char(36)");
+
                     b.Property<Guid?>("CostCenterId")
                         .HasColumnType("char(36)");
 
@@ -6114,6 +6129,9 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("AdjustmentNo")
+                        .IsUnique();
+
+                    b.HasIndex("ClientReferenceId")
                         .IsUnique();
 
                     b.HasIndex("CostCenterId");
@@ -6513,6 +6531,9 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasMaxLength(150)
                         .HasColumnType("varchar(150)");
 
+                    b.Property<Guid?>("ClientReferenceId")
+                        .HasColumnType("char(36)");
+
                     b.Property<Guid?>("CostCenterId")
                         .HasColumnType("char(36)");
 
@@ -6553,6 +6574,9 @@ namespace ZARI.Infrastructure.Persistence.Migrations
                         .HasColumnType("char(36)");
 
                     b.HasKey("Id");
+
+                    b.HasIndex("ClientReferenceId")
+                        .IsUnique();
 
                     b.HasIndex("CostCenterId");
 

@@ -12,6 +12,11 @@ public sealed class StockOpname : AuditableEntity
     public DateTimeOffset CountDate { get; set; }
     public string Status { get; set; } = default!;
     public string? Remarks { get; set; }
+    /// <summary>
+    /// Idempotency key from an offline client (ZARI Mobile's outbox row id): a repeat create with the same key returns
+    /// the document the first one made instead of a second copy. Unique when set.
+    /// </summary>
+    public Guid? ClientReferenceId { get; set; }
     public List<StockOpnameLine> Lines { get; set; } = [];
 
     // Optional departmental tag, applied to every line of this document's posted GL journal.

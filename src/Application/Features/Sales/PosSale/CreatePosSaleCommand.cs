@@ -25,7 +25,10 @@ public sealed record CreatePosSaleCommand(
     // settlement before handing off to CreateCustomerPaymentCommand, which requires tenders to sum
     // to exactly the invoice total.
     List<CustomerPaymentTenderInput> Tenders,
-    string? CreatedBy) : ICommand<Result<PosSaleResponse>>;
+    string? CreatedBy,
+    // Idempotency key from an offline client (ZARI Mobile's outbox row id): a resend with the same key resumes the
+    // sale the first attempt started — finishing its stock and payment if they didn't complete — and never books it twice.
+    Guid? ClientReferenceId = null) : ICommand<Result<PosSaleResponse>>;
 
 public sealed record PosSaleResponse(
     Guid SalesInvoiceId,

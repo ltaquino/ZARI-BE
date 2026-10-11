@@ -19,6 +19,7 @@ public sealed class SalesOrderConfiguration : BaseModelConfig, IEntityTypeConfig
         builder.Property(o => o.CancelReason).HasMaxLength((int)EnumColumnLength.VARCHAR_FOR_300);
 
         builder.HasIndex(o => o.SoNo).IsUnique();
+        builder.HasIndex(o => o.ClientReferenceId).IsUnique();
         builder.HasIndex(o => new { o.BranchId, o.OrderDate });
         builder.HasIndex(o => o.Status);
 

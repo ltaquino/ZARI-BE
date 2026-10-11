@@ -12,6 +12,7 @@ using ZARI.Application.Features.Sales.CustomerPayments.Create;
 using ZARI.Application.Features.Sales.CustomerPayments.GetAll;
 using ZARI.Application.Features.Sales.SalesInvoices.Create;
 using ZARI.Application.Features.Sales.SalesInvoices.GetAll;
+using ZARI.Application.Features.Sales.SalesInvoices.Shared;
 using ZARI.Domain.Common;
 
 /// <summary>
@@ -28,6 +29,10 @@ using ZARI.Domain.Common;
 /// no payment applied and no stock moved: the same kind of recoverable, not-corrupted partial state
 /// already accepted below for a failed payment step, fixable by hand through the admin screens
 /// rather than a fully atomic three-way transaction across independently-committed handlers.)
+/// With a ClientReferenceId (ZARI Mobile always sends one) that partial state also heals itself: resending the same
+/// checkout finds the invoice the first attempt created and completes only what's missing — stock/COGS (each step
+/// skips what's already posted) and the payment (skipped once a posted payment covers the invoice) — so a lost
+/// answer or a failure part-way is simply retried, and the sale is never booked twice.
 /// </summary>
 public sealed class CreatePosSaleCommandHandler(
     IAppDbContext dbContext,
@@ -54,6 +59,13 @@ public sealed class CreatePosSaleCommandHandler(
         if (await dbContext.Vehicles.AnyAsync(v => v.PosTerminalId == terminal.Id, cancellationToken))
             return Result.Failure<PosSaleResponse>(Error.Validation("PosSale.TruckTerminal",
                 "That terminal belongs to a delivery truck — its invoices can only be issued from the truck's handheld."));
+
+        var resumed = command.ClientReferenceId is { } clientReferenceId
+            ? await dbContext.SalesInvoices.AsNoTracking().Include(i => i.Lines).ThenInclude(l => l.StatutoryDiscountType)
+                .FirstOrDefaultAsync(i => i.ClientReferenceId == clientReferenceId, cancellationToken)
+            : null;
+        if (resumed is not null && resumed.PosTerminalId != command.PosTerminalId)
+            return Result.Failure<PosSaleResponse>(Error.Conflict("PosSale.ClientReferenceReused", "That checkout id was already used for a sale on another terminal."));
 
         // POS is branch-scoped, not just branch-defaulted: an item can only be sold at a branch it
         // has an active ItemBranchSetting for (that's also where its POS price comes from) — a bare
@@ -118,7 +130,8 @@ public sealed class CreatePosSaleCommandHandler(
                 $"The same serial number was scanned more than once: {string.Join(", ", duplicateSerialDescriptions)}."));
         }
 
-        if (serializedLines.Count > 0)
+        // (Skipped on a resend: the first attempt may already have marked these units SOLD.)
+        if (serializedLines.Count > 0 && resumed is null)
         {
             var serializedItemIds = serializedLines.Select(l => l.ItemId).Distinct().ToList();
             var statusBySerialKey = (await dbContext.SerialNumbers
@@ -155,25 +168,40 @@ public sealed class CreatePosSaleCommandHandler(
         if (methods.Count != methodIds.Count)
             return Result.Failure<PosSaleResponse>(Error.NotFound("PosSale.PaymentMethodNotFound", "One or more payment methods were not found."));
 
-        var invoiceResult = await createSalesInvoiceHandler.HandleAsync(new CreateSalesInvoiceCommand(
-            command.BranchId, customerId.Value, null, command.InvoiceDate, null, "POS sale", command.DiscountPct, command.CostCenterId,
-            command.CreatedBy, command.Lines, ForceQuickPost: true, PosTerminalId: command.PosTerminalId), cancellationToken);
-        if (!invoiceResult.IsSuccess)
-            return Result.Failure<PosSaleResponse>(invoiceResult.Error!);
+        Guid invoiceId;
+        string invoiceNo, invoiceStatus;
+        string? birOrSeriesNumber;
+        decimal invoiceTotal;
+        if (resumed is null)
+        {
+            var invoiceResult = await createSalesInvoiceHandler.HandleAsync(new CreateSalesInvoiceCommand(
+                command.BranchId, customerId.Value, null, command.InvoiceDate, null, "POS sale", command.DiscountPct, command.CostCenterId,
+                command.CreatedBy, command.Lines, ForceQuickPost: true, PosTerminalId: command.PosTerminalId,
+                ClientReferenceId: command.ClientReferenceId), cancellationToken);
+            if (!invoiceResult.IsSuccess)
+                return Result.Failure<PosSaleResponse>(invoiceResult.Error!);
+            var invoice = invoiceResult.Value!;
+            (invoiceId, invoiceNo, invoiceStatus, birOrSeriesNumber) = (invoice.Id, invoice.InvoiceNo, invoice.Status, invoice.BirOrSeriesNumber);
+            invoiceTotal = invoice.Balance; // amountPaid is 0 immediately after creation, so Balance == the full total.
+        }
+        else
+        {
+            (invoiceId, invoiceNo, invoiceStatus, birOrSeriesNumber) = (resumed.Id, resumed.InvoiceNo, resumed.Status, resumed.BirOrSeriesNumber);
+            invoiceTotal = SalesInvoicePaymentBalance.GetInvoiceTotal(resumed);
+        }
 
-        var invoice = invoiceResult.Value!;
-        if (invoice.Status != "POSTED")
+        // POSTED on creation; PARTIALLY_PAID/PAID once a resumed sale's payment had already gone through.
+        if (invoiceStatus is not ("POSTED" or "PARTIALLY_PAID" or "PAID"))
         {
             return Result.Failure<PosSaleResponse>(Error.Validation("PosSale.RequiresApproval",
-                $"This sale's discount requires manager approval and can't be completed as an instant POS checkout — invoice {invoice.InvoiceNo} was saved as {invoice.Status} instead. Use the regular Sales Invoice workflow to submit it for approval."));
+                $"This sale's discount requires manager approval and can't be completed as an instant POS checkout — invoice {invoiceNo} was saved as {invoiceStatus} instead. Use the regular Sales Invoice workflow to submit it for approval."));
         }
 
         var stockResult = await PosStockPostingService.PostStockAndCogsAsync(
-            dbContext, issueStockLinesHandler, issueSerialHandler, postGlJournalHandler, invoice.Id, warehouseIdByItemId, cancellationToken);
+            dbContext, issueStockLinesHandler, issueSerialHandler, postGlJournalHandler, invoiceId, warehouseIdByItemId, cancellationToken);
         if (!stockResult.IsSuccess)
             return Result.Failure<PosSaleResponse>(stockResult.Error!);
 
-        var invoiceTotal = invoice.Balance; // amountPaid is 0 immediately after creation, so Balance == the full total.
         var tenderTotal = command.Tenders.Sum(t => t.Amount);
         var changeDue = Math.Max(0, Math.Round(tenderTotal - invoiceTotal, 4));
 
@@ -188,15 +216,23 @@ public sealed class CreatePosSaleCommandHandler(
             adjustedTenders[cashTenderIndex] = adjustedTenders[cashTenderIndex] with { Amount = Math.Round(adjustedTenders[cashTenderIndex].Amount - changeDue, 4) };
         }
 
+        // A resumed sale whose payment already went through: hand back that payment rather than paying twice.
+        var paid = resumed is null ? null : await dbContext.CustomerPaymentLines.AsNoTracking()
+            .Where(l => l.SalesInvoiceId == invoiceId && l.CustomerPayment.Status == "POSTED")
+            .Select(l => new { l.CustomerPaymentId, l.CustomerPayment.PaymentNo })
+            .FirstOrDefaultAsync(cancellationToken);
+        if (paid is not null)
+            return Result.Success(new PosSaleResponse(invoiceId, invoiceNo, birOrSeriesNumber, invoiceTotal, paid.CustomerPaymentId, paid.PaymentNo, changeDue));
+
         var paymentResult = await createCustomerPaymentHandler.HandleAsync(new CreateCustomerPaymentCommand(
             command.BranchId, customerId.Value, command.InvoiceDate, "POS sale payment", command.CostCenterId, command.CreatedBy,
-            Lines: [new CustomerPaymentLineInput(invoice.Id, invoiceTotal)],
+            Lines: [new CustomerPaymentLineInput(invoiceId, invoiceTotal)],
             Tenders: adjustedTenders,
             ForceQuickPost: true), cancellationToken);
         if (!paymentResult.IsSuccess)
             return Result.Failure<PosSaleResponse>(paymentResult.Error!);
 
         var payment = paymentResult.Value!;
-        return Result.Success(new PosSaleResponse(invoice.Id, invoice.InvoiceNo, invoice.BirOrSeriesNumber, invoiceTotal, payment.Id, payment.PaymentNo, changeDue));
+        return Result.Success(new PosSaleResponse(invoiceId, invoiceNo, birOrSeriesNumber, invoiceTotal, payment.Id, payment.PaymentNo, changeDue));
     }
 }

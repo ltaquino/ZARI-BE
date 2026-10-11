@@ -1,5 +1,6 @@
 namespace ZARI.Application.UnitTests.Features.Sales.SalesOrder;
 
+using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Features.Sales.SalesOrders.Create;
 using ZARI.Application.Features.SystemModule.DocumentSequences.GetNext;
 using ZARI.Application.Features.Workflow.Notifications.Create;
@@ -151,6 +152,23 @@ public sealed class CreateSalesOrderCommandHandlerTests
 
         result.IsSuccess.Should().BeTrue();
         result.Value!.Status.Should().Be("DRAFT");
+        await db.DisposeAsync();
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Return_The_First_Order_When_The_Same_Client_Reference_Is_Resent()
+    {
+        var (db, branchId, customerId, itemId, uomId) = await Seed();
+        var command = Command(branchId, customerId, itemId, uomId) with { ClientReferenceId = Guid.NewGuid() };
+
+        var first = await Handler(db).HandleAsync(command, TestContext.Current.CancellationToken);
+        var second = await Handler(db).HandleAsync(command, TestContext.Current.CancellationToken);
+
+        second.IsSuccess.Should().BeTrue(second.Error?.Message);
+        second.Value!.Id.Should().Be(first.Value!.Id);
+        second.Value.SoNo.Should().Be(first.Value.SoNo);
+        second.Value.Lines.Should().HaveCount(1);
+        (await db.SalesOrders.CountAsync(TestContext.Current.CancellationToken)).Should().Be(1);
         await db.DisposeAsync();
     }
 }

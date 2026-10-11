@@ -57,6 +57,32 @@ public sealed class GetAllItemsPagedQueryHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error!.Type.Should().Be(ErrorType.Forbidden);
     }
+
+    [Fact]
+    public async Task HandleAsync_Should_Return_Only_Items_Created_Or_Changed_Since()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var ct = TestContext.Current.CancellationToken;
+        var uom = InventoryTestFixtures.Uom();
+        db.Uoms.Add(uom);
+        await db.SaveChangesAsync(ct);
+        var old = InventoryTestFixtures.Item(uom.Id, code: "OLD");
+        var renamed = InventoryTestFixtures.Item(uom.Id, code: "RENAMED");
+        db.Items.AddRange(old, renamed);
+        await db.SaveChangesAsync(ct);
+        await Task.Delay(20, ct);
+        var cut = DateTimeOffset.UtcNow;
+        await Task.Delay(20, ct);
+        renamed.Name = "Renamed item";
+        db.Items.Add(InventoryTestFixtures.Item(uom.Id, code: "NEW"));
+        await db.SaveChangesAsync(ct);
+        var handler = new GetAllItemsPagedQueryHandler(db, LoanTestFixtures.AllowAllPermissionService());
+
+        var result = await handler.HandleAsync(new GetAllItemsPagedQuery(1, 100, null, cut), ct);
+
+        result.Value!.Items.Select(i => i.Code).Should().BeEquivalentTo(["RENAMED", "NEW"]);
+        result.Value.TotalCount.Should().Be(2);
+    }
 }
 
 public sealed class GetItemsByIdsQueryHandlerTests

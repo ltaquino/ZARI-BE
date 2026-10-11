@@ -42,10 +42,12 @@ public static class ItemBranchSettingEndpoints
     }
 
     private static async Task<IResult> GetAll(
+        string? branchId,
+        DateTimeOffset? updatedSince,
         IQueryHandler<GetAllItemBranchSettingsQuery, Result<List<ItemBranchSettingResponse>>> handler,
         CancellationToken cancellationToken)
     {
-        var result = await handler.HandleAsync(new GetAllItemBranchSettingsQuery(), cancellationToken);
+        var result = await handler.HandleAsync(new GetAllItemBranchSettingsQuery(branchId, updatedSince), cancellationToken);
         return result.IsSuccess ? TypedResults.Ok(result.Value) : result.ToProblemDetails();
     }
 

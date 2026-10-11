@@ -19,6 +19,9 @@ public sealed class GetAllItemsPagedQueryHandler(IAppDbContext dbContext, IPermi
         if (!string.IsNullOrWhiteSpace(query.Search))
             baseQuery = baseQuery.Where(i => i.Code.Contains(query.Search) || i.Name.Contains(query.Search));
 
+        if (query.UpdatedSince is { } since)
+            baseQuery = baseQuery.Where(i => i.CreatedAt >= since || i.LastModifiedAt >= since);
+
         var totalCount = await baseQuery.CountAsync(cancellationToken);
 
         var items = await baseQuery

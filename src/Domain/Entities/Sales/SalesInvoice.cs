@@ -24,6 +24,11 @@ public sealed class SalesInvoice : AuditableEntity
     public DateTimeOffset? DueDate { get; set; }
     public string Status { get; set; } = default!;
     public string? Remarks { get; set; }
+    /// <summary>
+    /// Idempotency key from an offline client (ZARI Mobile's outbox row id), set by POS checkout: a repeat checkout with the same key resumes
+    /// the sale the first one started instead of booking a second one. Unique when set.
+    /// </summary>
+    public Guid? ClientReferenceId { get; set; }
 
     public decimal? DiscountPct { get; set; }
 

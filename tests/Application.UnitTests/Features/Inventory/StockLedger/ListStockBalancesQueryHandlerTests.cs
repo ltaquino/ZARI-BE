@@ -58,4 +58,42 @@ public sealed class ListStockBalancesQueryHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value.Should().BeEmpty();
     }
+
+    [Fact]
+    public async Task HandleAsync_Should_Filter_By_Branch_And_Return_Only_Rows_Changed_Since()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var ct = TestContext.Current.CancellationToken;
+        var branch = LoanTestFixtures.Branch();
+        var other = LoanTestFixtures.Branch("br-2");
+        db.Branches.AddRange(branch, other);
+        var warehouse = InventoryTestFixtures.Warehouse(branch.Id);
+        var otherWarehouse = InventoryTestFixtures.Warehouse(other.Id);
+        db.Warehouses.AddRange(warehouse, otherWarehouse);
+        var uom = InventoryTestFixtures.Uom();
+        db.Uoms.Add(uom);
+        await db.SaveChangesAsync(ct);
+        var item = InventoryTestFixtures.Item(uom.Id);
+        db.Items.Add(item);
+        await db.SaveChangesAsync(ct);
+        var untouched = new StockBalance { ItemId = item.Id, BranchId = branch.Id, WarehouseId = warehouse.Id, BatchNo = "OLD", QtyOnHand = 1 };
+        var changedLater = new StockBalance { ItemId = item.Id, BranchId = branch.Id, WarehouseId = warehouse.Id, BatchNo = "MOVED", QtyOnHand = 1 };
+        db.StockBalances.AddRange(untouched, changedLater);
+        await db.SaveChangesAsync(ct);
+        await Task.Delay(20, ct);
+        var cut = DateTimeOffset.UtcNow;
+        await Task.Delay(20, ct);
+        changedLater.QtyOnHand = 3;
+        db.StockBalances.AddRange(
+            new StockBalance { ItemId = item.Id, BranchId = branch.Id, WarehouseId = warehouse.Id, BatchNo = "NEW", QtyOnHand = 1 },
+            new StockBalance { ItemId = item.Id, BranchId = other.Id, WarehouseId = otherWarehouse.Id, BatchNo = "OTHER", QtyOnHand = 1 });
+        await db.SaveChangesAsync(ct);
+        var handler = new ListStockBalancesQueryHandler(db, LoanTestFixtures.AllowAllPermissionService());
+
+        var delta = await handler.HandleAsync(new ListStockBalancesQuery(branch.Id, cut), ct);
+        var branchOnly = await handler.HandleAsync(new ListStockBalancesQuery(branch.Id), ct);
+
+        delta.Value!.Select(b => b.BatchNo).Should().BeEquivalentTo(["MOVED", "NEW"]);
+        branchOnly.Value!.Select(b => b.BatchNo).Should().BeEquivalentTo(["OLD", "MOVED", "NEW"]);
+    }
 }

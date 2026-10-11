@@ -350,4 +350,37 @@ public sealed class GetAllItemBranchSettingsQueryHandlerTests
         result.IsFailure.Should().BeTrue();
         result.Error!.Type.Should().Be(ErrorType.Forbidden);
     }
+
+    [Fact]
+    public async Task HandleAsync_Should_Filter_By_Branch_And_Changed_Since()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var ct = TestContext.Current.CancellationToken;
+        var uom = InventoryTestFixtures.Uom();
+        db.Uoms.Add(uom);
+        await db.SaveChangesAsync(ct);
+        var a = InventoryTestFixtures.Item(uom.Id, code: "A");
+        var b = InventoryTestFixtures.Item(uom.Id, code: "B");
+        var c = InventoryTestFixtures.Item(uom.Id, code: "C");
+        db.Items.AddRange(a, b, c);
+        await db.SaveChangesAsync(ct);
+        var unchanged = new ZARI.Domain.Entities.ItemBranchSetting { ItemId = a.Id, BranchId = "br-1", Status = "active", SellingPrice = 10 };
+        var repriced = new ZARI.Domain.Entities.ItemBranchSetting { ItemId = b.Id, BranchId = "br-1", Status = "active", SellingPrice = 10 };
+        db.ItemBranchSettings.AddRange(unchanged, repriced, new ZARI.Domain.Entities.ItemBranchSetting { ItemId = a.Id, BranchId = "br-2", Status = "active" });
+        await db.SaveChangesAsync(ct);
+        await Task.Delay(20, ct);
+        var cut = DateTimeOffset.UtcNow;
+        await Task.Delay(20, ct);
+        repriced.SellingPrice = 12;
+        db.ItemBranchSettings.Add(new ZARI.Domain.Entities.ItemBranchSetting { ItemId = c.Id, BranchId = "br-1", Status = "active" });
+        await db.SaveChangesAsync(ct);
+        var handler = new GetAllItemBranchSettingsQueryHandler(db, LoanTestFixtures.AllowAllPermissionService());
+
+        var delta = await handler.HandleAsync(new GetAllItemBranchSettingsQuery("br-1", cut), ct);
+        var branchOnly = await handler.HandleAsync(new GetAllItemBranchSettingsQuery("br-1"), ct);
+
+        delta.Value!.Select(s => s.ItemId).Should().BeEquivalentTo([b.Id, c.Id]);
+        delta.Value!.Single(s => s.ItemId == b.Id).SellingPrice.Should().Be(12);
+        branchOnly.Value.Should().HaveCount(3);
+    }
 }

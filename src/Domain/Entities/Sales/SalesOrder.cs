@@ -17,6 +17,11 @@ public sealed class SalesOrder : AuditableEntity
     public DateTimeOffset? ExpectedDeliveryDate { get; set; }
     public string Status { get; set; } = default!;
     public string? Remarks { get; set; }
+    /// <summary>
+    /// Idempotency key from an offline client (ZARI Mobile's outbox row id): a repeat create with the same key returns
+    /// the document the first one made instead of a second copy. Unique when set.
+    /// </summary>
+    public Guid? ClientReferenceId { get; set; }
 
     // Header discount — manual only, percent-only for v1, applied after line-level discounts.
     // Subject to the same Company.MaxUnapprovedDiscountPct threshold as line discounts.

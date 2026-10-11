@@ -4,4 +4,6 @@ using ZARI.Application.Abstractions.Messaging;
 using ZARI.Application.Features.Customers.Get;
 using ZARI.Domain.Common;
 
-public sealed record GetAllCustomersQuery : IQuery<Result<List<CustomerResponse>>>;
+// Delta sync (ZARI Mobile): only rows created or changed at/after this instant. Deletions aren't reported — a client
+// still does an occasional full refresh to prune.
+public sealed record GetAllCustomersQuery(DateTimeOffset? UpdatedSince = null) : IQuery<Result<List<CustomerResponse>>>;

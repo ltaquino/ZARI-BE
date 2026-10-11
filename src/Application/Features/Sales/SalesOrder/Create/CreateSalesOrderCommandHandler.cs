@@ -32,6 +32,15 @@ public sealed class CreateSalesOrderCommandHandler(
         if (!await permissionService.HasPermissionOnBranchAsync("SALES_ORDERS", FormAction.Create, command.BranchId, cancellationToken))
             return Result.Failure<SalesOrderResponse>(Error.Forbidden("SalesOrder.Forbidden", "You do not have permission to create sales orders for this branch."));
 
+        // A resend from an offline client: hand back the sales order the first send created.
+        if (command.ClientReferenceId is { } clientReferenceId
+            && await dbContext.SalesOrders.AsNoTracking().Include(o => o.Customer)
+                .Include(o => o.Lines).ThenInclude(l => l.Item).Include(o => o.Lines).ThenInclude(l => l.Uom)
+                .FirstOrDefaultAsync(x => x.ClientReferenceId == clientReferenceId, cancellationToken) is { } existing)
+            return existing.BranchId == command.BranchId
+                ? Result.Success(SalesOrderMapper.ToResponse(existing))
+                : Result.Failure<SalesOrderResponse>(Error.Conflict("SalesOrder.ClientReferenceReused", "That client reference was already used for another branch's sales order."));
+
         var branchExists = await dbContext.Branches.AnyAsync(b => b.Id == command.BranchId, cancellationToken);
         if (!branchExists)
             return Result.Failure<SalesOrderResponse>(Error.NotFound("Branch.NotFound", $"Branch with ID '{command.BranchId}' was not found."));
@@ -70,6 +79,7 @@ public sealed class CreateSalesOrderCommandHandler(
             Remarks = command.Remarks,
             DiscountPct = command.DiscountPct,
             CreatedBy = command.CreatedBy,
+            ClientReferenceId = command.ClientReferenceId,
             Lines = command.Lines.Select(l => new SalesOrderLine
             {
                 ItemId = l.ItemId,

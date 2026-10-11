@@ -21,4 +21,6 @@ public sealed record CreateSalesOrderCommand(
     string? Remarks,
     decimal? DiscountPct,
     string? CreatedBy,
-    List<SalesOrderLineInput> Lines) : ICommand<Result<SalesOrderResponse>>;
+    List<SalesOrderLineInput> Lines,
+    // Idempotency key from an offline client (ZARI Mobile): a repeat with the same key returns the first one's document.
+    Guid? ClientReferenceId = null) : ICommand<Result<SalesOrderResponse>>;

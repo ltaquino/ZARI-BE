@@ -1,5 +1,6 @@
 namespace ZARI.Application.UnitTests.Features.Inventory.StockOpname;
 
+using Microsoft.EntityFrameworkCore;
 using ZARI.Application.Features.Inventory.StockOpnames.Create;
 using ZARI.Application.Features.SystemModule.DocumentSequences.GetNext;
 using ZARI.Application.Features.Workflow.Notifications.Create;
@@ -114,5 +115,30 @@ public sealed class CreateStockOpnameCommandHandlerTests
         result.IsSuccess.Should().BeTrue();
         result.Value!.Status.Should().Be("DRAFT");
         result.Value.Lines.Should().ContainSingle(l => l.VarianceQty == 2);
+    }
+
+    [Fact]
+    public async Task HandleAsync_Should_Return_The_First_Count_When_The_Same_Client_Reference_Is_Resent()
+    {
+        await using var db = TestDbContextFactory.Create();
+        var branch = LoanTestFixtures.Branch();
+        db.Branches.Add(branch);
+        var warehouse = InventoryTestFixtures.Warehouse(branch.Id);
+        db.Warehouses.Add(warehouse);
+        var uom = InventoryTestFixtures.Uom();
+        db.Uoms.Add(uom);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var item = InventoryTestFixtures.Item(uom.Id);
+        db.Items.Add(item);
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        var command = Command(branch.Id, warehouse.Id, item.Id) with { ClientReferenceId = Guid.NewGuid() };
+
+        var first = await Handler(db).HandleAsync(command, TestContext.Current.CancellationToken);
+        var second = await Handler(db).HandleAsync(command, TestContext.Current.CancellationToken);
+
+        second.IsSuccess.Should().BeTrue(second.Error?.Message);
+        second.Value!.Id.Should().Be(first.Value!.Id);
+        second.Value.Lines.Should().HaveCount(1);
+        (await db.StockOpnames.CountAsync(TestContext.Current.CancellationToken)).Should().Be(1);
     }
 }
