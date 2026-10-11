@@ -106,6 +106,9 @@ jobs:
       - name: Run 5-day full-cycle regression script
         run: bash scripts/full-cycle-5day-test.sh
 
+      - name: Run route-sales day regression script
+        run: bash scripts/route-sales-day-test.sh
+
       - name: Dump API log on failure
         if: failure()
         run: cat api.log || true
